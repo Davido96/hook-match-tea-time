@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 5 81% 69%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -37,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -100,4 +94,33 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom gradients for Hooks dating app */
+.gradient-coral {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E9B 100%);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #C44E88 0%, #A855F7 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FF6B6B 0%, #C44E88 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-swipe {
+  touch-action: pan-y pinch-zoom;
+}
+
+.backdrop-blur-glass {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
 }

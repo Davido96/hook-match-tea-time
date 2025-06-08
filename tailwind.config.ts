@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				hooks: {
+					coral: '#FF6B6B',
+					pink: '#FF8E9B',
+					purple: '#C44E88',
+					blue: '#4ECDC4',
+					dark: '#2C3E50',
+					light: '#F8F9FA'
 				}
 			},
 			borderRadius: {
@@ -84,11 +93,32 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'swipe-right': {
+					'0%': { transform: 'translateX(0) rotate(0deg)', opacity: '1' },
+					'100%': { transform: 'translateX(100%) rotate(10deg)', opacity: '0' }
+				},
+				'swipe-left': {
+					'0%': { transform: 'translateX(0) rotate(0deg)', opacity: '1' },
+					'100%': { transform: 'translateX(-100%) rotate(-10deg)', opacity: '0' }
+				},
+				'match-celebration': {
+					'0%': { transform: 'scale(0.8)', opacity: '0' },
+					'50%': { transform: 'scale(1.1)', opacity: '1' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-10px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'swipe-right': 'swipe-right 0.3s ease-out forwards',
+				'swipe-left': 'swipe-left 0.3s ease-out forwards',
+				'match-celebration': 'match-celebration 0.5s ease-out',
+				'float': 'float 3s ease-in-out infinite'
 			}
 		}
 	},
