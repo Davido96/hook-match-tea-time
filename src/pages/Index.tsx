@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import ChatInterface from "@/components/ChatInterface";
 import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
 import ExclusiveContentPage from "@/components/ExclusiveContentPage";
 import ProfileButton from "@/components/ProfileButton";
+import WalletModal from "@/components/WalletModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
@@ -55,6 +55,7 @@ const Index = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [matches, setMatches] = useState<any[]>([]);
   const [showMatch, setShowMatch] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -213,7 +214,12 @@ const Index = () => {
               <Badge className="bg-hooks-coral text-white text-xs">PREMIUM</Badge>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="text-hooks-coral">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-hooks-coral"
+                onClick={() => setShowWalletModal(true)}
+              >
                 <Wallet className="w-4 h-4 mr-1" />
                 {wallet?.keys_balance || 0} Keys
               </Button>
@@ -253,7 +259,12 @@ const Index = () => {
             <Card className="bg-gradient-to-r from-hooks-coral to-hooks-pink text-white">
               <CardContent className="p-4">
                 <p className="text-sm">💡 Purchase Keys (₦1,000 each) to tip creators and unlock premium features</p>
-                <Button variant="outline" size="sm" className="mt-2 border-white text-white hover:bg-white hover:text-hooks-coral">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2 border-white text-white hover:bg-white hover:text-hooks-coral"
+                  onClick={() => setShowWalletModal(true)}
+                >
                   Buy Keys
                 </Button>
               </CardContent>
@@ -325,6 +336,14 @@ const Index = () => {
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Wallet Modal */}
+      {showWalletModal && (
+        <WalletModal 
+          isOpen={showWalletModal}
+          onClose={() => setShowWalletModal(false)}
+        />
       )}
     </div>
   );

@@ -8,29 +8,35 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Plus, X, Heart, Camera, MapPin, Users, Shield } from "lucide-react";
 import { nigerianStates, getCitiesByState } from "@/data/nigerianLocations";
-import { UserProfile } from "@/types/user";
+import { useProfile } from "@/hooks/useProfile";
+import { useToast } from "@/hooks/use-toast";
 
 interface EnhancedProfileSetupProps {
   onComplete: () => void;
 }
 
 const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
+  const { createProfile } = useProfile();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [profile, setProfile] = useState<Partial<UserProfile>>({
+  const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState({
     name: "",
     age: 18,
     bio: "",
-    user_type: undefined,
-    location: { state: "", city: "" },
-    gender: undefined,
-    gender_preference: undefined,
-    age_range_preference: { min: 18, max: 35 },
+    user_type: undefined as 'creator' | 'consumer' | undefined,
+    location_state: "",
+    location_city: "",
+    gender: undefined as 'male' | 'female' | 'non-binary' | undefined,
+    gender_preference: undefined as 'male' | 'female' | 'both' | undefined,
+    age_range_min: 18,
+    age_range_max: 35,
     search_radius_km: 50,
-    interests: [],
-    photos: [],
+    interests: [] as string[],
     subscription_fee: 0,
     services_offered: "",
-    is_age_verified: false
+    is_age_verified: false,
+    verification_status: 'pending' as const
   });
 
   const sampleInterests = [
@@ -42,17 +48,60 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
   const handleInterestToggle = (interest: string) => {
     setProfile(prev => ({
       ...prev,
-      interests: prev.interests?.includes(interest)
+      interests: prev.interests.includes(interest)
         ? prev.interests.filter(i => i !== interest)
-        : [...(prev.interests || []), interest]
+        : [...prev.interests, interest]
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     } else {
-      onComplete();
+      // Final step - save profile
+      setIsLoading(true);
+      try {
+        const { error } = await createProfile({
+          name: profile.name,
+          age: profile.age,
+          bio: profile.bio || "",
+          user_type: profile.user_type!,
+          location_state: profile.location_state,
+          location_city: profile.location_city,
+          gender: profile.gender!,
+          gender_preference: profile.gender_preference!,
+          age_range_min: profile.age_range_min,
+          age_range_max: profile.age_range_max,
+          search_radius_km: profile.search_radius_km,
+          interests: profile.interests,
+          subscription_fee: profile.subscription_fee,
+          services_offered: profile.services_offered,
+          verification_status: 'pending',
+          is_age_verified: profile.is_age_verified
+        });
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to create profile. Please try again.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Your profile has been created successfully!",
+          });
+          onComplete();
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -63,11 +112,11 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
       case 2:
         return profile.is_age_verified && profile.name && profile.age;
       case 3:
-        return profile.location?.state && profile.location?.city;
+        return profile.location_state && profile.location_city;
       case 4:
         return profile.gender && profile.gender_preference;
       case 5:
-        return profile.age_range_preference && profile.search_radius_km;
+        return profile.age_range_min && profile.age_range_max && profile.search_radius_km;
       case 6:
         return profile.user_type === 'consumer' || (profile.subscription_fee !== undefined && profile.services_offered);
       default:
@@ -186,10 +235,11 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                 <div>
                   <label className="block text-sm font-medium mb-2">State</label>
                   <Select 
-                    value={profile.location?.state} 
+                    value={profile.location_state} 
                     onValueChange={(value) => setProfile({
                       ...profile, 
-                      location: { ...profile.location!, state: value, city: "" }
+                      location_state: value, 
+                      location_city: ""
                     })}
                   >
                     <SelectTrigger>
@@ -205,21 +255,21 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                   </Select>
                 </div>
                 
-                {profile.location?.state && (
+                {profile.location_state && (
                   <div>
                     <label className="block text-sm font-medium mb-2">City</label>
                     <Select 
-                      value={profile.location?.city} 
+                      value={profile.location_city} 
                       onValueChange={(value) => setProfile({
                         ...profile, 
-                        location: { ...profile.location!, city: value }
+                        location_city: value
                       })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select your city" />
                       </SelectTrigger>
                       <SelectContent>
-                        {getCitiesByState(profile.location.state).map((city) => (
+                        {getCitiesByState(profile.location_state).map((city) => (
                           <SelectItem key={city} value={city}>
                             {city}
                           </SelectItem>
@@ -285,7 +335,7 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Age Range: {profile.age_range_preference?.min} - {profile.age_range_preference?.max}
+                    Age Range: {profile.age_range_min} - {profile.age_range_max}
                   </label>
                   <div className="flex space-x-2">
                     <Input
@@ -293,13 +343,10 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                       min="18"
                       max="100"
                       placeholder="Min"
-                      value={profile.age_range_preference?.min}
+                      value={profile.age_range_min}
                       onChange={(e) => setProfile({
                         ...profile,
-                        age_range_preference: {
-                          ...profile.age_range_preference!,
-                          min: parseInt(e.target.value)
-                        }
+                        age_range_min: parseInt(e.target.value)
                       })}
                     />
                     <Input
@@ -307,13 +354,10 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                       min="18"
                       max="100"
                       placeholder="Max"
-                      value={profile.age_range_preference?.max}
+                      value={profile.age_range_max}
                       onChange={(e) => setProfile({
                         ...profile,
-                        age_range_preference: {
-                          ...profile.age_range_preference!,
-                          max: parseInt(e.target.value)
-                        }
+                        age_range_max: parseInt(e.target.value)
                       })}
                     />
                   </div>
@@ -372,16 +416,16 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                     {sampleInterests.map((interest) => (
                       <Badge
                         key={interest}
-                        variant={profile.interests?.includes(interest) ? "default" : "outline"}
+                        variant={profile.interests.includes(interest) ? "default" : "outline"}
                         className={`cursor-pointer transition-colors ${
-                          profile.interests?.includes(interest)
+                          profile.interests.includes(interest)
                             ? 'bg-hooks-coral hover:bg-hooks-coral/80'
                             : 'hover:bg-gray-100'
                         }`}
                         onClick={() => handleInterestToggle(interest)}
                       >
                         {interest}
-                        {profile.interests?.includes(interest) && (
+                        {profile.interests.includes(interest) && (
                           <X className="w-3 h-3 ml-1" />
                         )}
                       </Badge>
@@ -398,16 +442,17 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                 variant="outline"
                 onClick={() => setCurrentStep(currentStep - 1)}
                 className="flex-1"
+                disabled={isLoading}
               >
                 Back
               </Button>
             )}
             <Button
               onClick={handleNext}
-              disabled={!canProceed()}
+              disabled={!canProceed() || isLoading}
               className="flex-1 gradient-coral text-white"
             >
-              {currentStep === 6 ? 'Join Hooks' : 'Next'}
+              {isLoading ? 'Saving...' : currentStep === 6 ? 'Join Hooks' : 'Next'}
             </Button>
           </div>
         </CardContent>

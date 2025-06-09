@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import CreatePostModal from "./CreatePostModal";
+import TipModal from "./TipModal";
 
 interface ExclusivePost {
   id: string;
@@ -33,6 +34,8 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
   const [posts, setPosts] = useState<ExclusivePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -64,6 +67,11 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
   const handlePostCreated = () => {
     fetchPosts();
     setShowCreatePost(false);
+  };
+
+  const handleSendTip = (creatorId: string, creatorName: string) => {
+    setSelectedCreator({ id: creatorId, name: creatorName });
+    setShowTipModal(true);
   };
 
   if (loading) {
@@ -141,9 +149,16 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
                       <MessageCircle className="w-4 h-4" />
                     </Button>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-hooks-coral">
-                    Send Keys 🪝
-                  </Button>
+                  {post.creator_id !== user?.id && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-hooks-coral"
+                      onClick={() => handleSendTip(post.creator_id, post.profiles.name)}
+                    >
+                      Send Keys 🪝
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -170,6 +185,19 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
           isOpen={showCreatePost}
           onClose={() => setShowCreatePost(false)}
           onPostCreated={handlePostCreated}
+        />
+      )}
+
+      {/* Tip Modal */}
+      {showTipModal && selectedCreator && (
+        <TipModal
+          isOpen={showTipModal}
+          onClose={() => {
+            setShowTipModal(false);
+            setSelectedCreator(null);
+          }}
+          recipientName={selectedCreator.name}
+          recipientId={selectedCreator.id}
         />
       )}
     </div>
