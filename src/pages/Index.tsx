@@ -3,39 +3,39 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, X, MessageCircle, Settings, Star, Zap } from "lucide-react";
+import { Heart, X, MessageCircle, Settings, Star, Zap, Shield, Camera, Wallet } from "lucide-react";
 import SwipeCard from "@/components/SwipeCard";
 import ChatInterface from "@/components/ChatInterface";
-import ProfileSetup from "@/components/ProfileSetup";
+import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
 
-// Sample user data
+// Sample user data with Nigerian context
 const sampleUsers = [
   {
     id: 1,
-    name: "Alex",
+    name: "Amara",
     age: 24,
-    bio: "Adventure seeker, coffee lover ☕",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop",
-    interests: ["Travel", "Coffee", "Hiking"],
-    distance: "2 miles away"
+    bio: "Lagos-based content creator ✨ Fashion & lifestyle",
+    image: "https://images.unsplash.com/photo-1494790108755-2616b332c5c0?w=400&h=600&fit=crop",
+    interests: ["Fashion", "Photography", "Lagos"],
+    distance: "2km away in Victoria Island"
   },
   {
     id: 2,
-    name: "Sam",
+    name: "Kemi",
     age: 27,
-    bio: "Artist by day, chef by night 🎨👨‍🍳",
-    image: "https://images.unsplash.com/photo-1494790108755-2616b332c5c0?w=400&h=600&fit=crop",
-    interests: ["Art", "Cooking", "Music"],
-    distance: "5 miles away"
+    bio: "Abuja entrepreneur 💼 Exclusive content creator",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop",
+    interests: ["Business", "Lifestyle", "Travel"],
+    distance: "5km away in Maitama"
   },
   {
     id: 3,
-    name: "Jordan",
+    name: "Tunde",
     age: 23,
-    bio: "Fitness enthusiast & dog parent 🐕",
+    bio: "Fitness coach & model 💪 Premium content",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop",
-    interests: ["Fitness", "Dogs", "Running"],
-    distance: "1 mile away"
+    interests: ["Fitness", "Modeling", "Health"],
+    distance: "1km away in Lekki"
   }
 ];
 
@@ -79,19 +79,19 @@ const Index = () => {
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-6xl md:text-8xl font-bold mb-6 animate-float">
-              Find Your
+              Nigeria's
               <br />
-              <span className="text-gradient">Perfect Match</span>
+              <span className="text-gradient">Premium Network</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Swipe, Match, Chat. The most authentic way to meet people around you.
+              Connect with exclusive content creators. Subscribe, tip with Keys (₦), and discover premium experiences across Nigeria.
             </p>
             <Button 
               size="lg" 
               className="bg-white text-hooks-coral hover:bg-white/90 text-lg px-8 py-6 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
               onClick={() => setCurrentView('setup')}
             >
-              Start Matching 🪝 🍵
+              Join Premium Network 🪝
             </Button>
           </div>
 
@@ -99,25 +99,25 @@ const Index = () => {
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
               <CardContent className="p-6 text-center">
-                <Heart className="w-12 h-12 mx-auto mb-4 text-hooks-coral" />
-                <h3 className="text-xl font-semibold mb-2">Smart Matching</h3>
-                <p className="text-white/80">Our algorithm learns your preferences to find perfect matches</p>
+                <Camera className="w-12 h-12 mx-auto mb-4 text-hooks-coral" />
+                <h3 className="text-xl font-semibold mb-2">Exclusive Content</h3>
+                <p className="text-white/80">Premium photos and videos from verified Nigerian creators</p>
               </CardContent>
             </Card>
             
             <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
               <CardContent className="p-6 text-center">
-                <MessageCircle className="w-12 h-12 mx-auto mb-4 text-hooks-blue" />
-                <h3 className="text-xl font-semibold mb-2">Instant Chat</h3>
-                <p className="text-white/80">Start meaningful conversations with your matches instantly</p>
+                <Wallet className="w-12 h-12 mx-auto mb-4 text-hooks-blue" />
+                <h3 className="text-xl font-semibold mb-2">Keys Currency</h3>
+                <p className="text-white/80">Purchase Keys (₦1,000 each) to tip creators and unlock premium features</p>
               </CardContent>
             </Card>
             
             <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
               <CardContent className="p-6 text-center">
-                <Star className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
-                <h3 className="text-xl font-semibold mb-2">Verified Profiles</h3>
-                <p className="text-white/80">Real people, real connections, verified authenticity</p>
+                <Shield className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
+                <h3 className="text-xl font-semibold mb-2">Safe & Verified</h3>
+                <p className="text-white/80">Age-verified profiles with secure Nigerian payment methods</p>
               </CardContent>
             </Card>
           </div>
@@ -126,17 +126,27 @@ const Index = () => {
           <div className="text-center">
             <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
               <div>
-                <div className="text-3xl font-bold">10M+</div>
-                <div className="text-white/80">Active Users</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">2M+</div>
-                <div className="text-white/80">Matches Daily</div>
-              </div>
-              <div>
                 <div className="text-3xl font-bold">50K+</div>
-                <div className="text-white/80">Success Stories</div>
+                <div className="text-white/80">Active Nigerians</div>
               </div>
+              <div>
+                <div className="text-3xl font-bold">₦10M+</div>
+                <div className="text-white/80">Creator Earnings</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold">Lagos</div>
+                <div className="text-white/80">to Abuja</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Nigerian Payment Methods */}
+          <div className="mt-16 text-center">
+            <h3 className="text-2xl font-bold mb-8">Secure Nigerian Payments</h3>
+            <div className="flex justify-center space-x-8 opacity-80">
+              <div className="bg-white/20 px-6 py-3 rounded-lg">Paystack</div>
+              <div className="bg-white/20 px-6 py-3 rounded-lg">Bank Transfer</div>
+              <div className="bg-white/20 px-6 py-3 rounded-lg">Flutterwave</div>
             </div>
           </div>
         </div>
@@ -145,7 +155,7 @@ const Index = () => {
   }
 
   if (currentView === 'setup') {
-    return <ProfileSetup onComplete={() => setCurrentView('swipe')} />;
+    return <EnhancedProfileSetup onComplete={() => setCurrentView('swipe')} />;
   }
 
   if (currentView === 'chat') {
@@ -161,8 +171,13 @@ const Index = () => {
             <div className="flex items-center space-x-2">
               <span className="text-2xl">🪝</span>
               <h1 className="text-xl font-bold text-gradient">Hooks</h1>
+              <Badge className="bg-hooks-coral text-white text-xs">PREMIUM</Badge>
             </div>
             <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" className="text-hooks-coral">
+                <Wallet className="w-4 h-4 mr-1" />
+                0 Keys
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -187,6 +202,18 @@ const Index = () => {
       {/* Main Swipe Interface */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
+          {/* Keys Notice */}
+          <div className="mb-6 text-center">
+            <Card className="bg-gradient-to-r from-hooks-coral to-hooks-pink text-white">
+              <CardContent className="p-4">
+                <p className="text-sm">💡 Purchase Keys (₦1,000 each) to tip creators and unlock premium features</p>
+                <Button variant="outline" size="sm" className="mt-2 border-white text-white hover:bg-white hover:text-hooks-coral">
+                  Buy Keys
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Swipe Cards */}
           <div className="relative h-[600px] mb-8">
             {currentUserIndex < sampleUsers.length && (
@@ -228,9 +255,10 @@ const Index = () => {
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full w-16 h-16 border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+              className="rounded-full w-16 h-16 border-2 border-yellow-200 hover:border-yellow-300 hover:bg-yellow-50"
+              title="Send 1 Key Tip"
             >
-              <Zap className="w-6 h-6 text-blue-500" />
+              <span className="text-xl">🪝</span>
             </Button>
           </div>
         </div>
@@ -241,13 +269,13 @@ const Index = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-8 text-center animate-match-celebration">
             <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold text-gradient mb-2">It's a Match!</h2>
-            <p className="text-gray-600">You and {sampleUsers[currentUserIndex]?.name} liked each other</p>
+            <h2 className="text-2xl font-bold text-gradient mb-2">Premium Match!</h2>
+            <p className="text-gray-600">You and {sampleUsers[currentUserIndex]?.name} are now connected</p>
             <Button 
               className="mt-4 gradient-coral text-white"
               onClick={() => setCurrentView('chat')}
             >
-              Start Chatting
+              Start Premium Chat
             </Button>
           </div>
         </div>
