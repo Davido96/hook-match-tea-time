@@ -88,22 +88,21 @@ export const useWallet = () => {
 
       if (tipError) throw tipError;
 
-      // Add to recipient's wallet - need to handle this with a database function
-      const { error: recipientError } = await supabase
+      // Add to recipient's wallet - get current balance first, then update
+      const { data: recipientWallet, error: getError } = await supabase
         .from('wallets')
         .select('keys_balance')
         .eq('user_id', recipientUserId)
-        .single()
-        .then(async ({ data: recipientWallet, error }) => {
-          if (error) throw error;
-          
-          return supabase
-            .from('wallets')
-            .update({ keys_balance: (recipientWallet?.keys_balance || 0) + amount })
-            .eq('user_id', recipientUserId);
-        });
+        .single();
 
-      if (recipientError.error) throw recipientError.error;
+      if (getError) throw getError;
+
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ keys_balance: (recipientWallet?.keys_balance || 0) + amount })
+        .eq('user_id', recipientUserId);
+
+      if (updateError) throw updateError;
 
       // Refresh wallet
       await fetchWallet();
