@@ -1,4 +1,6 @@
 
+import { NigerianLocation } from "@/types/user";
+
 export const nigerianStates: NigerianLocation[] = [
   {
     state: "Lagos",
