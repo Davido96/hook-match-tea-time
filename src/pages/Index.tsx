@@ -1,12 +1,18 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, X, MessageCircle, Settings, Star, Zap, Shield, Camera, Wallet } from "lucide-react";
+import { Heart, X, MessageCircle, Settings, Star, Zap, Shield, Camera, Wallet, Grid3X3 } from "lucide-react";
 import SwipeCard from "@/components/SwipeCard";
 import ChatInterface from "@/components/ChatInterface";
 import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
+import ExclusiveContentPage from "@/components/ExclusiveContentPage";
+import ProfileButton from "@/components/ProfileButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { useWallet } from "@/hooks/useWallet";
+import { useNavigate } from "react-router-dom";
 
 // Sample user data with Nigerian context
 const sampleUsers = [
@@ -40,10 +46,27 @@ const sampleUsers = [
 ];
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<'landing' | 'setup' | 'swipe' | 'chat'>('landing');
+  const { user, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  const { wallet } = useWallet();
+  const navigate = useNavigate();
+  
+  const [currentView, setCurrentView] = useState<'landing' | 'setup' | 'swipe' | 'chat' | 'exclusive'>('landing');
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [matches, setMatches] = useState<any[]>([]);
   const [showMatch, setShowMatch] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (!profile && !profileLoading) {
+        setCurrentView('setup');
+      } else if (profile) {
+        setCurrentView('swipe');
+      }
+    } else if (!authLoading && !user) {
+      setCurrentView('landing');
+    }
+  }, [user, profile, authLoading, profileLoading]);
 
   const handleSwipe = (direction: 'left' | 'right') => {
     if (direction === 'right') {
@@ -61,7 +84,15 @@ const Index = () => {
     }, 300);
   };
 
-  if (currentView === 'landing') {
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user && currentView === 'landing') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
         <div className="container mx-auto px-4 py-8 text-white">
@@ -71,7 +102,11 @@ const Index = () => {
               <span className="text-3xl">🪝</span>
               <h1 className="text-2xl font-bold">Hooks</h1>
             </div>
-            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-hooks-coral">
+            <Button 
+              variant="outline" 
+              className="border-white text-white hover:bg-white hover:text-hooks-coral"
+              onClick={() => navigate('/auth')}
+            >
               Sign In
             </Button>
           </div>
@@ -89,7 +124,7 @@ const Index = () => {
             <Button 
               size="lg" 
               className="bg-white text-hooks-coral hover:bg-white/90 text-lg px-8 py-6 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
-              onClick={() => setCurrentView('setup')}
+              onClick={() => navigate('/auth')}
             >
               Join Premium Network 🪝
             </Button>
@@ -162,6 +197,10 @@ const Index = () => {
     return <ChatInterface onBack={() => setCurrentView('swipe')} matches={matches} />;
   }
 
+  if (currentView === 'exclusive') {
+    return <ExclusiveContentPage onBack={() => setCurrentView('swipe')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
@@ -176,7 +215,16 @@ const Index = () => {
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" className="text-hooks-coral">
                 <Wallet className="w-4 h-4 mr-1" />
-                0 Keys
+                {wallet?.keys_balance || 0} Keys
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setCurrentView('exclusive')}
+                className="text-hooks-coral"
+              >
+                <Grid3X3 className="w-4 h-4 mr-1" />
+                Exclusive
               </Button>
               <Button 
                 variant="ghost" 
@@ -191,9 +239,7 @@ const Index = () => {
                   </Badge>
                 )}
               </Button>
-              <Button variant="ghost" size="sm">
-                <Settings className="w-5 h-5" />
-              </Button>
+              <ProfileButton />
             </div>
           </div>
         </div>
