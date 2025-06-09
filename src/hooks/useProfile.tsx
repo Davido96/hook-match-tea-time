@@ -49,8 +49,16 @@ export const useProfile = () => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
-      } else {
-        setProfile(data);
+      } else if (data) {
+        // Type cast the data to ensure compatibility
+        const profileData: Profile = {
+          ...data,
+          user_type: data.user_type as 'creator' | 'consumer',
+          gender: data.gender as 'male' | 'female' | 'non-binary',
+          gender_preference: data.gender_preference as 'male' | 'female' | 'both',
+          verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
+        };
+        setProfile(profileData);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -71,8 +79,18 @@ export const useProfile = () => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
-      return { data, error: null };
+      
+      // Type cast the response
+      const newProfile: Profile = {
+        ...data,
+        user_type: data.user_type as 'creator' | 'consumer',
+        gender: data.gender as 'male' | 'female' | 'non-binary',
+        gender_preference: data.gender_preference as 'male' | 'female' | 'both',
+        verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
+      };
+      
+      setProfile(newProfile);
+      return { data: newProfile, error: null };
     } catch (error) {
       return { data: null, error };
     }
@@ -88,8 +106,18 @@ export const useProfile = () => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
-      return { data, error: null };
+      
+      // Type cast the response
+      const updatedProfile: Profile = {
+        ...data,
+        user_type: data.user_type as 'creator' | 'consumer',
+        gender: data.gender as 'male' | 'female' | 'non-binary',
+        gender_preference: data.gender_preference as 'male' | 'female' | 'both',
+        verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
+      };
+      
+      setProfile(updatedProfile);
+      return { data: updatedProfile, error: null };
     } catch (error) {
       return { data: null, error };
     }

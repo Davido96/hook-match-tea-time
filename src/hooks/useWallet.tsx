@@ -62,7 +62,7 @@ export const useWallet = () => {
     }
   };
 
-  const sendTip = async (recipientId: string, amount: number, message?: string) => {
+  const sendTip = async (recipientUserId: string, amount: number, message?: string) => {
     try {
       if (!wallet || wallet.keys_balance < amount) {
         throw new Error('Insufficient Keys balance');
@@ -81,20 +81,29 @@ export const useWallet = () => {
         .from('tips')
         .insert({
           sender_id: user!.id,
-          recipient_id: recipientId,
+          recipient_id: recipientUserId,
           amount,
           message
         });
 
       if (tipError) throw tipError;
 
-      // Update recipient's wallet
-      const { error: recipientError } = await supabase.rpc('increment_wallet_balance', {
-        user_id: recipientId,
-        amount: amount
-      });
+      // Add to recipient's wallet - need to handle this with a database function
+      const { error: recipientError } = await supabase
+        .from('wallets')
+        .select('keys_balance')
+        .eq('user_id', recipientUserId)
+        .single()
+        .then(async ({ data: recipientWallet, error }) => {
+          if (error) throw error;
+          
+          return supabase
+            .from('wallets')
+            .update({ keys_balance: (recipientWallet?.keys_balance || 0) + amount })
+            .eq('user_id', recipientUserId);
+        });
 
-      if (recipientError) throw recipientError;
+      if (recipientError.error) throw recipientError.error;
 
       // Refresh wallet
       await fetchWallet();
