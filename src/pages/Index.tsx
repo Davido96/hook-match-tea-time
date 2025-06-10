@@ -13,6 +13,7 @@ import ExclusiveContentPage from "@/components/ExclusiveContentPage";
 import WalletModal from "@/components/WalletModal";
 import TipModal from "@/components/TipModal";
 import ProfileButton from "@/components/ProfileButton";
+import ProfileViewModal from "@/components/ProfileViewModal";
 
 // Sample creator data - would come from database in real app
 const sampleCreators = [
@@ -49,7 +50,9 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const [showWallet, setShowWallet] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [showProfileView, setShowProfileView] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
 
   // Handle navigation based on auth and profile state
   useEffect(() => {
@@ -76,6 +79,11 @@ const Index = () => {
   const handleSendTip = (creatorId: string, creatorName: string) => {
     setSelectedCreator({ id: creatorId, name: creatorName });
     setShowTipModal(true);
+  };
+
+  const handleViewProfile = (creator: any) => {
+    setSelectedProfile(creator);
+    setShowProfileView(true);
   };
 
   // Show loading while checking auth/profile state
@@ -168,7 +176,8 @@ const Index = () => {
                 <img
                   src={creator.images[0]}
                   alt={creator.name}
-                  className="w-full h-64 object-cover"
+                  className="w-full h-64 object-cover cursor-pointer"
+                  onClick={() => handleViewProfile(creator)}
                 />
                 {creator.isVerified && (
                   <Badge className="absolute top-2 right-2 bg-blue-500 text-white">
@@ -178,7 +187,12 @@ const Index = () => {
               </div>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-lg">{creator.name}</h3>
+                  <h3 
+                    className="font-semibold text-lg cursor-pointer hover:text-hooks-coral transition-colors"
+                    onClick={() => handleViewProfile(creator)}
+                  >
+                    {creator.name}
+                  </h3>
                   <span className="text-sm text-gray-500">{creator.age}</span>
                 </div>
                 <p className="text-sm text-gray-600 mb-2">{creator.location}</p>
@@ -238,6 +252,17 @@ const Index = () => {
           }}
           recipientName={selectedCreator.name}
           recipientId={selectedCreator.id}
+        />
+      )}
+
+      {showProfileView && selectedProfile && (
+        <ProfileViewModal
+          isOpen={showProfileView}
+          onClose={() => {
+            setShowProfileView(false);
+            setSelectedProfile(null);
+          }}
+          profile={selectedProfile}
         />
       )}
     </div>
