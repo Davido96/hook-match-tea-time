@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Wallet, Settings, Plus, X } from "lucide-react";
+import { Heart, MessageCircle, Wallet, X, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
@@ -14,7 +14,6 @@ import ProfileButton from "@/components/ProfileButton";
 import ProfileViewModal from "@/components/ProfileViewModal";
 import SwipeCard from "@/components/SwipeCard";
 import ChatInterface from "@/components/ChatInterface";
-import EditProfileModal from "@/components/EditProfileModal";
 
 // Sample users for matching
 const sampleUsers = [
@@ -66,7 +65,6 @@ const Index = () => {
   const [showWallet, setShowWallet] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
@@ -144,7 +142,7 @@ const Index = () => {
 
   // Show messages interface
   if (currentView === 'messages') {
-    return <ChatInterface onBack={() => setCurrentView('discover')} />;
+    return <ChatInterface onBack={() => setCurrentView('discover')} matches={matches} />;
   }
 
   // Main discover interface with Tinder-style cards
@@ -253,7 +251,7 @@ const Index = () => {
               onClick={() => sampleUsers[currentUserIndex] && handleViewProfile(sampleUsers[currentUserIndex])}
               disabled={currentUserIndex >= sampleUsers.length}
             >
-              <MessageCircle className="w-8 h-8" />
+              <User className="w-8 h-8" />
             </Button>
             
             <Button
@@ -303,13 +301,6 @@ const Index = () => {
             setSelectedProfile(null);
           }}
           profile={selectedProfile}
-        />
-      )}
-
-      {showEditProfile && (
-        <EditProfileModal
-          isOpen={showEditProfile}
-          onClose={() => setShowEditProfile(false)}
         />
       )}
     </div>

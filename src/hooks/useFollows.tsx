@@ -22,15 +22,13 @@ export const useFollows = () => {
 
       if (error) {
         console.error('Error following user:', error);
-        // For now, just log success to avoid blocking the UI
-        console.log('Follow action completed');
+        throw error;
       } else {
         console.log('Successfully followed user');
       }
     } catch (error) {
       console.error('Error following user:', error);
-      // For now, just log success to avoid blocking the UI
-      console.log('Follow action completed');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -50,13 +48,13 @@ export const useFollows = () => {
 
       if (error) {
         console.error('Error unfollowing user:', error);
-        console.log('Unfollow action completed');
+        throw error;
       } else {
         console.log('Successfully unfollowed user');
       }
     } catch (error) {
       console.error('Error unfollowing user:', error);
-      console.log('Unfollow action completed');
+      throw error;
     } finally {
       setLoading(false);
     }
