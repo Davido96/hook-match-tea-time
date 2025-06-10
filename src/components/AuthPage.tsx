@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,7 +13,6 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,15 +22,13 @@ const AuthPage = () => {
     try {
       let result;
       if (isSignUp) {
-        result = await signUp(email, password, {});
+        result = await signUp(email, password);
       } else {
         result = await signIn(email, password);
       }
 
       if (result.error) {
         setError(result.error.message);
-      } else {
-        navigate('/');
       }
     } catch (err: any) {
       setError(err.message);

@@ -40,11 +40,13 @@ const sampleCreators = [
   }
 ];
 
+type ViewType = 'home' | 'exclusive' | 'profile-setup';
+
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { wallet } = useWallet();
-  const [currentView, setCurrentView] = useState<'home' | 'exclusive' | 'profile-setup'>('home');
+  const [currentView, setCurrentView] = useState<ViewType>('home');
   const [showWallet, setShowWallet] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
