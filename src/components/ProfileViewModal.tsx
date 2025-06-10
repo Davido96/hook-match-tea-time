@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, MapPin, Calendar, Heart, UserPlus, UserMinus, Crown } from "lucide-react";
+import { X, MapPin, Calendar, Heart, UserPlus, UserMinus, Crown, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useFollows } from "@/hooks/useFollows";

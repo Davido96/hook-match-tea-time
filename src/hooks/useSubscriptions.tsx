@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useSubscriptions = () => {
   const { user } = useAuth();
-  const { wallet, updateWalletBalance } = useWallet();
+  const { wallet, refetch: refetchWallet } = useWallet();
   const [loading, setLoading] = useState(false);
 
   const subscribeToCreator = async (creatorId: string, subscriptionFee: number) => {
@@ -37,7 +37,15 @@ export const useSubscriptions = () => {
 
       // Deduct from wallet
       const newBalance = wallet.keys_balance - subscriptionFee;
-      await updateWalletBalance(newBalance);
+      const { error: walletError } = await supabase
+        .from('wallets')
+        .update({ keys_balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (walletError) throw walletError;
+
+      // Refresh wallet data
+      await refetchWallet();
 
       console.log('Successfully subscribed to creator');
     } catch (error) {
