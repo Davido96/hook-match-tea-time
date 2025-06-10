@@ -40,16 +40,20 @@ export const useProfile = () => {
   }, [user]);
 
   const fetchProfile = async () => {
+    if (!user) return;
+    
     try {
+      console.log('Fetching profile for user:', user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user!.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching profile:', error);
       } else if (data) {
+        console.log('Profile found:', data);
         // Type cast the data to ensure compatibility
         const profileData: Profile = {
           ...data,
@@ -59,6 +63,9 @@ export const useProfile = () => {
           verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
         };
         setProfile(profileData);
+      } else {
+        console.log('No profile found for user');
+        setProfile(null);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -68,18 +75,27 @@ export const useProfile = () => {
   };
 
   const createProfile = async (profileData: Omit<Profile, 'id' | 'user_id'>) => {
+    if (!user) {
+      return { data: null, error: new Error('User not authenticated') };
+    }
+
     try {
+      console.log('Creating profile for user:', user.id, profileData);
       const { data, error } = await supabase
         .from('profiles')
         .insert({
-          user_id: user!.id,
+          user_id: user.id,
           ...profileData
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating profile:', error);
+        throw error;
+      }
       
+      console.log('Profile created successfully:', data);
       // Type cast the response
       const newProfile: Profile = {
         ...data,
@@ -92,16 +108,21 @@ export const useProfile = () => {
       setProfile(newProfile);
       return { data: newProfile, error: null };
     } catch (error) {
+      console.error('Profile creation failed:', error);
       return { data: null, error };
     }
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
+    if (!user) {
+      return { data: null, error: new Error('User not authenticated') };
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
