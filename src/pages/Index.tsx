@@ -1,9 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, Wallet, Settings, Plus } from "lucide-react";
+import { Heart, MessageCircle, Wallet, Settings, Plus, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
@@ -14,66 +12,100 @@ import WalletModal from "@/components/WalletModal";
 import TipModal from "@/components/TipModal";
 import ProfileButton from "@/components/ProfileButton";
 import ProfileViewModal from "@/components/ProfileViewModal";
+import SwipeCard from "@/components/SwipeCard";
+import ChatInterface from "@/components/ChatInterface";
+import EditProfileModal from "@/components/EditProfileModal";
 
-// Sample creator data - would come from database in real app
-const sampleCreators = [
+// Sample users for matching
+const sampleUsers = [
   {
-    id: "1",
+    id: 1,
     name: "Amara Beauty",
     age: 24,
-    location: "Lagos, Nigeria",
-    bio: "Fashion model and lifestyle content creator",
-    images: ["/placeholder.svg"],
+    bio: "Fashion model and lifestyle content creator passionate about beauty and photography",
+    image: "/placeholder.svg",
+    interests: ["Fashion", "Beauty", "Photography", "Travel"],
+    distance: "2 km away",
     isVerified: true,
     subscriptionFee: 5000,
-    interests: ["Fashion", "Beauty", "Photography"]
+    location: "Lagos, Nigeria"
   },
   {
-    id: "2", 
+    id: 2,
     name: "Kemi Fitness",
     age: 26,
-    location: "Abuja, Nigeria",
-    bio: "Fitness coach and wellness enthusiast",
-    images: ["/placeholder.svg"],
+    bio: "Fitness coach and wellness enthusiast helping people live their best lives",
+    image: "/placeholder.svg",
+    interests: ["Fitness", "Health", "Motivation", "Nutrition"],
+    distance: "5 km away",
     isVerified: true,
     subscriptionFee: 3000,
-    interests: ["Fitness", "Health", "Motivation"]
+    location: "Abuja, Nigeria"
+  },
+  {
+    id: 3,
+    name: "Tunde Creative",
+    age: 28,
+    bio: "Digital artist and content creator specializing in African art and culture",
+    image: "/placeholder.svg",
+    interests: ["Art", "Design", "Culture", "Music"],
+    distance: "3 km away",
+    isVerified: true,
+    subscriptionFee: 4000,
+    location: "Ibadan, Nigeria"
   }
 ];
 
-type ViewType = 'home' | 'exclusive' | 'profile-setup';
+type ViewType = 'discover' | 'exclusive' | 'profile-setup' | 'messages';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { wallet } = useWallet();
-  const [currentView, setCurrentView] = useState<ViewType>('home');
+  const [currentView, setCurrentView] = useState<ViewType>('discover');
   const [showWallet, setShowWallet] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [currentUserIndex, setCurrentUserIndex] = useState(0);
+  const [matches, setMatches] = useState<any[]>([]);
 
   // Handle navigation based on auth and profile state
   useEffect(() => {
     if (!authLoading && !profileLoading) {
       if (!user) {
-        // User not authenticated - AuthPage will handle this
         return;
       }
       
       if (user && !profile) {
-        // User authenticated but no profile - show setup
         setCurrentView('profile-setup');
       } else if (user && profile) {
-        // User authenticated with profile - show home
-        setCurrentView('home');
+        setCurrentView('discover');
       }
     }
   }, [user, profile, authLoading, profileLoading]);
 
   const handleProfileSetupComplete = () => {
-    setCurrentView('home');
+    setCurrentView('discover');
+  };
+
+  const handleSwipe = (direction: 'left' | 'right') => {
+    if (direction === 'right') {
+      // It's a match! Add to matches
+      const currentUser = sampleUsers[currentUserIndex];
+      setMatches(prev => [...prev, currentUser]);
+      console.log(`Matched with ${currentUser.name}!`);
+    }
+    
+    // Move to next user
+    if (currentUserIndex < sampleUsers.length - 1) {
+      setCurrentUserIndex(prev => prev + 1);
+    } else {
+      // Reset to first user when we've gone through all
+      setCurrentUserIndex(0);
+    }
   };
 
   const handleSendTip = (creatorId: string, creatorName: string) => {
@@ -107,28 +139,43 @@ const Index = () => {
 
   // Show exclusive content page
   if (currentView === 'exclusive') {
-    return <ExclusiveContentPage onBack={() => setCurrentView('home')} />;
+    return <ExclusiveContentPage onBack={() => setCurrentView('discover')} />;
   }
 
-  // Main homepage for authenticated users with profiles
+  // Show messages interface
+  if (currentView === 'messages') {
+    return <ChatInterface onBack={() => setCurrentView('discover')} />;
+  }
+
+  // Main discover interface with Tinder-style cards
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-2xl">🪝</span>
-              <h1 className="text-xl font-bold text-gradient">Hooks</h1>
+              <h1 className="text-xl font-bold text-white">Hooks</h1>
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Messages */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView('messages')}
+                className="text-white hover:bg-white/20"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </Button>
+              
               {/* Wallet */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowWallet(true)}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 text-white hover:bg-white/20"
               >
                 <Wallet className="w-4 h-4" />
                 <span>{wallet?.keys_balance || 0} 🪝</span>
@@ -142,22 +189,22 @@ const Index = () => {
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b">
+      <div className="bg-white/10 backdrop-blur-sm border-b border-white/20">
         <div className="container mx-auto px-4">
           <div className="flex space-x-8">
             <Button
               variant="ghost"
-              className={`py-4 px-0 rounded-none border-b-2 ${
-                currentView === 'home' ? 'border-hooks-coral text-hooks-coral' : 'border-transparent'
+              className={`py-4 px-0 rounded-none border-b-2 text-white hover:bg-white/20 ${
+                currentView === 'discover' ? 'border-white' : 'border-transparent'
               }`}
-              onClick={() => setCurrentView('home')}
+              onClick={() => setCurrentView('discover')}
             >
               Discover
             </Button>
             <Button
               variant="ghost"
-              className={`py-4 px-0 rounded-none border-b-2 ${
-                currentView === 'exclusive' ? 'border-hooks-coral text-hooks-coral' : 'border-transparent'
+              className={`py-4 px-0 rounded-none border-b-2 text-white hover:bg-white/20 ${
+                currentView === 'exclusive' ? 'border-white' : 'border-transparent'
               }`}
               onClick={() => setCurrentView('exclusive')}
             >
@@ -167,71 +214,64 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sampleCreators.map((creator) => (
-            <Card key={creator.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative">
-                <img
-                  src={creator.images[0]}
-                  alt={creator.name}
-                  className="w-full h-64 object-cover cursor-pointer"
-                  onClick={() => handleViewProfile(creator)}
-                />
-                {creator.isVerified && (
-                  <Badge className="absolute top-2 right-2 bg-blue-500 text-white">
-                    ✓ Verified
-                  </Badge>
-                )}
+      {/* Main Swipe Interface */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-sm mx-auto">
+          {/* Card Stack */}
+          <div className="relative h-[600px] mb-8">
+            {sampleUsers.length > 0 && currentUserIndex < sampleUsers.length ? (
+              <SwipeCard
+                user={sampleUsers[currentUserIndex]}
+                onSwipe={handleSwipe}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-white rounded-2xl shadow-lg flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <Heart className="w-16 h-16 mx-auto mb-4 text-hooks-coral" />
+                  <h3 className="text-xl font-semibold mb-2">No more profiles</h3>
+                  <p>Check back later for new matches!</p>
+                </div>
               </div>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 
-                    className="font-semibold text-lg cursor-pointer hover:text-hooks-coral transition-colors"
-                    onClick={() => handleViewProfile(creator)}
-                  >
-                    {creator.name}
-                  </h3>
-                  <span className="text-sm text-gray-500">{creator.age}</span>
-                </div>
-                <p className="text-sm text-gray-600 mb-2">{creator.location}</p>
-                <p className="text-sm text-gray-700 mb-3">{creator.bio}</p>
-                
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {creator.interests.map((interest, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="text-sm">
-                    <span className="font-semibold text-hooks-coral">
-                      ₦{creator.subscriptionFee.toLocaleString()}/month
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <Heart className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <MessageCircle className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-hooks-coral"
-                      onClick={() => handleSendTip(creator.id, creator.name)}
-                    >
-                      Send Keys 🪝
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center space-x-6">
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-16 h-16 rounded-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+              onClick={() => handleSwipe('left')}
+              disabled={currentUserIndex >= sampleUsers.length}
+            >
+              <X className="w-8 h-8" />
+            </Button>
+            
+            <Button
+              size="lg"
+              className="w-20 h-20 rounded-full bg-white text-hooks-coral hover:bg-gray-100"
+              onClick={() => sampleUsers[currentUserIndex] && handleViewProfile(sampleUsers[currentUserIndex])}
+              disabled={currentUserIndex >= sampleUsers.length}
+            >
+              <MessageCircle className="w-8 h-8" />
+            </Button>
+            
+            <Button
+              size="lg"
+              className="w-16 h-16 rounded-full gradient-coral"
+              onClick={() => handleSwipe('right')}
+              disabled={currentUserIndex >= sampleUsers.length}
+            >
+              <Heart className="w-8 h-8" />
+            </Button>
+          </div>
+
+          {/* Match Counter */}
+          <div className="text-center mt-6">
+            <p className="text-white text-sm">
+              {matches.length} matches • {sampleUsers.length - currentUserIndex} profiles remaining
+            </p>
+          </div>
         </div>
       </div>
 
@@ -263,6 +303,13 @@ const Index = () => {
             setSelectedProfile(null);
           }}
           profile={selectedProfile}
+        />
+      )}
+
+      {showEditProfile && (
+        <EditProfileModal
+          isOpen={showEditProfile}
+          onClose={() => setShowEditProfile(false)}
         />
       )}
     </div>
