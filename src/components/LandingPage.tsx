@@ -24,6 +24,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
 
   const handleAuthSuccess = () => {
     setShowAuth(false);
+    // Call the parent's onGetStarted to handle the redirect
     onGetStarted();
   };
 

@@ -25,13 +25,32 @@ const Index = () => {
         return;
       }
       
+      // If user exists but no profile, show profile setup
       if (user && !profile) {
         setCurrentView('profile-setup');
-      } else if (user && profile && currentView === 'landing') {
+        return;
+      }
+      
+      // If user and profile exist, and we're still on landing, go to discover
+      if (user && profile && currentView === 'landing') {
         setCurrentView('discover');
+        return;
       }
     }
   }, [user, profile, authLoading, profileLoading, currentView]);
+
+  const handleGetStarted = () => {
+    // This will be called from LandingPage when user clicks get started
+    // If user is authenticated and has profile, go directly to discover
+    if (user && profile) {
+      setCurrentView('discover');
+    } else if (user && !profile) {
+      setCurrentView('profile-setup');
+    } else {
+      // User needs to authenticate first - this is handled by LandingPage
+      setCurrentView('landing');
+    }
+  };
 
   const handleProfileSetupComplete = () => {
     setCurrentView('discover');
@@ -52,7 +71,7 @@ const Index = () => {
 
   // Show landing page if no user
   if (!user || currentView === 'landing') {
-    return <LandingPage onGetStarted={() => setCurrentView('discover')} />;
+    return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
   // Show profile setup if user exists but no profile
@@ -70,7 +89,7 @@ const Index = () => {
     return <ChatInterface onBack={() => setCurrentView('discover')} matches={matches} />;
   }
 
-  // Main discover interface
+  // Main discover interface - this is the homepage after authentication
   return (
     <DiscoverPage 
       currentView={currentView}
