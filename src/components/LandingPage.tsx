@@ -1,12 +1,36 @@
 
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Shield, Zap } from "lucide-react";
+import { useState } from "react";
+import AuthPage from "@/components/AuthPage";
 
 interface LandingPageProps {
   onGetStarted: () => void;
 }
 
 const LandingPage = ({ onGetStarted }: LandingPageProps) => {
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+
+  const handleGetStarted = () => {
+    setAuthMode('signup');
+    setShowAuth(true);
+  };
+
+  const handleSignIn = () => {
+    setAuthMode('signin');
+    setShowAuth(true);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuth(false);
+    onGetStarted();
+  };
+
+  if (showAuth) {
+    return <AuthPage initialMode={authMode} onAuthSuccess={handleAuthSuccess} onBack={() => setShowAuth(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
       {/* Hero Section */}
@@ -20,7 +44,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
             Connect with amazing creators and find meaningful relationships in Nigeria's premier dating platform
           </p>
           <Button
-            onClick={onGetStarted}
+            onClick={handleGetStarted}
             size="lg"
             className="bg-white text-hooks-coral hover:bg-gray-100 text-xl px-12 py-6 rounded-full font-semibold"
           >
@@ -69,14 +93,14 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           <p className="text-xl text-white/90 mb-8">Join thousands of users who have found their perfect match on Hooks</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              onClick={onGetStarted}
+              onClick={handleGetStarted}
               size="lg"
               className="bg-white text-hooks-coral hover:bg-gray-100 text-lg px-8 py-4 rounded-full font-semibold"
             >
               Sign Up Free
             </Button>
             <Button
-              onClick={onGetStarted}
+              onClick={handleSignIn}
               size="lg"
               variant="outline"
               className="border-white text-white hover:bg-white hover:text-hooks-coral text-lg px-8 py-4 rounded-full font-semibold"
