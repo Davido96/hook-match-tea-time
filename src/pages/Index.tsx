@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Wallet, X, User } from "lucide-react";
+import { Heart, MessageCircle, Wallet, X, User, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
@@ -14,6 +14,10 @@ import ProfileButton from "@/components/ProfileButton";
 import ProfileViewModal from "@/components/ProfileViewModal";
 import SwipeCard from "@/components/SwipeCard";
 import ChatInterface from "@/components/ChatInterface";
+import EditProfileModal from "@/components/EditProfileModal";
+import MatchModal from "@/components/MatchModal";
+import FilterModal from "@/components/FilterModal";
+import LandingPage from "@/components/LandingPage";
 
 // Sample users for matching
 const sampleUsers = [
@@ -27,7 +31,9 @@ const sampleUsers = [
     distance: "2 km away",
     isVerified: true,
     subscriptionFee: 5000,
-    location: "Lagos, Nigeria"
+    location: "Lagos, Nigeria",
+    gender: "female",
+    user_type: "creator"
   },
   {
     id: 2,
@@ -39,7 +45,9 @@ const sampleUsers = [
     distance: "5 km away",
     isVerified: true,
     subscriptionFee: 3000,
-    location: "Abuja, Nigeria"
+    location: "Abuja, Nigeria",
+    gender: "female",
+    user_type: "creator"
   },
   {
     id: 3,
@@ -51,39 +59,78 @@ const sampleUsers = [
     distance: "3 km away",
     isVerified: true,
     subscriptionFee: 4000,
-    location: "Ibadan, Nigeria"
+    location: "Ibadan, Nigeria",
+    gender: "male",
+    user_type: "creator"
   }
 ];
 
-type ViewType = 'discover' | 'exclusive' | 'profile-setup' | 'messages';
+type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { wallet } = useWallet();
-  const [currentView, setCurrentView] = useState<ViewType>('discover');
+  const [currentView, setCurrentView] = useState<ViewType>('landing');
   const [showWallet, setShowWallet] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [matches, setMatches] = useState<any[]>([]);
+  const [currentMatch, setCurrentMatch] = useState<any>(null);
+  const [filteredUsers, setFilteredUsers] = useState(sampleUsers);
+  const [filters, setFilters] = useState({
+    distance: 50,
+    ageRange: [18, 35],
+    gender: 'both',
+    location: ''
+  });
 
   // Handle navigation based on auth and profile state
   useEffect(() => {
     if (!authLoading && !profileLoading) {
       if (!user) {
+        setCurrentView('landing');
         return;
       }
       
       if (user && !profile) {
         setCurrentView('profile-setup');
-      } else if (user && profile) {
+      } else if (user && profile && currentView === 'landing') {
         setCurrentView('discover');
       }
     }
-  }, [user, profile, authLoading, profileLoading]);
+  }, [user, profile, authLoading, profileLoading, currentView]);
+
+  // Apply filters to users
+  useEffect(() => {
+    let filtered = sampleUsers.filter(user => {
+      // Gender filter
+      if (filters.gender !== 'both' && user.gender !== filters.gender) {
+        return false;
+      }
+      
+      // Location filter
+      if (filters.location && !user.location.toLowerCase().includes(filters.location.toLowerCase())) {
+        return false;
+      }
+      
+      // Age filter
+      if (user.age < filters.ageRange[0] || user.age > filters.ageRange[1]) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    setFilteredUsers(filtered);
+    setCurrentUserIndex(0);
+  }, [filters]);
 
   const handleProfileSetupComplete = () => {
     setCurrentView('discover');
@@ -92,13 +139,17 @@ const Index = () => {
   const handleSwipe = (direction: 'left' | 'right') => {
     if (direction === 'right') {
       // It's a match! Add to matches
-      const currentUser = sampleUsers[currentUserIndex];
-      setMatches(prev => [...prev, currentUser]);
-      console.log(`Matched with ${currentUser.name}!`);
+      const currentUser = filteredUsers[currentUserIndex];
+      if (currentUser) {
+        setMatches(prev => [...prev, currentUser]);
+        setCurrentMatch(currentUser);
+        setShowMatchModal(true);
+        console.log(`Matched with ${currentUser.name}!`);
+      }
     }
     
     // Move to next user
-    if (currentUserIndex < sampleUsers.length - 1) {
+    if (currentUserIndex < filteredUsers.length - 1) {
       setCurrentUserIndex(prev => prev + 1);
     } else {
       // Reset to first user when we've gone through all
@@ -116,6 +167,22 @@ const Index = () => {
     setShowProfileView(true);
   };
 
+  const handleMatchModalClose = () => {
+    setShowMatchModal(false);
+    setCurrentMatch(null);
+  };
+
+  const handleStartChatting = () => {
+    setShowMatchModal(false);
+    setCurrentMatch(null);
+    setCurrentView('messages');
+  };
+
+  const handleFiltersApply = (newFilters: any) => {
+    setFilters(newFilters);
+    setShowFilterModal(false);
+  };
+
   // Show loading while checking auth/profile state
   if (authLoading || profileLoading) {
     return (
@@ -125,9 +192,9 @@ const Index = () => {
     );
   }
 
-  // Show auth page if no user
-  if (!user) {
-    return <AuthPage />;
+  // Show landing page if no user
+  if (!user || currentView === 'landing') {
+    return <LandingPage onGetStarted={() => setCurrentView('discover')} />;
   }
 
   // Show profile setup if user exists but no profile
@@ -158,14 +225,29 @@ const Index = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Filter */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilterModal(true)}
+                className="text-white hover:bg-white/20"
+              >
+                <Filter className="w-5 h-5" />
+              </Button>
+              
               {/* Messages */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentView('messages')}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 relative"
               >
                 <MessageCircle className="w-5 h-5" />
+                {matches.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {matches.length}
+                  </span>
+                )}
               </Button>
               
               {/* Wallet */}
@@ -180,7 +262,7 @@ const Index = () => {
               </Button>
               
               {/* Profile */}
-              <ProfileButton />
+              <ProfileButton onEditProfile={() => setShowEditProfile(true)} />
             </div>
           </div>
         </div>
@@ -217,9 +299,9 @@ const Index = () => {
         <div className="max-w-sm mx-auto">
           {/* Card Stack */}
           <div className="relative h-[600px] mb-8">
-            {sampleUsers.length > 0 && currentUserIndex < sampleUsers.length ? (
+            {filteredUsers.length > 0 && currentUserIndex < filteredUsers.length ? (
               <SwipeCard
-                user={sampleUsers[currentUserIndex]}
+                user={filteredUsers[currentUserIndex]}
                 onSwipe={handleSwipe}
               />
             ) : (
@@ -227,7 +309,7 @@ const Index = () => {
                 <div className="text-center text-gray-500">
                   <Heart className="w-16 h-16 mx-auto mb-4 text-hooks-coral" />
                   <h3 className="text-xl font-semibold mb-2">No more profiles</h3>
-                  <p>Check back later for new matches!</p>
+                  <p>Try adjusting your filters or check back later!</p>
                 </div>
               </div>
             )}
@@ -240,7 +322,7 @@ const Index = () => {
               variant="outline"
               className="w-16 h-16 rounded-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
               onClick={() => handleSwipe('left')}
-              disabled={currentUserIndex >= sampleUsers.length}
+              disabled={currentUserIndex >= filteredUsers.length}
             >
               <X className="w-8 h-8" />
             </Button>
@@ -248,8 +330,8 @@ const Index = () => {
             <Button
               size="lg"
               className="w-20 h-20 rounded-full bg-white text-hooks-coral hover:bg-gray-100"
-              onClick={() => sampleUsers[currentUserIndex] && handleViewProfile(sampleUsers[currentUserIndex])}
-              disabled={currentUserIndex >= sampleUsers.length}
+              onClick={() => filteredUsers[currentUserIndex] && handleViewProfile(filteredUsers[currentUserIndex])}
+              disabled={currentUserIndex >= filteredUsers.length}
             >
               <User className="w-8 h-8" />
             </Button>
@@ -258,7 +340,7 @@ const Index = () => {
               size="lg"
               className="w-16 h-16 rounded-full gradient-coral"
               onClick={() => handleSwipe('right')}
-              disabled={currentUserIndex >= sampleUsers.length}
+              disabled={currentUserIndex >= filteredUsers.length}
             >
               <Heart className="w-8 h-8" />
             </Button>
@@ -267,7 +349,7 @@ const Index = () => {
           {/* Match Counter */}
           <div className="text-center mt-6">
             <p className="text-white text-sm">
-              {matches.length} matches • {sampleUsers.length - currentUserIndex} profiles remaining
+              {matches.length} matches • {filteredUsers.length - currentUserIndex} profiles remaining
             </p>
           </div>
         </div>
@@ -301,6 +383,31 @@ const Index = () => {
             setSelectedProfile(null);
           }}
           profile={selectedProfile}
+        />
+      )}
+
+      {showEditProfile && (
+        <EditProfileModal
+          isOpen={showEditProfile}
+          onClose={() => setShowEditProfile(false)}
+        />
+      )}
+
+      {showMatchModal && currentMatch && (
+        <MatchModal
+          isOpen={showMatchModal}
+          onClose={handleMatchModalClose}
+          match={currentMatch}
+          onStartChatting={handleStartChatting}
+        />
+      )}
+
+      {showFilterModal && (
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          filters={filters}
+          onApply={handleFiltersApply}
         />
       )}
     </div>
