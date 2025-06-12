@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Plus, X, Heart, Camera, MapPin, Users, Shield } from "lucide-react";
+import { Upload, Plus, X, Heart, Camera, MapPin, Users, Shield, User } from "lucide-react";
 import { nigerianStates, getCitiesByState } from "@/data/nigerianLocations";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
@@ -16,14 +16,16 @@ interface EnhancedProfileSetupProps {
 }
 
 const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
-  const { createProfile } = useProfile();
+  const { createProfile, uploadAvatar } = useProfile();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [profile, setProfile] = useState({
     name: "",
     age: 18,
     bio: "",
+    avatar_url: "",
     user_type: undefined as 'creator' | 'consumer' | undefined,
     location_state: "",
     location_city: "",
@@ -45,6 +47,37 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
     "Modeling", "Content Creation", "Social Media", "Beauty", "Lifestyle"
   ];
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const { data: imageUrl, error } = await uploadAvatar(file);
+      if (error) {
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive"
+        });
+      } else if (imageUrl) {
+        setProfile(prev => ({ ...prev, avatar_url: imageUrl }));
+        toast({
+          title: "Success",
+          description: "Profile image uploaded successfully!",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong uploading the image.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleInterestToggle = (interest: string) => {
     setProfile(prev => ({
       ...prev,
@@ -65,6 +98,7 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
           name: profile.name,
           age: profile.age,
           bio: profile.bio || "",
+          avatar_url: profile.avatar_url,
           user_type: profile.user_type!,
           location_state: profile.location_state,
           location_city: profile.location_city,
@@ -81,6 +115,7 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
         });
 
         if (error) {
+          console.error('Profile creation error:', error);
           toast({
             title: "Error",
             description: "Failed to create profile. Please try again.",
@@ -94,6 +129,7 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
           onComplete();
         }
       } catch (error) {
+        console.error('Profile creation error:', error);
         toast({
           title: "Error",
           description: "Something went wrong. Please try again.",
@@ -112,11 +148,11 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
       case 2:
         return profile.is_age_verified && profile.name && profile.age;
       case 3:
-        return profile.location_state && profile.location_city;
+        return profile.bio;
       case 4:
-        return profile.gender && profile.gender_preference;
+        return profile.location_state && profile.location_city;
       case 5:
-        return profile.age_range_min && profile.age_range_max && profile.search_radius_km;
+        return profile.gender && profile.gender_preference;
       case 6:
         return profile.user_type === 'consumer' || (profile.subscription_fee !== undefined && profile.services_offered);
       default:
@@ -225,6 +261,72 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
 
           {currentStep === 3 && (
             <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-center">About You & Profile Picture</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Bio</label>
+                  <Textarea
+                    placeholder="Tell people about yourself..."
+                    value={profile.bio}
+                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                    rows={4}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {profile.bio.length}/500 characters
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Profile Picture</label>
+                  <div className="flex flex-col items-center space-y-4">
+                    {profile.avatar_url ? (
+                      <div className="relative">
+                        <img
+                          src={profile.avatar_url}
+                          alt="Profile"
+                          className="w-24 h-24 rounded-full object-cover border-4 border-hooks-coral"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute -top-2 -right-2 w-8 h-8 rounded-full p-0"
+                          onClick={() => setProfile({ ...profile, avatar_url: "" })}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                        <User className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                    
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="avatar-upload"
+                        disabled={uploadingImage}
+                      />
+                      <label
+                        htmlFor="avatar-upload"
+                        className="cursor-pointer inline-flex items-center space-x-2 px-4 py-2 bg-hooks-coral text-white rounded-lg hover:bg-hooks-coral/80 transition-colors"
+                      >
+                        <Camera className="w-4 h-4" />
+                        <span>{uploadingImage ? 'Uploading...' : 'Upload Photo'}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div className="space-y-4">
               <div className="text-center">
                 <MapPin className="w-12 h-12 mx-auto mb-4 text-hooks-coral" />
                 <h3 className="text-lg font-semibold">Location in Nigeria</h3>
@@ -282,7 +384,7 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
             </div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 5 && (
             <div className="space-y-4">
               <div className="text-center">
                 <Users className="w-12 h-12 mx-auto mb-4 text-hooks-coral" />
@@ -324,15 +426,7 @@ const EnhancedProfileSetup = ({ onComplete }: EnhancedProfileSetupProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {currentStep === 5 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-center">Discovery Settings</h3>
-              
-              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Age Range: {profile.age_range_min} - {profile.age_range_max}

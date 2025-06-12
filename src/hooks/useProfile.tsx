@@ -52,9 +52,9 @@ export const useProfile = () => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setProfile(null);
       } else if (data) {
         console.log('Profile found:', data);
-        // Type cast the data to ensure compatibility
         const profileData: Profile = {
           ...data,
           user_type: data.user_type as 'creator' | 'consumer',
@@ -69,6 +69,7 @@ export const useProfile = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -81,22 +82,41 @@ export const useProfile = () => {
 
     try {
       console.log('Creating profile for user:', user.id, profileData);
+      
+      // Ensure required fields have default values
+      const dataToInsert = {
+        user_id: user.id,
+        name: profileData.name || '',
+        age: profileData.age || 18,
+        bio: profileData.bio || '',
+        user_type: profileData.user_type,
+        location_state: profileData.location_state || '',
+        location_city: profileData.location_city || '',
+        gender: profileData.gender,
+        gender_preference: profileData.gender_preference,
+        age_range_min: profileData.age_range_min || 18,
+        age_range_max: profileData.age_range_max || 35,
+        search_radius_km: profileData.search_radius_km || 50,
+        interests: profileData.interests || [],
+        avatar_url: profileData.avatar_url || null,
+        subscription_fee: profileData.subscription_fee || 0,
+        services_offered: profileData.services_offered || '',
+        verification_status: 'pending',
+        is_age_verified: profileData.is_age_verified || false
+      };
+
       const { data, error } = await supabase
         .from('profiles')
-        .insert({
-          user_id: user.id,
-          ...profileData
-        })
+        .insert(dataToInsert)
         .select()
         .single();
 
       if (error) {
         console.error('Error creating profile:', error);
-        throw error;
+        return { data: null, error };
       }
       
       console.log('Profile created successfully:', data);
-      // Type cast the response
       const newProfile: Profile = {
         ...data,
         user_type: data.user_type as 'creator' | 'consumer',
@@ -128,7 +148,6 @@ export const useProfile = () => {
 
       if (error) throw error;
       
-      // Type cast the response
       const updatedProfile: Profile = {
         ...data,
         user_type: data.user_type as 'creator' | 'consumer',
@@ -144,11 +163,42 @@ export const useProfile = () => {
     }
   };
 
+  const uploadAvatar = async (file: File) => {
+    if (!user) {
+      return { data: null, error: new Error('User not authenticated') };
+    }
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        return { data: null, error: uploadError };
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return { data: urlData.publicUrl, error: null };
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+      return { data: null, error };
+    }
+  };
+
   return {
     profile,
     loading,
     createProfile,
     updateProfile,
+    uploadAvatar,
     refetch: fetchProfile
   };
 };

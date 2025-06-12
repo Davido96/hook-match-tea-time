@@ -28,25 +28,51 @@ const AuthPage = ({ initialMode = 'signup', onAuthSuccess, onBack }: AuthPagePro
     setError(null);
     setSuccess(null);
 
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
     try {
       let result;
       if (isSignUp) {
         result = await signUp(email, password);
         if (!result.error) {
           setSuccess("Account created successfully! Please check your email to verify your account.");
+          // Don't call onAuthSuccess for signup as user needs to verify email first
         }
       } else {
         result = await signIn(email, password);
         if (!result.error) {
-          onAuthSuccess?.();
+          setSuccess("Signed in successfully!");
+          setTimeout(() => {
+            onAuthSuccess?.();
+          }, 1000);
         }
       }
 
       if (result.error) {
-        setError(result.error.message);
+        // Handle specific error messages
+        if (result.error.message.includes('Invalid login credentials')) {
+          setError("Invalid email or password. Please check your credentials.");
+        } else if (result.error.message.includes('User already registered')) {
+          setError("An account with this email already exists. Try signing in instead.");
+        } else if (result.error.message.includes('Email not confirmed')) {
+          setError("Please check your email and click the confirmation link before signing in.");
+        } else {
+          setError(result.error.message || "An error occurred. Please try again.");
+        }
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -82,6 +108,7 @@ const AuthPage = ({ initialMode = 'signup', onAuthSuccess, onBack }: AuthPagePro
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div>
@@ -92,6 +119,7 @@ const AuthPage = ({ initialMode = 'signup', onAuthSuccess, onBack }: AuthPagePro
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled={loading}
               />
             </div>
             
@@ -123,8 +151,11 @@ const AuthPage = ({ initialMode = 'signup', onAuthSuccess, onBack }: AuthPagePro
                 setIsSignUp(!isSignUp);
                 setError(null);
                 setSuccess(null);
+                setEmail("");
+                setPassword("");
               }}
               className="text-sm"
+              disabled={loading}
             >
               {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             </Button>
