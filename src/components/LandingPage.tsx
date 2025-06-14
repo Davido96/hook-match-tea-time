@@ -1,9 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 import AuthPage from "@/components/AuthPage";
 import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -13,6 +13,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
   const [showAuth, setShowAuth] = useState(false);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const { user, signOut } = useAuth();
 
   const handleGetStarted = () => {
     setAuthMode('signup');
@@ -22,6 +23,14 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
   const handleSignIn = () => {
     setAuthMode('signin');
     setShowAuth(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const handleAuthSuccess = () => {
@@ -82,13 +91,35 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           <p className="text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
             Connect with amazing creators and find meaningful relationships in Nigeria's premier dating platform
           </p>
-          <Button
-            onClick={handleGetStarted}
-            size="lg"
-            className="bg-white text-hooks-coral hover:bg-gray-100 text-xl px-12 py-6 rounded-full font-semibold"
-          >
-            Get Started
-          </Button>
+          
+          {/* Show different buttons based on auth state */}
+          {user ? (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                onClick={onGetStarted}
+                size="lg"
+                className="bg-white text-hooks-coral hover:bg-gray-100 text-xl px-12 py-6 rounded-full font-semibold"
+              >
+                Continue to App
+              </Button>
+              <Button
+                onClick={handleSignOut}
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white hover:text-hooks-coral text-xl px-12 py-6 rounded-full font-semibold"
+              >
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={handleGetStarted}
+              size="lg"
+              className="bg-white text-hooks-coral hover:bg-gray-100 text-xl px-12 py-6 rounded-full font-semibold"
+            >
+              Get Started
+            </Button>
+          )}
         </div>
 
         {/* Features */}
@@ -131,21 +162,25 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           <h2 className="text-4xl font-bold text-white mb-6">Ready to Find Love?</h2>
           <p className="text-xl text-white/90 mb-8">Join thousands of users who have found their perfect match on Hooks</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              onClick={handleGetStarted}
-              size="lg"
-              className="bg-white text-hooks-coral hover:bg-gray-100 text-lg px-8 py-4 rounded-full font-semibold"
-            >
-              Sign Up Free
-            </Button>
-            <Button
-              onClick={handleSignIn}
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-hooks-coral text-lg px-8 py-4 rounded-full font-semibold"
-            >
-              Sign In
-            </Button>
+            {!user && (
+              <>
+                <Button
+                  onClick={handleGetStarted}
+                  size="lg"
+                  className="bg-white text-hooks-coral hover:bg-gray-100 text-lg px-8 py-4 rounded-full font-semibold"
+                >
+                  Sign Up Free
+                </Button>
+                <Button
+                  onClick={handleSignIn}
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-hooks-coral text-lg px-8 py-4 rounded-full font-semibold"
+                >
+                  Sign In
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

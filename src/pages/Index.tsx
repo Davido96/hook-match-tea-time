@@ -16,10 +16,17 @@ const Index = () => {
   const { profile, loading: profileLoading } = useProfile();
   const [currentView, setCurrentView] = useState<ViewType>('landing');
   const [matches, setMatches] = useState<any[]>([]);
+  const [forceShowLanding, setForceShowLanding] = useState(false);
 
   // Handle navigation based on auth and profile state
   useEffect(() => {
     if (!authLoading && !profileLoading) {
+      // If force showing landing, respect that
+      if (forceShowLanding) {
+        setCurrentView('landing');
+        return;
+      }
+
       if (!user) {
         setCurrentView('landing');
         return;
@@ -37,9 +44,10 @@ const Index = () => {
         return;
       }
     }
-  }, [user, profile, authLoading, profileLoading, currentView]);
+  }, [user, profile, authLoading, profileLoading, currentView, forceShowLanding]);
 
   const handleGetStarted = () => {
+    setForceShowLanding(false);
     // This will be called from LandingPage when user clicks get started
     // If user is authenticated and has profile, go directly to discover
     if (user && profile) {
@@ -56,8 +64,19 @@ const Index = () => {
     setCurrentView('discover');
   };
 
+  const handleProfileSetupBack = () => {
+    // This allows users to go back to landing from profile setup
+    setForceShowLanding(true);
+    setCurrentView('landing');
+  };
+
   const handleMatchAdded = (match: any) => {
     setMatches(prev => [...prev, match]);
+  };
+
+  const handleBackToLanding = () => {
+    setForceShowLanding(true);
+    setCurrentView('landing');
   };
 
   // Show loading while checking auth/profile state
@@ -69,14 +88,19 @@ const Index = () => {
     );
   }
 
-  // Show landing page if no user
-  if (!user || currentView === 'landing') {
+  // Show landing page if no user or force showing landing
+  if (!user || currentView === 'landing' || forceShowLanding) {
     return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
   // Show profile setup if user exists but no profile
   if (currentView === 'profile-setup') {
-    return <EnhancedProfileSetup onComplete={handleProfileSetupComplete} />;
+    return (
+      <EnhancedProfileSetup 
+        onComplete={handleProfileSetupComplete}
+        onBack={handleProfileSetupBack}
+      />
+    );
   }
 
   // Show exclusive content page

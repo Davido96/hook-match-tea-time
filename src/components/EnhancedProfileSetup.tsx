@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase } from "lucide-react";
+import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase, LogOut } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface EnhancedProfileSetupProps {
@@ -40,6 +41,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   });
 
   const { createProfile, uploadAvatar } = useProfile();
+  const { signOut } = useAuth();
   const { toast } = useToast();
 
   const totalSteps = formData.userType === 'creator' ? 5 : 4;
@@ -57,6 +59,23 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto",
     "Taraba", "Yobe", "Zamfara"
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed Out",
+        description: "You have been signed out successfully.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -119,7 +138,11 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   };
 
   const handleBack = () => {
-    setStep(step - 1);
+    if (step === 1 && onBack) {
+      onBack();
+    } else {
+      setStep(step - 1);
+    }
     setError(null);
   };
 
@@ -187,16 +210,30 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center relative">
-          {step > 1 && (
+          {/* Always show back button and sign out option */}
+          <div className="absolute top-4 left-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBack}
-              className="absolute top-4 left-4 p-2"
+              className="p-2"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
-          )}
+          </div>
+          
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="p-2"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+
           <div className="flex items-center justify-center space-x-2 mb-4">
             <span className="text-3xl">🪝</span>
             <h1 className="text-2xl font-bold text-gradient">Hooks</h1>
@@ -330,7 +367,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             </div>
           )}
 
-          {/* Step 3: Preferences & Location */}
           {step === 3 && (
             <div className="space-y-6">
               <div className="text-center">
@@ -398,7 +434,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             </div>
           )}
 
-          {/* Step 4: Creator Settings (only for creators) */}
           {step === 4 && formData.userType === 'creator' && (
             <div className="space-y-6">
               <div className="text-center">
@@ -438,7 +473,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             </div>
           )}
 
-          {/* Final Step: Interests */}
           {step === totalSteps && (
             <div className="space-y-6">
               <div className="text-center">
@@ -492,20 +526,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
               </Button>
             )}
           </div>
-
-          {/* Back to Landing Page Button */}
-          {onBack && step === 1 && (
-            <div className="mt-4">
-              <Button
-                onClick={onBack}
-                variant="outline"
-                className="w-full"
-                disabled={loading}
-              >
-                Back to Sign In
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
