@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Heart, MessageCircle, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Heart, MessageCircle, Upload, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,8 @@ import ProfileViewModal from "./ProfileViewModal";
 interface ExclusivePost {
   id: string;
   creator_id: string;
-  image_url: string;
+  media_url: string;
+  media_type: string;
   caption?: string;
   is_public: boolean;
   created_at: string;
@@ -142,11 +142,24 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
           {posts.map((post) => (
             <Card key={post.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
               <div className="relative" onClick={() => handleContentClick(post)}>
-                <img
-                  src={post.image_url}
-                  alt="Exclusive content"
-                  className="w-full h-64 object-cover"
-                />
+                {post.media_type === 'video' ? (
+                  <div className="relative">
+                    <video
+                      src={post.media_url}
+                      className="w-full h-64 object-cover"
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <Play className="w-12 h-12 text-white" />
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={post.media_url}
+                    alt="Exclusive content"
+                    className="w-full h-64 object-cover"
+                  />
+                )}
                 {!post.is_public && (
                   <Badge className="absolute top-2 right-2 bg-hooks-coral text-white">
                     Subscribers Only

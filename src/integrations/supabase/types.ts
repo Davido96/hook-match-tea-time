@@ -15,8 +15,9 @@ export type Database = {
           created_at: string | null
           creator_id: string | null
           id: string
-          image_url: string
           is_public: boolean | null
+          media_type: string | null
+          media_url: string
           updated_at: string | null
         }
         Insert: {
@@ -24,8 +25,9 @@ export type Database = {
           created_at?: string | null
           creator_id?: string | null
           id?: string
-          image_url: string
           is_public?: boolean | null
+          media_type?: string | null
+          media_url: string
           updated_at?: string | null
         }
         Update: {
@@ -33,8 +35,9 @@ export type Database = {
           created_at?: string | null
           creator_id?: string | null
           id?: string
-          image_url?: string
           is_public?: boolean | null
+          media_type?: string | null
+          media_url?: string
           updated_at?: string | null
         }
         Relationships: [

@@ -14,7 +14,8 @@ interface ExclusiveContentModalProps {
   post: {
     id: string;
     creator_id: string;
-    image_url: string;
+    media_url: string;
+    media_type: string;
     caption?: string;
     is_public: boolean;
     created_at: string;
@@ -103,13 +104,22 @@ const ExclusiveContentModal = ({ isOpen, onClose, post }: ExclusiveContentModalP
 
           {/* Content */}
           <div className="flex flex-col">
-            {/* Image */}
+            {/* Media */}
             <div className="relative">
-              <img
-                src={post.image_url}
-                alt="Exclusive content"
-                className="w-full max-h-96 object-cover"
-              />
+              {post.media_type === 'video' ? (
+                <video
+                  src={post.media_url}
+                  className="w-full max-h-96 object-cover"
+                  controls
+                  autoPlay={false}
+                />
+              ) : (
+                <img
+                  src={post.media_url}
+                  alt="Exclusive content"
+                  className="w-full max-h-96 object-cover"
+                />
+              )}
             </div>
 
             {/* Caption and Actions */}
