@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { X, MapPin, Calendar, Edit } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -43,9 +44,12 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           <CardContent className="space-y-4">
             {/* Profile Image */}
             <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-hooks-coral flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">
-                {profile.name.charAt(0).toUpperCase()}
-              </div>
+              <Avatar className="w-20 h-20 mx-auto mb-3">
+                <AvatarImage src={profile.avatar_url || ""} alt={profile.name} />
+                <AvatarFallback className="bg-hooks-coral text-white text-2xl font-bold">
+                  {profile.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <h3 className="font-semibold text-lg">{profile.name}</h3>
               <Badge className={profile.user_type === 'creator' ? 'bg-hooks-coral' : 'bg-hooks-blue'}>
                 {profile.user_type === 'creator' ? 'Content Creator' : 'Premium Member'}

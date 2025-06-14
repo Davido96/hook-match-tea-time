@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { X, MapPin, Calendar, Plus } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { nigerianStates } from "@/data/nigerianLocations";
+import AvatarUpload from "./AvatarUpload";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -27,7 +27,8 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
     location_city: '',
     interests: [] as string[],
     subscription_fee: 0,
-    services_offered: ''
+    services_offered: '',
+    avatar_url: ''
   });
   const [newInterest, setNewInterest] = useState('');
 
@@ -41,7 +42,8 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
         location_city: profile.location_city || '',
         interests: profile.interests || [],
         subscription_fee: profile.subscription_fee || 0,
-        services_offered: profile.services_offered || ''
+        services_offered: profile.services_offered || '',
+        avatar_url: profile.avatar_url || ''
       });
     }
   }, [profile]);
@@ -50,6 +52,13 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleAvatarUpdate = (url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      avatar_url: url
     }));
   };
 
@@ -109,6 +118,16 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {/* Avatar Upload Section */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-center">Profile Picture</h3>
+            <AvatarUpload
+              currentAvatarUrl={formData.avatar_url}
+              userName={formData.name}
+              onAvatarUpdate={handleAvatarUpdate}
+            />
+          </div>
+
           {/* Basic Info */}
           <div className="space-y-4">
             <h3 className="font-semibold">Basic Information</h3>
