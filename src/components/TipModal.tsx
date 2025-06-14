@@ -40,18 +40,23 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
       
       if (success) {
         toast({
-          title: "Tip Sent! 🪝",
+          title: "Tip Sent Successfully! 🪝",
           description: `Successfully sent ${amount} Keys to ${recipientName}`,
         });
+        
+        // Reset form
+        setAmount(1);
+        setMessage("");
         onClose();
       } else {
         toast({
           title: "Failed to Send Tip",
-          description: "Something went wrong. Please try again.",
+          description: error || "Something went wrong. Please try again.",
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Tip error:', error);
       toast({
         title: "Error",
         description: "Failed to send tip. Please try again.",
@@ -100,6 +105,7 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
                   size="sm"
                   className={amount === quickAmount ? "bg-hooks-coral hover:bg-hooks-coral/80" : ""}
                   onClick={() => setAmount(quickAmount)}
+                  disabled={isLoading}
                 >
                   {quickAmount} 🪝
                 </Button>
@@ -117,6 +123,7 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
               value={amount}
               onChange={(e) => setAmount(parseInt(e.target.value) || 1)}
               placeholder="Enter amount"
+              disabled={isLoading}
             />
           </div>
 
@@ -128,6 +135,7 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Add a personal message..."
               rows={3}
+              disabled={isLoading}
             />
           </div>
 

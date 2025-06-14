@@ -76,6 +76,7 @@ const FollowSubscribeButtons = ({
         });
       }
     } catch (error: any) {
+      console.error('Follow error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update follow status",
@@ -102,6 +103,7 @@ const FollowSubscribeButtons = ({
         });
       }
     } catch (error: any) {
+      console.error('Subscribe error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update subscription status",

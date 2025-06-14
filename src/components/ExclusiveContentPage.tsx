@@ -9,6 +9,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import CreatePostModal from "./CreatePostModal";
 import TipModal from "./TipModal";
+import ExclusiveContentModal from "./ExclusiveContentModal";
+import ProfileViewModal from "./ProfileViewModal";
 
 interface ExclusivePost {
   id: string;
@@ -35,7 +37,11 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
   const [loading, setLoading] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
+  const [selectedPost, setSelectedPost] = useState<ExclusivePost | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -72,6 +78,28 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
   const handleSendTip = (creatorId: string, creatorName: string) => {
     setSelectedCreator({ id: creatorId, name: creatorName });
     setShowTipModal(true);
+  };
+
+  const handleContentClick = (post: ExclusivePost) => {
+    setSelectedPost(post);
+    setShowContentModal(true);
+  };
+
+  const handleProfileClick = (post: ExclusivePost) => {
+    setSelectedProfile({
+      id: post.creator_id,
+      name: post.profiles.name,
+      avatar_url: post.profiles.avatar_url,
+      user_type: post.profiles.user_type,
+      isVerified: post.profiles.user_type === 'creator',
+      // Add placeholder data for other required fields
+      age: 25,
+      location: 'Lagos, Nigeria',
+      bio: 'Content creator',
+      interests: [],
+      subscriptionFee: 1000
+    });
+    setShowProfileModal(true);
   };
 
   if (loading) {
@@ -112,8 +140,8 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (
-            <Card key={post.id} className="overflow-hidden">
-              <div className="relative">
+            <Card key={post.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
+              <div className="relative" onClick={() => handleContentClick(post)}>
                 <img
                   src={post.image_url}
                   alt="Exclusive content"
@@ -127,18 +155,40 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
               </div>
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-hooks-coral flex items-center justify-center text-white text-sm font-semibold">
-                    {post.profiles.name.charAt(0).toUpperCase()}
+                  <div 
+                    className="w-8 h-8 rounded-full bg-hooks-coral flex items-center justify-center text-white text-sm font-semibold cursor-pointer hover:bg-hooks-coral/80 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleProfileClick(post);
+                    }}
+                  >
+                    {post.profiles.avatar_url ? (
+                      <img 
+                        src={post.profiles.avatar_url} 
+                        alt={post.profiles.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      post.profiles.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">{post.profiles.name}</p>
+                    <p 
+                      className="font-semibold text-sm cursor-pointer hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleProfileClick(post);
+                      }}
+                    >
+                      {post.profiles.name}
+                    </p>
                     <Badge variant="outline" className="text-xs">
                       {post.profiles.user_type === 'creator' ? 'Creator' : 'Member'}
                     </Badge>
                   </div>
                 </div>
                 {post.caption && (
-                  <p className="text-sm text-gray-600 mb-3">{post.caption}</p>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{post.caption}</p>
                 )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -154,7 +204,10 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
                       variant="ghost" 
                       size="sm" 
                       className="text-hooks-coral"
-                      onClick={() => handleSendTip(post.creator_id, post.profiles.name)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSendTip(post.creator_id, post.profiles.name);
+                      }}
                     >
                       Send Keys 🪝
                     </Button>
@@ -198,6 +251,30 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
           }}
           recipientName={selectedCreator.name}
           recipientId={selectedCreator.id}
+        />
+      )}
+
+      {/* Content Modal */}
+      {showContentModal && selectedPost && (
+        <ExclusiveContentModal
+          isOpen={showContentModal}
+          onClose={() => {
+            setShowContentModal(false);
+            setSelectedPost(null);
+          }}
+          post={selectedPost}
+        />
+      )}
+
+      {/* Profile Modal */}
+      {showProfileModal && selectedProfile && (
+        <ProfileViewModal
+          isOpen={showProfileModal}
+          onClose={() => {
+            setShowProfileModal(false);
+            setSelectedProfile(null);
+          }}
+          profile={selectedProfile}
         />
       )}
     </div>

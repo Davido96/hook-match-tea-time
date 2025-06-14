@@ -63,52 +63,90 @@ export const useWallet = () => {
   };
 
   const sendTip = async (recipientUserId: string, amount: number, message?: string) => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    if (!wallet || wallet.keys_balance < amount) {
+      return { success: false, error: 'Insufficient Keys balance' };
+    }
+
     try {
-      if (!wallet || wallet.keys_balance < amount) {
-        throw new Error('Insufficient Keys balance');
-      }
-
-      // Deduct from sender's wallet
-      const { error: walletError } = await supabase
-        .from('wallets')
-        .update({ keys_balance: wallet.keys_balance - amount })
-        .eq('user_id', user!.id);
-
-      if (walletError) throw walletError;
-
-      // Record the tip
+      // Start a transaction-like operation
+      // First, record the tip
       const { error: tipError } = await supabase
         .from('tips')
         .insert({
-          sender_id: user!.id,
+          sender_id: user.id,
           recipient_id: recipientUserId,
           amount,
-          message
+          message: message || null
         });
 
-      if (tipError) throw tipError;
+      if (tipError) {
+        console.error('Error creating tip record:', tipError);
+        throw new Error('Failed to record tip');
+      }
 
-      // Add to recipient's wallet - get current balance first, then update
-      const { data: recipientWallet, error: getError } = await supabase
+      // Deduct from sender's wallet
+      const newSenderBalance = wallet.keys_balance - amount;
+      const { error: senderWalletError } = await supabase
+        .from('wallets')
+        .update({ keys_balance: newSenderBalance })
+        .eq('user_id', user.id);
+
+      if (senderWalletError) {
+        console.error('Error updating sender wallet:', senderWalletError);
+        throw new Error('Failed to update sender balance');
+      }
+
+      // Get recipient's current balance
+      const { data: recipientWallet, error: getRecipientError } = await supabase
         .from('wallets')
         .select('keys_balance')
         .eq('user_id', recipientUserId)
-        .single();
+        .maybeSingle();
 
-      if (getError) throw getError;
+      if (getRecipientError) {
+        console.error('Error getting recipient wallet:', getRecipientError);
+        throw new Error('Failed to get recipient wallet');
+      }
 
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ keys_balance: (recipientWallet?.keys_balance || 0) + amount })
-        .eq('user_id', recipientUserId);
+      // If recipient doesn't have a wallet, create one
+      if (!recipientWallet) {
+        const { error: createWalletError } = await supabase
+          .from('wallets')
+          .insert({ 
+            user_id: recipientUserId, 
+            keys_balance: amount 
+          });
 
-      if (updateError) throw updateError;
+        if (createWalletError) {
+          console.error('Error creating recipient wallet:', createWalletError);
+          throw new Error('Failed to create recipient wallet');
+        }
+      } else {
+        // Update recipient's wallet
+        const newRecipientBalance = (recipientWallet.keys_balance || 0) + amount;
+        const { error: recipientWalletError } = await supabase
+          .from('wallets')
+          .update({ keys_balance: newRecipientBalance })
+          .eq('user_id', recipientUserId);
 
-      // Refresh wallet
+        if (recipientWalletError) {
+          console.error('Error updating recipient wallet:', recipientWalletError);
+          throw new Error('Failed to update recipient balance');
+        }
+      }
+
+      // Refresh sender's wallet
       await fetchWallet();
+      
+      console.log('Tip sent successfully');
       return { success: true, error: null };
-    } catch (error) {
-      return { success: false, error };
+    } catch (error: any) {
+      console.error('Error sending tip:', error);
+      return { success: false, error: error.message || 'Failed to send tip' };
     }
   };
 
