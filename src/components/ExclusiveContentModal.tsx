@@ -60,9 +60,9 @@ const ExclusiveContentModal = ({ isOpen, onClose, post }: ExclusiveContentModalP
   return (
     <>
       <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-auto">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
             <div className="flex items-center space-x-3">
               <div 
                 className="w-10 h-10 rounded-full bg-hooks-coral flex items-center justify-center text-white text-sm font-semibold cursor-pointer hover:bg-hooks-coral/80 transition-colors"
@@ -105,11 +105,11 @@ const ExclusiveContentModal = ({ isOpen, onClose, post }: ExclusiveContentModalP
           {/* Content */}
           <div className="flex flex-col">
             {/* Media */}
-            <div className="relative">
+            <div className="relative flex justify-center bg-gray-50">
               {post.media_type === 'video' ? (
                 <video
                   src={post.media_url}
-                  className="w-full max-h-96 object-cover"
+                  className="w-full max-h-[70vh] object-contain"
                   controls
                   autoPlay={false}
                 />
@@ -117,7 +117,7 @@ const ExclusiveContentModal = ({ isOpen, onClose, post }: ExclusiveContentModalP
                 <img
                   src={post.media_url}
                   alt="Exclusive content"
-                  className="w-full max-h-96 object-cover"
+                  className="w-full max-h-[70vh] object-contain"
                 />
               )}
             </div>

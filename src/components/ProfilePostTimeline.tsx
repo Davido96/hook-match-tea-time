@@ -209,12 +209,12 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
                   onClick={() => handlePostClick(post)}
                 >
                   {canAccess ? (
-                    <>
+                    <div className="flex justify-center bg-gray-50">
                       {post.media_type === 'video' ? (
-                        <div className="relative">
+                        <div className="relative w-full">
                           <video
                             src={post.media_url}
-                            className="w-full h-64 object-cover"
+                            className="w-full max-h-80 object-contain"
                             preload="metadata"
                           />
                           <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -225,10 +225,10 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
                         <img
                           src={post.media_url}
                           alt="Post content"
-                          className="w-full h-64 object-cover"
+                          className="w-full max-h-80 object-contain"
                         />
                       )}
-                    </>
+                    </div>
                   ) : (
                     <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
                       <div className="text-center">
