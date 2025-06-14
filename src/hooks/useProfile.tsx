@@ -138,7 +138,13 @@ export const useProfile = () => {
       return { data: null, error: new Error('User not authenticated') };
     }
 
+    if (!profile) {
+      console.error('No profile found to update');
+      return { data: null, error: new Error('No profile found to update') };
+    }
+
     try {
+      console.log('Updating profile with:', updates);
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -146,7 +152,10 @@ export const useProfile = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
       
       const updatedProfile: Profile = {
         ...data,
@@ -159,24 +168,55 @@ export const useProfile = () => {
       setProfile(updatedProfile);
       return { data: updatedProfile, error: null };
     } catch (error) {
+      console.error('Profile update failed:', error);
       return { data: null, error };
     }
   };
 
   const uploadAvatar = async (file: File) => {
     if (!user) {
+      console.error('Avatar upload: User not authenticated');
       return { data: null, error: new Error('User not authenticated') };
+    }
+
+    if (!profile) {
+      console.error('Avatar upload: No profile found');
+      return { data: null, error: new Error('Profile must be created before uploading avatar') };
     }
 
     try {
       console.log('Starting avatar upload for user:', user.id);
       
-      // Create a unique filename
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        return { data: null, error: new Error('File must be an image') };
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        return { data: null, error: new Error('File size must be less than 5MB') };
+      }
+
+      // Create a unique filename with proper folder structure for RLS
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = fileName;
+      const filePath = `${user.id}/${fileName}`;
 
-      console.log('Uploading file:', filePath);
+      console.log('Uploading file to path:', filePath);
+
+      // Delete old avatar if exists
+      if (profile.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').pop();
+        if (oldPath) {
+          const { error: deleteError } = await supabase.storage
+            .from('avatars')
+            .remove([`${user.id}/${oldPath}`]);
+          
+          if (deleteError) {
+            console.warn('Could not delete old avatar:', deleteError);
+          }
+        }
+      }
 
       // Upload the file
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -198,7 +238,7 @@ export const useProfile = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      console.log('Public URL:', urlData.publicUrl);
+      console.log('Public URL generated:', urlData.publicUrl);
 
       return { data: urlData.publicUrl, error: null };
     } catch (error) {
