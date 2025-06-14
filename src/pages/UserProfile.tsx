@@ -35,6 +35,7 @@ const UserProfile = () => {
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [userIsSubscribed, setUserIsSubscribed] = useState(false);
 
@@ -79,15 +80,35 @@ const UserProfile = () => {
 
   const checkSubscriptionStatus = async () => {
     if (userId && user) {
-      const subscribed = await isSubscribed(userId);
-      setUserIsSubscribed(subscribed);
+      setSubscriptionLoading(true);
+      try {
+        const subscribed = await isSubscribed(userId);
+        setUserIsSubscribed(subscribed);
+        console.log('Subscription status for user:', userId, 'is:', subscribed);
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+        setUserIsSubscribed(false);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    } else {
+      setUserIsSubscribed(false);
+      setSubscriptionLoading(false);
     }
   };
 
-  if (loading) {
+  // Refresh subscription status when buttons are used
+  const handleSubscriptionChange = () => {
+    checkSubscriptionStatus();
+  };
+
+  if (loading || subscriptionLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">Loading profile...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hooks-coral mx-auto mb-2"></div>
+          <div>Loading profile...</div>
+        </div>
       </div>
     );
   }
@@ -116,6 +137,9 @@ const UserProfile = () => {
               <h1 className="text-xl font-bold">{profile.name}</h1>
               <p className="text-sm text-gray-500">
                 {profile.user_type === 'creator' ? 'Content Creator' : 'Premium Member'}
+                {profile.user_type === 'creator' && userIsSubscribed && (
+                  <span className="ml-2 text-green-600">• Subscribed</span>
+                )}
               </p>
             </div>
           </div>
@@ -142,6 +166,7 @@ const UserProfile = () => {
                     targetUserId={userId!}
                     targetUserType={profile.user_type}
                     className="flex gap-2 w-full"
+                    onSubscriptionChange={handleSubscriptionChange}
                   />
                 </div>
               )}
@@ -198,6 +223,15 @@ const UserProfile = () => {
                   </div>
                 )}
               </div>
+
+              {/* Subscription Benefits */}
+              {profile.user_type === 'creator' && userIsSubscribed && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700 font-medium">
+                    🎉 You have access to all exclusive content from this creator
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -208,6 +242,7 @@ const UserProfile = () => {
         userId={userId!} 
         isSubscribed={userIsSubscribed}
         isOwnProfile={user?.id === userId}
+        onSubscriptionStatusChange={checkSubscriptionStatus}
       />
     </div>
   );

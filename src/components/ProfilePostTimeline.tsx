@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, Share, Lock, Play, Plus } from "lucide-react";
+import { Heart, MessageCircle, Share, Lock, Play, Plus, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import CreatePostModal from "./CreatePostModal";
@@ -28,9 +29,10 @@ interface ProfilePostTimelineProps {
   userId: string;
   isSubscribed: boolean;
   isOwnProfile: boolean;
+  onSubscriptionStatusChange?: () => void;
 }
 
-const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePostTimelineProps) => {
+const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptionStatusChange }: ProfilePostTimelineProps) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,10 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
   }, [userId, isSubscribed]);
 
   const fetchPosts = async () => {
+    setLoading(true);
     try {
+      console.log('Fetching posts for user:', userId, 'isSubscribed:', isSubscribed, 'isOwnProfile:', isOwnProfile);
+      
       let query = supabase
         .from('exclusive_posts')
         .select(`
@@ -61,11 +66,16 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
       // If user is not subscribed and not the owner, only show public posts
       if (!isSubscribed && !isOwnProfile) {
         query = query.eq('is_public', true);
+        console.log('User not subscribed, showing only public posts');
+      } else {
+        console.log('User is subscribed or owner, showing all posts');
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
+      
+      console.log('Fetched posts:', data?.length || 0);
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -82,8 +92,11 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
   const handlePostClick = (post: Post) => {
     // Check if user can access this post
     if (!post.is_public && !isSubscribed && !isOwnProfile) {
+      console.log('Cannot access private post - not subscribed');
       return; // Can't access private post
     }
+    
+    console.log('Opening post:', post.id, 'isPublic:', post.is_public);
     setSelectedPost(post);
     setShowContentModal(true);
   };
@@ -102,10 +115,17 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <div className="text-center">Loading posts...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hooks-coral mx-auto mb-2"></div>
+          <div>Loading posts...</div>
+        </div>
       </div>
     );
   }
+
+  const publicPosts = posts.filter(post => post.is_public);
+  const privatePosts = posts.filter(post => !post.is_public);
+  const canViewPrivatePosts = isSubscribed || isOwnProfile;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
@@ -125,10 +145,37 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
         </Card>
       )}
 
+      {/* Content Access Info */}
+      {!isOwnProfile && (
+        <div className="mb-6">
+          {isSubscribed ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <Eye className="w-5 h-5 text-green-600" />
+                <div>
+                  <p className="text-green-800 font-medium">Premium Access Unlocked</p>
+                  <p className="text-green-600 text-sm">You can view all content from this creator</p>
+                </div>
+              </div>
+            </div>
+          ) : privatePosts.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <Lock className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-blue-800 font-medium">Exclusive Content Available</p>
+                  <p className="text-blue-600 text-sm">Subscribe to unlock {privatePosts.length} exclusive posts</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Posts Timeline */}
       <div className="space-y-4">
         {posts.map((post) => {
-          const canAccess = post.is_public || isSubscribed || isOwnProfile;
+          const canAccess = post.is_public || canViewPrivatePosts;
           
           return (
             <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -144,6 +191,12 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
                         <Badge variant="secondary" className="text-xs">
                           <Lock className="w-3 h-3 mr-1" />
                           Subscribers Only
+                        </Badge>
+                      )}
+                      {canAccess && (
+                        <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                          <Eye className="w-3 h-3 mr-1" />
+                          Accessible
                         </Badge>
                       )}
                     </div>
