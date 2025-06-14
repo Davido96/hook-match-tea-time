@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface EnhancedProfileSetupProps {
@@ -40,7 +40,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   });
 
   const { createProfile, uploadAvatar } = useProfile();
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const totalSteps = formData.userType === 'creator' ? 5 : 4;
@@ -125,29 +124,22 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   };
 
   const handleSubmit = async () => {
-    if (!user) {
-      setError("You must be signed in to create a profile. Please try signing in again.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
       let avatarUrl = '';
       
-      // Upload avatar if provided and user is authenticated
+      // Upload avatar if provided
       if (avatarFile) {
-        console.log('Uploading avatar for user:', user.id);
+        console.log('Uploading avatar...');
         const { data: uploadData, error: uploadError } = await uploadAvatar(avatarFile);
         if (uploadError) {
           console.error('Avatar upload error:', uploadError);
-          setError("Failed to upload avatar. You can add one later from your profile settings.");
-          // Continue without avatar instead of failing
-        } else {
-          avatarUrl = uploadData || '';
-          console.log('Avatar uploaded successfully:', avatarUrl);
+          throw new Error("Failed to upload avatar: " + uploadError.message);
         }
+        avatarUrl = uploadData || '';
+        console.log('Avatar uploaded successfully:', avatarUrl);
       }
 
       // Create profile
@@ -179,7 +171,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
 
       toast({
         title: "Profile Created!",
-        description: avatarUrl ? "Your profile has been set up successfully." : "Your profile has been created. You can add a profile picture later.",
+        description: "Your profile has been set up successfully.",
       });
 
       onComplete();
@@ -190,30 +182,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
       setLoading(false);
     }
   };
-
-  // Show loading or error if user is not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-gray-600">Please wait while we set up your account...</p>
-              {onBack && (
-                <Button
-                  onClick={onBack}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Back to Sign In
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center p-4">
@@ -322,7 +290,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
                     className="hidden"
                   />
                 </div>
-                <p className="text-sm text-gray-600">Upload your profile picture (optional)</p>
+                <p className="text-sm text-gray-600">Upload your profile picture</p>
               </div>
 
               <div className="space-y-4">
@@ -534,7 +502,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
                 className="w-full"
                 disabled={loading}
               >
-                Back to Landing Page
+                Back to Sign In
               </Button>
             </div>
           )}

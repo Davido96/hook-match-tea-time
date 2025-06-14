@@ -165,7 +165,6 @@ export const useProfile = () => {
 
   const uploadAvatar = async (file: File) => {
     if (!user) {
-      console.error('No authenticated user found for avatar upload');
       return { data: null, error: new Error('User not authenticated') };
     }
 
@@ -179,7 +178,7 @@ export const useProfile = () => {
 
       console.log('Uploading file:', filePath);
 
-      // Upload the file to avatars bucket
+      // Upload the file
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
