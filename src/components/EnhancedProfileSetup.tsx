@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
-import { nigerianStates } from "@/data/nigerianLocations";
 
 interface EnhancedProfileSetupProps {
   onComplete: () => void;
@@ -48,6 +48,14 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     "Music", "Art", "Fashion", "Fitness", "Travel", "Food", "Technology", 
     "Photography", "Reading", "Movies", "Gaming", "Sports", "Dancing", 
     "Cooking", "Nature", "Business", "Education", "Health"
+  ];
+
+  // Nigerian states - simplified list
+  const nigerianStates = [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", "Cross River", "Delta",
+    "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi",
+    "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto",
+    "Taraba", "Yobe", "Zamfara"
   ];
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -366,8 +374,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
                     </SelectTrigger>
                     <SelectContent>
                       {nigerianStates.map((state) => (
-                        <SelectItem key={state.name} value={state.name}>
-                          {state.name}
+                        <SelectItem key={state} value={state}>
+                          {state}
                         </SelectItem>
                       ))}
                     </SelectContent>

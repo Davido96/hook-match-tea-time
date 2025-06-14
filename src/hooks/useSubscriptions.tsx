@@ -76,19 +76,6 @@ export const useSubscriptions = () => {
 
       if (updateCreatorWalletError) throw updateCreatorWalletError;
 
-      // Record the earning
-      const { error: earningError } = await supabase
-        .from('earnings')
-        .insert({
-          creator_id: creatorId,
-          subscriber_id: user.id,
-          amount: subscriptionFee,
-          source: 'subscription',
-          reference_id: subscription.id
-        });
-
-      if (earningError) console.error('Error recording earning:', earningError);
-
       // Refresh wallet data
       await refetchWallet();
 

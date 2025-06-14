@@ -5,7 +5,7 @@ import { useFollows } from "@/hooks/useFollows";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, HeartOff, Crown, CrownOff } from "lucide-react";
+import { Heart, HeartOff, Crown, X } from "lucide-react";
 
 interface FollowSubscribeButtonsProps {
   targetUserId: string;
@@ -144,7 +144,7 @@ const FollowSubscribeButtons = ({
         >
           {isCurrentlySubscribed ? (
             <>
-              <CrownOff className="w-4 h-4" />
+              <X className="w-4 h-4" />
               Unsubscribe
             </>
           ) : (
