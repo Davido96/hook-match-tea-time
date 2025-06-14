@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -134,12 +135,15 @@ const UserProfile = () => {
                 </AvatarFallback>
               </Avatar>
               
+              {/* Follow and Subscribe Buttons - positioned close together */}
               {user && user.id !== userId && (
-                <FollowSubscribeButtons
-                  targetUserId={userId!}
-                  targetUserType={profile.user_type}
-                  className="w-full md:w-auto"
-                />
+                <div className="w-full md:w-auto">
+                  <FollowSubscribeButtons
+                    targetUserId={userId!}
+                    targetUserType={profile.user_type}
+                    className="flex gap-2 w-full"
+                  />
+                </div>
               )}
             </div>
 
@@ -186,6 +190,13 @@ const UserProfile = () => {
                   <span className="font-semibold">{followCounts.followers}</span>
                   <span className="text-gray-600 ml-1">Followers</span>
                 </div>
+                {profile.user_type === 'creator' && userIsSubscribed && (
+                  <div>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      ✓ Subscribed
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
           </div>
