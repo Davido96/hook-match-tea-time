@@ -1,0 +1,132 @@
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useEarnings } from "@/hooks/useEarnings";
+import { useWallet } from "@/hooks/useWallet";
+import { DollarSign, TrendingUp, Users, Gift } from "lucide-react";
+import { format } from "date-fns";
+
+const EarningsDashboard = () => {
+  const { summary, earnings, loading } = useEarnings();
+  const { wallet } = useWallet();
+
+  if (loading) {
+    return <div className="text-center py-8">Loading earnings data...</div>;
+  }
+
+  const getSourceIcon = (sourceType: string) => {
+    switch (sourceType) {
+      case 'subscription':
+        return <Users className="w-4 h-4" />;
+      case 'tip':
+        return <Gift className="w-4 h-4" />;
+      case 'bonus':
+        return <TrendingUp className="w-4 h-4" />;
+      default:
+        return <DollarSign className="w-4 h-4" />;
+    }
+  };
+
+  const getSourceColor = (sourceType: string) => {
+    switch (sourceType) {
+      case 'subscription':
+        return 'bg-blue-500';
+      case 'tip':
+        return 'bg-green-500';
+      case 'bonus':
+        return 'bg-purple-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{wallet?.keys_balance || 0} Keys</div>
+            <p className="text-xs text-muted-foreground">Available for withdrawal</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summary?.total || 0} Keys</div>
+            <p className="text-xs text-muted-foreground">All time earnings</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Subscription Revenue</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summary?.subscription_earnings || 0} Keys</div>
+            <p className="text-xs text-muted-foreground">From subscriptions</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tips Received</CardTitle>
+            <Gift className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summary?.tip_earnings || 0} Keys</div>
+            <p className="text-xs text-muted-foreground">From tips</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Earnings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Earnings</CardTitle>
+          <CardDescription>Your latest income transactions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {earnings.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No earnings yet</p>
+          ) : (
+            <div className="space-y-4">
+              {earnings.slice(0, 10).map((earning) => (
+                <div key={earning.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full text-white ${getSourceColor(earning.source_type)}`}>
+                      {getSourceIcon(earning.source_type)}
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize">{earning.source_type}</p>
+                      {earning.description && (
+                        <p className="text-sm text-gray-600">{earning.description}</p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        {format(new Date(earning.created_at), 'MMM dd, yyyy HH:mm')}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="font-bold">
+                    +{earning.amount} Keys
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default EarningsDashboard;

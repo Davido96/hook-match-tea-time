@@ -1,19 +1,33 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
+import { useEarnings } from '@/hooks/useEarnings';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useSubscriptions = () => {
   const { user } = useAuth();
   const { wallet, refetch: refetchWallet } = useWallet();
+  const { recordEarning } = useEarnings();
   const [loading, setLoading] = useState(false);
 
-  const subscribeToCreator = async (creatorId: string, subscriptionFee: number) => {
+  const subscribeToCreator = async (creatorId: string, planId: string) => {
     if (!user) throw new Error('User not authenticated');
     
+    // Get plan details
+    const { data: plan, error: planError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', planId)
+      .eq('creator_id', creatorId)
+      .eq('is_active', true)
+      .single();
+
+    if (planError || !plan) {
+      throw new Error('Invalid subscription plan');
+    }
+
     // Check if user has enough balance
-    if (!wallet || wallet.keys_balance < subscriptionFee) {
+    if (!wallet || wallet.keys_balance < plan.price_keys) {
       throw new Error('Insufficient balance');
     }
 
@@ -33,9 +47,9 @@ export const useSubscriptions = () => {
         throw new Error('Already subscribed to this creator');
       }
 
-      // Calculate expiry date (1 month from now)
+      // Calculate expiry date based on plan duration
       const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      expiresAt.setDate(expiresAt.getDate() + plan.duration_days);
 
       // Create subscription
       const { data: subscription, error: subscriptionError } = await supabase
@@ -43,6 +57,7 @@ export const useSubscriptions = () => {
         .insert({
           subscriber_id: user.id,
           creator_id: creatorId,
+          subscription_plan_id: planId,
           expires_at: expiresAt.toISOString(),
           is_active: true
         })
@@ -52,7 +67,7 @@ export const useSubscriptions = () => {
       if (subscriptionError) throw subscriptionError;
 
       // Deduct from subscriber's wallet
-      const newBalance = wallet.keys_balance - subscriptionFee;
+      const newBalance = wallet.keys_balance - plan.price_keys;
       const { error: walletError } = await supabase
         .from('wallets')
         .update({ keys_balance: newBalance })
@@ -65,16 +80,36 @@ export const useSubscriptions = () => {
         .from('wallets')
         .select('keys_balance')
         .eq('user_id', creatorId)
-        .single();
+        .maybeSingle();
 
       if (getCreatorWalletError) throw getCreatorWalletError;
 
-      const { error: updateCreatorWalletError } = await supabase
-        .from('wallets')
-        .update({ keys_balance: (creatorWallet?.keys_balance || 0) + subscriptionFee })
-        .eq('user_id', creatorId);
+      if (!creatorWallet) {
+        // Create wallet for creator if it doesn't exist
+        const { error: createWalletError } = await supabase
+          .from('wallets')
+          .insert({ 
+            user_id: creatorId, 
+            keys_balance: plan.price_keys 
+          });
 
-      if (updateCreatorWalletError) throw updateCreatorWalletError;
+        if (createWalletError) throw createWalletError;
+      } else {
+        const { error: updateCreatorWalletError } = await supabase
+          .from('wallets')
+          .update({ keys_balance: (creatorWallet?.keys_balance || 0) + plan.price_keys })
+          .eq('user_id', creatorId);
+
+        if (updateCreatorWalletError) throw updateCreatorWalletError;
+      }
+
+      // Record earning for creator
+      await recordEarning({
+        source_type: 'subscription',
+        source_id: subscription.id,
+        amount: plan.price_keys,
+        description: `Subscription: ${plan.name}`
+      });
 
       // Refresh wallet data
       await refetchWallet();
@@ -141,8 +176,12 @@ export const useSubscriptions = () => {
           profiles!subscriptions_creator_id_fkey (
             name,
             avatar_url,
-            user_type,
-            subscription_fee
+            user_type
+          ),
+          subscription_plans (
+            name,
+            duration_days,
+            price_keys
           )
         `)
         .eq('subscriber_id', user.id)

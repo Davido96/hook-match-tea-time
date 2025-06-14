@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEarnings } from '@/hooks/useEarnings';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Wallet {
@@ -11,6 +12,7 @@ interface Wallet {
 
 export const useWallet = () => {
   const { user } = useAuth();
+  const { recordEarning } = useEarnings();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,14 +76,16 @@ export const useWallet = () => {
     try {
       // Start a transaction-like operation
       // First, record the tip
-      const { error: tipError } = await supabase
+      const { data: tipData, error: tipError } = await supabase
         .from('tips')
         .insert({
           sender_id: user.id,
           recipient_id: recipientUserId,
           amount,
           message: message || null
-        });
+        })
+        .select()
+        .single();
 
       if (tipError) {
         console.error('Error creating tip record:', tipError);
@@ -138,6 +142,14 @@ export const useWallet = () => {
           throw new Error('Failed to update recipient balance');
         }
       }
+
+      // Record earning for recipient
+      await recordEarning({
+        source_type: 'tip',
+        source_id: tipData.id,
+        amount,
+        description: message ? `Tip: ${message}` : 'Tip received'
+      });
 
       // Refresh sender's wallet
       await fetchWallet();

@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, Wallet } from "lucide-react";
 
 interface WithdrawalModalProps {
@@ -23,9 +24,10 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
   const [accountName, setAccountName] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const { requestWithdrawal, loading } = useWithdrawals();
-  const { wallet } = useWallet();
+  const { wallet, refetch: refetchWallet } = useWallet();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,17 +56,41 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
       return;
     }
 
+    if (!user) {
+      setError("User not authenticated");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { error: withdrawalError } = await requestWithdrawal({
-        amount: withdrawalAmount,
-        bankName: bankName.trim(),
-        accountNumber: accountNumber.trim(),
-        accountName: accountName.trim(),
-        notes: notes.trim()
-      });
+      // Create withdrawal request
+      const { data: withdrawal, error: withdrawalError } = await supabase
+        .from('withdrawals')
+        .insert({
+          user_id: user.id,
+          amount: withdrawalAmount,
+          bank_name: bankName.trim(),
+          account_number: accountNumber.trim(),
+          account_name: accountName.trim(),
+          notes: notes.trim() || null,
+          status: 'pending'
+        })
+        .select()
+        .single();
 
       if (withdrawalError) {
         throw withdrawalError;
+      }
+
+      // Update wallet balance (put withdrawal amount on hold)
+      const newBalance = wallet.keys_balance - withdrawalAmount;
+      const { error: walletError } = await supabase
+        .from('wallets')
+        .update({ keys_balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (walletError) {
+        throw walletError;
       }
 
       toast({
@@ -78,9 +104,15 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
       setAccountNumber("");
       setAccountName("");
       setNotes("");
+      
+      // Refresh wallet
+      await refetchWallet();
       onClose();
     } catch (err: any) {
+      console.error('Withdrawal error:', err);
       setError(err.message || "Failed to request withdrawal");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,6 +146,7 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min="1000"
+                max={wallet?.keys_balance || 0}
                 required
                 disabled={loading}
               />
@@ -188,6 +221,7 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
             <p>• Minimum withdrawal: 1000 Keys</p>
             <p>• Processing time: 1-3 business days</p>
             <p>• Withdrawal fees may apply</p>
+            <p>• Keys will be deducted immediately upon request</p>
           </div>
         </div>
       </DialogContent>

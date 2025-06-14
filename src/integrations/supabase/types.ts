@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      earnings: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exclusive_posts: {
         Row: {
           caption: string | null
@@ -146,6 +176,47 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          creator_id: string
+          duration_days: number
+          id: string
+          is_active: boolean | null
+          name: string
+          price_keys: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id: string
+          duration_days: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_keys: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_keys?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string | null
@@ -154,6 +225,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           subscriber_id: string | null
+          subscription_plan_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -162,6 +234,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           subscriber_id?: string | null
+          subscription_plan_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -170,6 +243,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           subscriber_id?: string | null
+          subscription_plan_id?: string | null
         }
         Relationships: [
           {
@@ -178,6 +252,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "subscriptions_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -237,6 +318,54 @@ export type Database = {
           keys_balance?: number | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          account_name: string
+          account_number: string
+          admin_notes: string | null
+          amount: number
+          bank_name: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          processed_at: string | null
+          requested_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          admin_notes?: string | null
+          amount: number
+          bank_name: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          requested_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          admin_notes?: string | null
+          amount?: number
+          bank_name?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          requested_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
