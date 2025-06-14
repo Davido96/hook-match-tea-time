@@ -11,9 +11,17 @@ interface AuthPageProps {
   initialMode?: 'signin' | 'signup';
   onAuthSuccess?: () => void;
   onBack?: () => void;
+  showProfileSetup?: boolean;
+  onProfileSetupComplete?: () => void;
 }
 
-const AuthPage = ({ initialMode = 'signup', onAuthSuccess, onBack }: AuthPageProps) => {
+const AuthPage = ({ 
+  initialMode = 'signup', 
+  onAuthSuccess, 
+  onBack,
+  showProfileSetup = false,
+  onProfileSetupComplete
+}: AuthPageProps) => {
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,23 +19,39 @@ export const useSubscriptions = () => {
 
     setLoading(true);
     try {
+      // Check if already subscribed
+      const { data: existingSubscription } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('subscriber_id', user.id)
+        .eq('creator_id', creatorId)
+        .eq('is_active', true)
+        .gte('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      if (existingSubscription) {
+        throw new Error('Already subscribed to this creator');
+      }
+
       // Calculate expiry date (1 month from now)
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + 1);
 
       // Create subscription
-      const { error: subscriptionError } = await supabase
+      const { data: subscription, error: subscriptionError } = await supabase
         .from('subscriptions')
         .insert({
           subscriber_id: user.id,
           creator_id: creatorId,
           expires_at: expiresAt.toISOString(),
           is_active: true
-        });
+        })
+        .select()
+        .single();
 
       if (subscriptionError) throw subscriptionError;
 
-      // Deduct from wallet
+      // Deduct from subscriber's wallet
       const newBalance = wallet.keys_balance - subscriptionFee;
       const { error: walletError } = await supabase
         .from('wallets')
@@ -43,6 +59,35 @@ export const useSubscriptions = () => {
         .eq('user_id', user.id);
 
       if (walletError) throw walletError;
+
+      // Add to creator's wallet
+      const { data: creatorWallet, error: getCreatorWalletError } = await supabase
+        .from('wallets')
+        .select('keys_balance')
+        .eq('user_id', creatorId)
+        .single();
+
+      if (getCreatorWalletError) throw getCreatorWalletError;
+
+      const { error: updateCreatorWalletError } = await supabase
+        .from('wallets')
+        .update({ keys_balance: (creatorWallet?.keys_balance || 0) + subscriptionFee })
+        .eq('user_id', creatorId);
+
+      if (updateCreatorWalletError) throw updateCreatorWalletError;
+
+      // Record the earning
+      const { error: earningError } = await supabase
+        .from('earnings')
+        .insert({
+          creator_id: creatorId,
+          subscriber_id: user.id,
+          amount: subscriptionFee,
+          source: 'subscription',
+          reference_id: subscription.id
+        });
+
+      if (earningError) console.error('Error recording earning:', earningError);
 
       // Refresh wallet data
       await refetchWallet();
@@ -109,11 +154,13 @@ export const useSubscriptions = () => {
           profiles!subscriptions_creator_id_fkey (
             name,
             avatar_url,
-            user_type
+            user_type,
+            subscription_fee
           )
         `)
         .eq('subscriber_id', user.id)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .gte('expires_at', new Date().toISOString());
 
       if (error) throw error;
       return data || [];
@@ -123,11 +170,29 @@ export const useSubscriptions = () => {
     }
   };
 
+  const getSubscriptionCount = async (creatorId: string): Promise<number> => {
+    try {
+      const { count, error } = await supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('creator_id', creatorId)
+        .eq('is_active', true)
+        .gte('expires_at', new Date().toISOString());
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting subscription count:', error);
+      return 0;
+    }
+  };
+
   return {
     subscribeToCreator,
     unsubscribeFromCreator,
     isSubscribed,
     getUserSubscriptions,
+    getSubscriptionCount,
     loading
   };
 };

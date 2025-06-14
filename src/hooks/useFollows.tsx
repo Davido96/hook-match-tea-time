@@ -1,18 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useFollows = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [followCounts, setFollowCounts] = useState<{[key: string]: { followers: number, following: number }}>({});
 
   const followUser = async (followingId: string) => {
     if (!user) throw new Error('User not authenticated');
     
     setLoading(true);
     try {
-      // Try to insert into follows table
       const { error } = await supabase
         .from('follows')
         .insert({
@@ -25,6 +25,8 @@ export const useFollows = () => {
         throw error;
       } else {
         console.log('Successfully followed user');
+        // Update follow counts
+        await getFollowCounts(followingId);
       }
     } catch (error) {
       console.error('Error following user:', error);
@@ -39,7 +41,6 @@ export const useFollows = () => {
     
     setLoading(true);
     try {
-      // Try to delete from follows table
       const { error } = await supabase
         .from('follows')
         .delete()
@@ -51,6 +52,8 @@ export const useFollows = () => {
         throw error;
       } else {
         console.log('Successfully unfollowed user');
+        // Update follow counts
+        await getFollowCounts(followingId);
       }
     } catch (error) {
       console.error('Error unfollowing user:', error);
@@ -83,6 +86,42 @@ export const useFollows = () => {
     }
   };
 
+  const getFollowCounts = async (userId: string) => {
+    try {
+      // Get followers count
+      const { count: followersCount, error: followersError } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId);
+
+      // Get following count
+      const { count: followingCount, error: followingError } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', userId);
+
+      if (followersError || followingError) {
+        console.error('Error fetching follow counts:', followersError || followingError);
+        return { followers: 0, following: 0 };
+      }
+
+      const counts = {
+        followers: followersCount || 0,
+        following: followingCount || 0
+      };
+
+      setFollowCounts(prev => ({
+        ...prev,
+        [userId]: counts
+      }));
+
+      return counts;
+    } catch (error) {
+      console.error('Error fetching follow counts:', error);
+      return { followers: 0, following: 0 };
+    }
+  };
+
   const getFollowers = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -91,7 +130,8 @@ export const useFollows = () => {
           follower_id,
           profiles!follows_follower_id_fkey (
             name,
-            avatar_url
+            avatar_url,
+            user_type
           )
         `)
         .eq('following_id', userId);
@@ -116,7 +156,8 @@ export const useFollows = () => {
           following_id,
           profiles!follows_following_id_fkey (
             name,
-            avatar_url
+            avatar_url,
+            user_type
           )
         `)
         .eq('follower_id', userId);
@@ -139,6 +180,8 @@ export const useFollows = () => {
     isFollowing,
     getFollowers,
     getFollowing,
+    getFollowCounts,
+    followCounts,
     loading
   };
 };
