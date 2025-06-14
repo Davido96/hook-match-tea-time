@@ -11,16 +11,14 @@ interface AuthPageProps {
   initialMode?: 'signin' | 'signup';
   onAuthSuccess?: () => void;
   onBack?: () => void;
-  showProfileSetup?: boolean;
-  onProfileSetupComplete?: () => void;
+  onSignupSuccess?: () => void;
 }
 
 const AuthPage = ({ 
   initialMode = 'signup', 
   onAuthSuccess, 
   onBack,
-  showProfileSetup = false,
-  onProfileSetupComplete
+  onSignupSuccess
 }: AuthPageProps) => {
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [email, setEmail] = useState("");
@@ -54,7 +52,10 @@ const AuthPage = ({
         result = await signUp(email, password);
         if (!result.error) {
           setSuccess("Account created successfully! Please check your email to verify your account.");
-          // Don't call onAuthSuccess for signup as user needs to verify email first
+          // For signup, call the signup success callback to go to profile setup
+          setTimeout(() => {
+            onSignupSuccess?.();
+          }, 1000);
         }
       } else {
         result = await signIn(email, password);

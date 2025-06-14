@@ -169,22 +169,36 @@ export const useProfile = () => {
     }
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      console.log('Starting avatar upload for user:', user.id);
+      
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = fileName;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('Uploading file:', filePath);
+
+      // Upload the file
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
         return { data: null, error: uploadError };
       }
 
+      console.log('Upload successful:', uploadData);
+
+      // Get the public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
+
+      console.log('Public URL:', urlData.publicUrl);
 
       return { data: urlData.publicUrl, error: null };
     } catch (error) {

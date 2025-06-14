@@ -132,11 +132,14 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
       
       // Upload avatar if provided
       if (avatarFile) {
+        console.log('Uploading avatar...');
         const { data: uploadData, error: uploadError } = await uploadAvatar(avatarFile);
         if (uploadError) {
-          throw new Error("Failed to upload avatar");
+          console.error('Avatar upload error:', uploadError);
+          throw new Error("Failed to upload avatar: " + uploadError.message);
         }
         avatarUrl = uploadData || '';
+        console.log('Avatar uploaded successfully:', avatarUrl);
       }
 
       // Create profile
@@ -184,11 +187,11 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center relative">
-          {(step > 1 || onBack) && (
+          {step > 1 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={step > 1 ? handleBack : onBack}
+              onClick={handleBack}
               className="absolute top-4 left-4 p-2"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -489,6 +492,20 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
               </Button>
             )}
           </div>
+
+          {/* Back to Landing Page Button */}
+          {onBack && step === 1 && (
+            <div className="mt-4">
+              <Button
+                onClick={onBack}
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

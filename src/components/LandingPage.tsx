@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, Users, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 import AuthPage from "@/components/AuthPage";
+import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -10,6 +11,7 @@ interface LandingPageProps {
 
 const LandingPage = ({ onGetStarted }: LandingPageProps) => {
   const [showAuth, setShowAuth] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
 
   const handleGetStarted = () => {
@@ -28,8 +30,44 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
     onGetStarted();
   };
 
+  const handleSignupSuccess = () => {
+    setShowAuth(false);
+    setShowProfileSetup(true);
+  };
+
+  const handleProfileSetupComplete = () => {
+    setShowProfileSetup(false);
+    onGetStarted();
+  };
+
+  const handleBackToAuth = () => {
+    setShowProfileSetup(false);
+    setShowAuth(true);
+  };
+
+  const handleBackToLanding = () => {
+    setShowAuth(false);
+    setShowProfileSetup(false);
+  };
+
+  if (showProfileSetup) {
+    return (
+      <EnhancedProfileSetup 
+        onComplete={handleProfileSetupComplete} 
+        onBack={handleBackToAuth}
+      />
+    );
+  }
+
   if (showAuth) {
-    return <AuthPage initialMode={authMode} onAuthSuccess={handleAuthSuccess} onBack={() => setShowAuth(false)} />;
+    return (
+      <AuthPage 
+        initialMode={authMode} 
+        onAuthSuccess={handleAuthSuccess}
+        onSignupSuccess={handleSignupSuccess}
+        onBack={handleBackToLanding}
+      />
+    );
   }
 
   return (
