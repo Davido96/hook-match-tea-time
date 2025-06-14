@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EnhancedProfileSetupProps {
   onComplete: () => void;
@@ -41,6 +41,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
 
   const { createProfile, uploadAvatar } = useProfile();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const totalSteps = formData.userType === 'creator' ? 5 : 4;
 
@@ -124,25 +125,32 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      setError("User not authenticated. Please try signing in again.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       let avatarUrl = '';
       
-      // Upload avatar if provided
-      if (avatarFile) {
+      // Upload avatar if provided and user is authenticated
+      if (avatarFile && user) {
         console.log('Uploading avatar...');
         const { data: uploadData, error: uploadError } = await uploadAvatar(avatarFile);
         if (uploadError) {
           console.error('Avatar upload error:', uploadError);
-          throw new Error("Failed to upload avatar: " + uploadError.message);
+          // Don't fail completely on avatar upload error, just log it
+          console.warn("Avatar upload failed, proceeding without avatar:", uploadError.message);
+        } else {
+          avatarUrl = uploadData || '';
+          console.log('Avatar uploaded successfully:', avatarUrl);
         }
-        avatarUrl = uploadData || '';
-        console.log('Avatar uploaded successfully:', avatarUrl);
       }
 
-      // Create profile
+      // Create profile with or without avatar
       const profileData = {
         name: formData.name.trim(),
         age: parseInt(formData.age),
@@ -163,20 +171,22 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
         is_age_verified: false
       };
 
+      console.log('Creating profile with data:', profileData);
       const { error: createError } = await createProfile(profileData);
       
       if (createError) {
+        console.error('Profile creation error:', createError);
         throw createError;
       }
 
       toast({
         title: "Profile Created!",
-        description: "Your profile has been set up successfully.",
+        description: avatarUrl ? "Your profile has been set up successfully with avatar." : "Your profile has been set up successfully.",
       });
 
       onComplete();
     } catch (err: any) {
-      console.error('Profile creation error:', err);
+      console.error('Profile setup error:', err);
       setError(err.message || "Failed to create profile. Please try again.");
     } finally {
       setLoading(false);
