@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, MapPin, Calendar, Edit } from "lucide-react";
+import { X, MapPin, Calendar, Edit, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
 import EditProfileModal from "./EditProfileModal";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -16,9 +17,10 @@ interface ProfileModalProps {
 }
 
 const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { wallet } = useWallet();
+  const navigate = useNavigate();
   const [showEditProfile, setShowEditProfile] = useState(false);
 
   if (!isOpen || !profile) return null;
@@ -26,6 +28,13 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
   const handleSignOut = async () => {
     await signOut();
     onClose();
+  };
+
+  const handleViewFullProfile = () => {
+    if (user) {
+      navigate(`/profile/${user.id}`);
+      onClose();
+    }
   };
 
   return (
@@ -90,7 +99,6 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               <div>
                 <h4 className="font-semibold mb-2">Creator Info</h4>
                 <div className="space-y-2 text-sm">
-                  <div>Subscription Fee: ₦{profile.subscription_fee || 0}/month</div>
                   <div className="flex items-center space-x-2">
                     <span>Status:</span>
                     <Badge variant={profile.verification_status === 'verified' ? 'default' : 'outline'}>
@@ -111,6 +119,14 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 
             {/* Actions */}
             <div className="space-y-2">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={handleViewFullProfile}
+              >
+                <User className="w-4 h-4 mr-2" />
+                View Full Profile
+              </Button>
               <Button 
                 variant="outline" 
                 className="w-full"

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Heart, MessageCircle, Upload, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import CreatePostModal from "./CreatePostModal";
 import TipModal from "./TipModal";
 import ExclusiveContentModal from "./ExclusiveContentModal";
-import ProfileViewModal from "./ProfileViewModal";
 
 interface ExclusivePost {
   id: string;
@@ -33,15 +34,14 @@ interface ExclusiveContentPageProps {
 const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<ExclusivePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
   const [selectedPost, setSelectedPost] = useState<ExclusivePost | null>(null);
-  const [selectedProfile, setSelectedProfile] = useState<any>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -85,21 +85,8 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
     setShowContentModal(true);
   };
 
-  const handleProfileClick = (post: ExclusivePost) => {
-    setSelectedProfile({
-      id: post.creator_id,
-      name: post.profiles.name,
-      avatar_url: post.profiles.avatar_url,
-      user_type: post.profiles.user_type,
-      isVerified: post.profiles.user_type === 'creator',
-      // Add placeholder data for other required fields
-      age: 25,
-      location: 'Lagos, Nigeria',
-      bio: 'Content creator',
-      interests: [],
-      subscriptionFee: 1000
-    });
-    setShowProfileModal(true);
+  const handleProfileClick = (creatorId: string) => {
+    navigate(`/profile/${creatorId}`);
   };
 
   if (loading) {
@@ -172,7 +159,7 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
                     className="w-8 h-8 rounded-full bg-hooks-coral flex items-center justify-center text-white text-sm font-semibold cursor-pointer hover:bg-hooks-coral/80 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleProfileClick(post);
+                      handleProfileClick(post.creator_id);
                     }}
                   >
                     {post.profiles.avatar_url ? (
@@ -190,7 +177,7 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
                       className="font-semibold text-sm cursor-pointer hover:underline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleProfileClick(post);
+                        handleProfileClick(post.creator_id);
                       }}
                     >
                       {post.profiles.name}
@@ -276,18 +263,6 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
             setSelectedPost(null);
           }}
           post={selectedPost}
-        />
-      )}
-
-      {/* Profile Modal */}
-      {showProfileModal && selectedProfile && (
-        <ProfileViewModal
-          isOpen={showProfileModal}
-          onClose={() => {
-            setShowProfileModal(false);
-            setSelectedProfile(null);
-          }}
-          profile={selectedProfile}
         />
       )}
     </div>
