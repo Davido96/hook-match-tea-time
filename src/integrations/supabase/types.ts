@@ -91,7 +91,7 @@ export type Database = {
           services_offered: string | null
           subscription_fee: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           user_type: string
           verification_status: string | null
         }
@@ -114,7 +114,7 @@ export type Database = {
           services_offered?: string | null
           subscription_fee?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           user_type: string
           verification_status?: string | null
         }
@@ -137,7 +137,7 @@ export type Database = {
           services_offered?: string | null
           subscription_fee?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           user_type?: string
           verification_status?: string | null
         }

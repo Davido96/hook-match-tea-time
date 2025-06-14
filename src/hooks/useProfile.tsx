@@ -171,16 +171,17 @@ export const useProfile = () => {
     try {
       console.log('Starting avatar upload for user:', user.id);
       
-      // Create a unique filename with user ID prefix for RLS
+      // Create a unique filename
       const fileExt = file.name.split('.').pop()?.toLowerCase();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = fileName;
 
-      console.log('Uploading file to path:', fileName);
+      console.log('Uploading file:', filePath);
 
-      // Upload the file to the avatars bucket
+      // Upload the file
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -195,7 +196,7 @@ export const useProfile = () => {
       // Get the public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
       console.log('Public URL:', urlData.publicUrl);
 
