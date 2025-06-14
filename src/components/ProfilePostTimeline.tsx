@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,11 @@ interface Post {
   caption?: string;
   is_public: boolean;
   created_at: string;
+  profiles: {
+    name: string;
+    avatar_url?: string;
+    user_type: string;
+  };
 }
 
 interface ProfilePostTimelineProps {
@@ -43,7 +47,14 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile }: ProfilePost
     try {
       let query = supabase
         .from('exclusive_posts')
-        .select('*')
+        .select(`
+          *,
+          profiles:creator_id (
+            name,
+            avatar_url,
+            user_type
+          )
+        `)
         .eq('creator_id', userId)
         .order('created_at', { ascending: false });
 

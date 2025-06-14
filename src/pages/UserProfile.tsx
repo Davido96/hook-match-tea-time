@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -55,7 +54,14 @@ const UserProfile = () => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      
+      // Type the user_type properly
+      const profileData: UserProfile = {
+        ...data,
+        user_type: data.user_type as 'creator' | 'consumer'
+      };
+      
+      setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
