@@ -40,7 +40,12 @@ export const useEarnings = () => {
 
       if (error) throw error;
       
-      const earningsData = data || [];
+      // Type assertion to ensure proper typing
+      const earningsData = (data || []).map(earning => ({
+        ...earning,
+        source_type: earning.source_type as 'subscription' | 'tip' | 'bonus'
+      })) as Earning[];
+      
       setEarnings(earningsData);
 
       // Calculate summary

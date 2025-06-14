@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useFollows } from "@/hooks/useFollows";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, HeartOff, Crown, X } from "lucide-react";
@@ -23,10 +24,12 @@ const FollowSubscribeButtons = ({
   const { user } = useAuth();
   const { followUser, unfollowUser, isFollowing, loading: followLoading } = useFollows();
   const { subscribeToCreator, unsubscribeFromCreator, isSubscribed, loading: subscribeLoading } = useSubscriptions();
+  const { fetchCreatorPlans } = useSubscriptionPlans();
   const { toast } = useToast();
   
   const [isCurrentlyFollowing, setIsCurrentlyFollowing] = useState(false);
   const [isCurrentlySubscribed, setIsCurrentlySubscribed] = useState(false);
+  const [defaultPlan, setDefaultPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,13 +40,19 @@ const FollowSubscribeButtons = ({
       }
 
       try {
-        const [followStatus, subscribeStatus] = await Promise.all([
+        const [followStatus, subscribeStatus, creatorPlans] = await Promise.all([
           isFollowing(targetUserId),
-          targetUserType === 'creator' ? isSubscribed(targetUserId) : Promise.resolve(false)
+          targetUserType === 'creator' ? isSubscribed(targetUserId) : Promise.resolve(false),
+          targetUserType === 'creator' ? fetchCreatorPlans(targetUserId) : Promise.resolve([])
         ]);
 
         setIsCurrentlyFollowing(followStatus);
         setIsCurrentlySubscribed(subscribeStatus);
+        
+        // Set default plan (first active plan)
+        if (creatorPlans.length > 0) {
+          setDefaultPlan(creatorPlans[0]);
+        }
       } catch (error) {
         console.error('Error checking follow/subscribe status:', error);
       } finally {
@@ -52,7 +61,7 @@ const FollowSubscribeButtons = ({
     };
 
     checkStatus();
-  }, [user, targetUserId, targetUserType, isFollowing, isSubscribed]);
+  }, [user, targetUserId, targetUserType, isFollowing, isSubscribed, fetchCreatorPlans]);
 
   if (!user || user.id === targetUserId || loading) {
     return null;
@@ -95,7 +104,16 @@ const FollowSubscribeButtons = ({
           description: "You have unsubscribed from this creator."
         });
       } else {
-        await subscribeToCreator(targetUserId, subscriptionFee);
+        if (!defaultPlan) {
+          toast({
+            title: "Error",
+            description: "No subscription plans available for this creator",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        await subscribeToCreator(targetUserId, defaultPlan.id);
         setIsCurrentlySubscribed(true);
         toast({
           title: "Subscribed",
@@ -136,7 +154,7 @@ const FollowSubscribeButtons = ({
       </Button>
 
       {/* Subscribe Button - Only for creators */}
-      {targetUserType === 'creator' && (
+      {targetUserType === 'creator' && defaultPlan && (
         <Button
           variant={isCurrentlySubscribed ? "secondary" : "default"}
           size="sm"
@@ -152,7 +170,7 @@ const FollowSubscribeButtons = ({
           ) : (
             <>
               <Crown className="w-4 h-4" />
-              Subscribe ({subscriptionFee} Keys)
+              Subscribe ({defaultPlan.price_keys} Keys)
             </>
           )}
         </Button>
