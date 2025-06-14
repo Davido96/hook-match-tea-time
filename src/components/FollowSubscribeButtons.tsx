@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useFollows } from "@/hooks/useFollows";
@@ -13,13 +12,15 @@ interface FollowSubscribeButtonsProps {
   targetUserType: 'creator' | 'consumer';
   subscriptionFee?: number;
   className?: string;
+  onSubscriptionChange?: () => void;
 }
 
 const FollowSubscribeButtons = ({ 
   targetUserId, 
   targetUserType, 
   subscriptionFee = 0,
-  className = "" 
+  className = "",
+  onSubscriptionChange
 }: FollowSubscribeButtonsProps) => {
   const { user } = useAuth();
   const { followUser, unfollowUser, isFollowing, loading: followLoading } = useFollows();
@@ -119,6 +120,11 @@ const FollowSubscribeButtons = ({
           title: "Subscribed",
           description: "You are now subscribed to this creator!"
         });
+      }
+      
+      // Call the callback if provided
+      if (onSubscriptionChange) {
+        onSubscriptionChange();
       }
     } catch (error: any) {
       console.error('Subscribe error:', error);
