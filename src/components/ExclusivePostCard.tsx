@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -142,7 +141,7 @@ const ExclusivePostCard = ({
                 onTipClick(post.creator_id, post.profiles.name);
               }}
             >
-              Send Keys <HookLogo size="sm" />
+              Send Tips <HookLogo size="sm" />
             </Button>
           )}
         </div>

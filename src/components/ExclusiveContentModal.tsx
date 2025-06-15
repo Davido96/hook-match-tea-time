@@ -158,7 +158,7 @@ const ExclusiveContentModal = ({ isOpen, onClose, post }: ExclusiveContentModalP
                     className="text-hooks-coral border-hooks-coral hover:bg-hooks-coral hover:text-white flex items-center gap-1"
                     onClick={handleSendTip}
                   >
-                    Send Keys <HookLogo size="sm" />
+                    Send Tips <HookLogo size="sm" />
                   </Button>
                 )}
               </div>
