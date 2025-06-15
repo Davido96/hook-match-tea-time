@@ -13,13 +13,15 @@ interface AuthPageProps {
   onAuthSuccess?: () => void;
   onBack?: () => void;
   onSignupSuccess?: () => void;
+  userType?: 'creator' | 'consumer' | null;
 }
 
 const AuthPage = ({ 
   initialMode = 'signup', 
   onAuthSuccess, 
   onBack,
-  onSignupSuccess
+  onSignupSuccess,
+  userType
 }: AuthPageProps) => {
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot-password'>(initialMode);
   const [email, setEmail] = useState("");
@@ -158,7 +160,14 @@ const AuthPage = ({
             <HookLogo size="lg" />
             <h1 className="text-2xl font-bold text-gradient">Hooks</h1>
           </div>
-          <CardTitle>{getTitle()}</CardTitle>
+          <CardTitle>
+            {getTitle()}
+            {userType && mode === 'signup' && (
+              <p className="text-sm text-gray-600 mt-2">
+                Joining as a {userType}
+              </p>
+            )}
+          </CardTitle>
         </CardHeader>
         
         <CardContent>
