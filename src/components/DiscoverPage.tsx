@@ -120,28 +120,36 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     const currentUser = filteredUsers[currentUserIndex];
     if (!currentUser) return;
 
-    console.log(`Swiping ${direction} on user:`, currentUser.name, 'user_id:', currentUser.user_id);
+    console.log(`🎯 Starting swipe ${direction} on user:`, currentUser.name, 'user_id:', currentUser.user_id);
 
     // Add current index to undo stack
-    setUndoStack(prev => [...prev, currentUserIndex].slice(-5)); // Keep last 5 for undo
+    setUndoStack(prev => [...prev, currentUserIndex].slice(-5));
     
     // Update stats
     setTodaySwipes(prev => prev + 1);
     
     if (direction === 'right') {
       try {
-        console.log('Creating like for user:', currentUser.user_id);
+        console.log('💕 Creating like for user:', currentUser.user_id);
         const success = await createLike(currentUser.user_id, false);
         
         if (success) {
-          console.log('Like created successfully, checking for mutual like...');
+          console.log('✅ Like created successfully, checking for mutual like...');
+          
+          // Add small delay to ensure database trigger has time to process
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Check if this creates a match
           const isMatch = await checkMutualLike(currentUser.user_id);
           
           if (isMatch) {
             console.log('🎉 MUTUAL MATCH DETECTED!', currentUser.name);
             
+            // Wait a bit more for match creation to complete
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             // Refresh matches to get the latest from database
+            console.log('🔄 Refreshing matches from database...');
             await refetchMatches();
             
             // Show match modal
@@ -157,31 +165,33 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
               description: `You matched with ${currentUser.name}!`,
             });
           } else {
-            console.log('Like sent, but no mutual match yet');
+            console.log('💌 Like sent, but no mutual match yet');
             toast({
               title: "Like Sent! 💕",
               description: `Your like has been sent to ${currentUser.name}`,
             });
           }
         } else {
-          console.error('Failed to create like');
+          console.error('❌ Failed to create like');
           toast({
             title: "Error",
             description: "Failed to send like. Please try again.",
             variant: "destructive"
           });
+          return; // Don't move to next user if like failed
         }
       } catch (error) {
-        console.error('Error in handleSwipe:', error);
+        console.error('💥 Error in handleSwipe:', error);
         toast({
           title: "Error",
           description: "Something went wrong. Please try again.",
           variant: "destructive"
         });
+        return; // Don't move to next user if error occurred
       }
     }
     
-    // Move to next user
+    // Move to next user only if everything succeeded (or it was a left swipe)
     if (currentUserIndex < filteredUsers.length - 1) {
       setCurrentUserIndex(prev => prev + 1);
     } else {
@@ -203,7 +213,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     const currentUser = filteredUsers[currentUserIndex];
     if (!currentUser) return;
 
-    console.log('Super liking user:', currentUser.name, 'user_id:', currentUser.user_id);
+    console.log('⚡ Super liking user:', currentUser.name, 'user_id:', currentUser.user_id);
 
     try {
       const success = await createLike(currentUser.user_id, true); // true for super like
@@ -213,13 +223,22 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
         setUndoStack(prev => [...prev, currentUserIndex].slice(-5));
         setTodaySwipes(prev => prev + 1);
         
+        console.log('✅ Super like created successfully, checking for match...');
+        
+        // Add delay for database processing
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Check for mutual match
         const isMatch = await checkMutualLike(currentUser.user_id);
         
         if (isMatch) {
           console.log('🎉 SUPER LIKE CREATED A MATCH!', currentUser.name);
           
-          // Refresh matches to get the latest from database
+          // Wait for match creation to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Refresh matches
+          console.log('🔄 Refreshing matches after super like match...');
           await refetchMatches();
           
           setCurrentMatch(currentUser);
@@ -252,7 +271,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
         });
       }
     } catch (error) {
-      console.error('Error in handleSuperLike:', error);
+      console.error('💥 Error in handleSuperLike:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -304,12 +323,23 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   };
 
   const handleStartChatting = async () => {
-    console.log('Starting chat, refreshing matches first...');
-    // Refresh matches before navigating to ensure latest data
-    await refetchMatches();
-    setShowMatchModal(false);
-    setCurrentMatch(null);
-    setCurrentView('messages');
+    console.log('💬 Starting chat, ensuring matches are up to date...');
+    
+    try {
+      // Refresh matches before navigating to ensure latest data
+      await refetchMatches();
+      console.log('✅ Matches refreshed, navigating to messages...');
+      
+      setShowMatchModal(false);
+      setCurrentMatch(null);
+      setCurrentView('messages');
+    } catch (error) {
+      console.error('❌ Error refreshing matches before chat:', error);
+      // Still navigate even if refresh fails
+      setShowMatchModal(false);
+      setCurrentMatch(null);
+      setCurrentView('messages');
+    }
   };
 
   const handleFiltersApply = (newFilters: any) => {
