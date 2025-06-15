@@ -14,7 +14,7 @@ interface Comment {
   profiles?: {
     name: string;
     avatar_url?: string;
-  };
+  } | null;
 }
 
 export const usePostComments = (postId: string) => {
@@ -36,7 +36,7 @@ export const usePostComments = (postId: string) => {
         .from('post_comments')
         .select(`
           *,
-          profiles!post_comments_user_id_fkey (
+          profiles (
             name,
             avatar_url
           )
@@ -75,7 +75,7 @@ export const usePostComments = (postId: string) => {
         })
         .select(`
           *,
-          profiles!post_comments_user_id_fkey (
+          profiles (
             name,
             avatar_url
           )

@@ -54,7 +54,7 @@ const PostCommentsModal = ({ isOpen, onClose, postId }: PostCommentsModalProps) 
             comments.map((comment) => (
               <div key={comment.id} className="flex space-x-3">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={comment.profiles?.avatar_url} />
+                  <AvatarImage src={comment.profiles?.avatar_url || ""} />
                   <AvatarFallback>
                     {comment.profiles?.name?.charAt(0) || 'U'}
                   </AvatarFallback>
