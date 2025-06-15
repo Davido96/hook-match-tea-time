@@ -10,8 +10,9 @@ import ExclusiveContentPage from "@/components/ExclusiveContentPage";
 import LandingPage from "@/components/LandingPage";
 import DiscoverPage from "@/components/DiscoverPage";
 import ChatInterface from "@/components/ChatInterface";
+import IncomingLikesPage from "@/components/IncomingLikesPage";
 
-type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages';
+type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages' | 'incoming-likes';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
@@ -91,6 +92,10 @@ const Index = () => {
     setCurrentView('landing');
   };
 
+  const handleViewChange = (view: ViewType) => {
+    setCurrentView(view);
+  };
+
   // Show loading while checking auth/profile state
   if (authLoading || profileLoading) {
     return (
@@ -120,16 +125,21 @@ const Index = () => {
     return <ExclusiveContentPage onBack={() => setCurrentView('discover')} />;
   }
 
-  // Show messages interface - removed matches prop
+  // Show messages interface
   if (currentView === 'messages') {
     return <ChatInterface onBack={() => setCurrentView('discover')} />;
+  }
+
+  // Show incoming likes page
+  if (currentView === 'incoming-likes') {
+    return <IncomingLikesPage onBack={() => setCurrentView('discover')} />;
   }
 
   // Main discover interface - this is the homepage after authentication
   return (
     <DiscoverPage 
       currentView={currentView}
-      setCurrentView={setCurrentView}
+      setCurrentView={handleViewChange}
       matches={matches}
       onMatchAdded={handleMatchAdded}
     />
