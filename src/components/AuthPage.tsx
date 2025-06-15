@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import HookLogo from "@/components/HookLogo";
 
 interface AuthPageProps {
-  initialMode?: 'signin' | 'signup';
+  initialMode?: 'signin' | 'signup' | 'forgot-password';
   onAuthSuccess?: () => void;
   onBack?: () => void;
   onSignupSuccess?: () => void;
@@ -20,13 +21,13 @@ const AuthPage = ({
   onBack,
   onSignupSuccess
 }: AuthPageProps) => {
-  const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot-password'>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +35,31 @@ const AuthPage = ({
     setError(null);
     setSuccess(null);
 
-    if (!email || !password) {
-      setError("Please fill in all fields");
+    if (!email) {
+      setError("Please enter your email address");
+      setLoading(false);
+      return;
+    }
+
+    if (mode === 'forgot-password') {
+      try {
+        const result = await resetPassword(email);
+        if (result.error) {
+          setError(result.error.message || "An error occurred. Please try again.");
+        } else {
+          setSuccess("Password reset email sent! Please check your inbox and follow the instructions.");
+        }
+      } catch (err: any) {
+        console.error('Reset password error:', err);
+        setError("An unexpected error occurred. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password");
       setLoading(false);
       return;
     }
@@ -48,11 +72,10 @@ const AuthPage = ({
 
     try {
       let result;
-      if (isSignUp) {
+      if (mode === 'signup') {
         result = await signUp(email, password);
         if (!result.error) {
           setSuccess("Account created successfully! Please check your email to verify your account.");
-          // For signup, call the signup success callback to go to profile setup
           setTimeout(() => {
             onSignupSuccess?.();
           }, 1000);
@@ -68,7 +91,6 @@ const AuthPage = ({
       }
 
       if (result.error) {
-        // Handle specific error messages
         if (result.error.message.includes('Invalid login credentials')) {
           setError("Invalid email or password. Please check your credentials.");
         } else if (result.error.message.includes('User already registered')) {
@@ -84,6 +106,37 @@ const AuthPage = ({
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setError(null);
+    setSuccess(null);
+  };
+
+  const switchMode = (newMode: 'signin' | 'signup' | 'forgot-password') => {
+    setMode(newMode);
+    resetForm();
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'signup': return 'Join Hooks';
+      case 'signin': return 'Welcome Back';
+      case 'forgot-password': return 'Reset Password';
+      default: return 'Welcome';
+    }
+  };
+
+  const getButtonText = () => {
+    if (loading) return 'Loading...';
+    switch (mode) {
+      case 'signup': return 'Sign Up';
+      case 'signin': return 'Sign In';
+      case 'forgot-password': return 'Send Reset Email';
+      default: return 'Continue';
     }
   };
 
@@ -105,7 +158,7 @@ const AuthPage = ({
             <HookLogo size="lg" />
             <h1 className="text-2xl font-bold text-gradient">Hooks</h1>
           </div>
-          <CardTitle>{isSignUp ? 'Join Hooks' : 'Welcome Back'}</CardTitle>
+          <CardTitle>{getTitle()}</CardTitle>
         </CardHeader>
         
         <CardContent>
@@ -120,17 +173,20 @@ const AuthPage = ({
                 disabled={loading}
               />
             </div>
-            <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                disabled={loading}
-              />
-            </div>
+            
+            {mode !== 'forgot-password' && (
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  disabled={loading}
+                />
+              </div>
+            )}
             
             {error && (
               <Alert variant="destructive">
@@ -149,25 +205,46 @@ const AuthPage = ({
               disabled={loading}
               className="w-full gradient-coral text-white"
             >
-              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+              {getButtonText()}
             </Button>
           </form>
           
-          <div className="mt-4 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(null);
-                setSuccess(null);
-                setEmail("");
-                setPassword("");
-              }}
-              className="text-sm"
-              disabled={loading}
-            >
-              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-            </Button>
+          <div className="mt-4 text-center space-y-2">
+            {mode === 'signin' && (
+              <Button
+                variant="ghost"
+                onClick={() => switchMode('forgot-password')}
+                className="text-sm text-hooks-coral hover:text-hooks-coral/80"
+                disabled={loading}
+              >
+                Forgot your password?
+              </Button>
+            )}
+            
+            {mode === 'forgot-password' && (
+              <Button
+                variant="ghost"
+                onClick={() => switchMode('signin')}
+                className="text-sm"
+                disabled={loading}
+              >
+                Back to Sign In
+              </Button>
+            )}
+            
+            {mode !== 'forgot-password' && (
+              <Button
+                variant="ghost"
+                onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
+                className="text-sm"
+                disabled={loading}
+              >
+                {mode === 'signin' 
+                  ? "Don't have an account? Sign Up" 
+                  : 'Already have an account? Sign In'
+                }
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
