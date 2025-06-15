@@ -39,6 +39,23 @@ export const useWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
 
+  // Constants for withdrawal calculations
+  const WITHDRAWAL_FEE_PERCENTAGE = 0.1; // 10%
+  const MINIMUM_WITHDRAWAL = 100; // 100 Keys
+  const KEYS_TO_NAIRA_RATE = 1000; // 1 Key = ₦1000
+
+  const calculateWithdrawalFee = (amount: number): number => {
+    return Math.round(amount * WITHDRAWAL_FEE_PERCENTAGE);
+  };
+
+  const calculateNetAmount = (amount: number): number => {
+    return amount - calculateWithdrawalFee(amount);
+  };
+
+  const convertKeysToNaira = (keys: number): number => {
+    return keys * KEYS_TO_NAIRA_RATE;
+  };
+
   const fetchWithdrawals = async () => {
     if (!user) return;
     
@@ -86,8 +103,8 @@ export const useWithdrawals = () => {
       throw new Error('Insufficient balance');
     }
 
-    if (request.amount < 1000) {
-      throw new Error('Minimum withdrawal amount is 1000 Keys');
+    if (request.amount < MINIMUM_WITHDRAWAL) {
+      throw new Error(`Minimum withdrawal amount is ${MINIMUM_WITHDRAWAL} Keys`);
     }
 
     setLoading(true);
@@ -128,9 +145,12 @@ export const useWithdrawals = () => {
         fetchWithdrawals()
       ]);
 
+      const netAmount = calculateNetAmount(request.amount);
+      const netAmountNaira = convertKeysToNaira(netAmount);
+
       toast({
         title: "Withdrawal Requested",
-        description: "Your withdrawal request has been submitted successfully. It will be processed within 1-3 business days."
+        description: `Your withdrawal request for ${request.amount} Keys (₦${convertKeysToNaira(request.amount).toLocaleString()}) has been submitted. You will receive ₦${netAmountNaira.toLocaleString()} after 10% fee within 24 hours.`
       });
 
       return { data: withdrawal, error: null };
@@ -168,6 +188,11 @@ export const useWithdrawals = () => {
     getTotalEarnings,
     getAvailableBalance,
     getPendingWithdrawals,
+    calculateWithdrawalFee,
+    calculateNetAmount,
+    convertKeysToNaira,
+    MINIMUM_WITHDRAWAL,
+    WITHDRAWAL_FEE_PERCENTAGE,
     loading,
     withdrawalsLoading
   };

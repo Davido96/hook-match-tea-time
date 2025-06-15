@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { X, Wallet, Plus, ArrowDown, DollarSign } from "lucide-react";
+import { X, Wallet, Plus, ArrowDown, DollarSign, Info } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +23,13 @@ interface UnifiedWalletModalProps {
 
 const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: UnifiedWalletModalProps) => {
   const { wallet, purchaseKeys, refetch: refetchWallet } = useWallet();
-  const { getPendingWithdrawals } = useWithdrawals();
+  const { 
+    getPendingWithdrawals, 
+    calculateWithdrawalFee, 
+    calculateNetAmount, 
+    convertKeysToNaira, 
+    MINIMUM_WITHDRAWAL 
+  } = useWithdrawals();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -47,8 +53,16 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
     { amount: 25, price: 18000, popular: false, savings: 7000 },
   ];
 
-  const withdrawalQuickAmounts = [1000, 2500, 5000, 10000];
+  const withdrawalQuickAmounts = [100, 500, 1000, 2500];
   const pendingWithdrawals = getPendingWithdrawals();
+  
+  // Calculate withdrawal details
+  const withdrawalAmountNumber = parseInt(withdrawalAmount) || 0;
+  const withdrawalFee = calculateWithdrawalFee(withdrawalAmountNumber);
+  const netAmount = calculateNetAmount(withdrawalAmountNumber);
+  const withdrawalAmountNaira = convertKeysToNaira(withdrawalAmountNumber);
+  const netAmountNaira = convertKeysToNaira(netAmount);
+  const feeAmountNaira = convertKeysToNaira(withdrawalFee);
 
   const handlePurchase = async () => {
     setPurchaseLoading(true);
@@ -90,8 +104,8 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
       return;
     }
 
-    if (amount < 1000) {
-      setWithdrawalError("Minimum withdrawal amount is 1000 Keys");
+    if (amount < MINIMUM_WITHDRAWAL) {
+      setWithdrawalError(`Minimum withdrawal amount is ${MINIMUM_WITHDRAWAL} Keys`);
       return;
     }
 
@@ -144,7 +158,7 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
 
       toast({
         title: "Withdrawal Requested",
-        description: "Your withdrawal request has been submitted successfully. It will be processed within 1-3 business days."
+        description: `Your withdrawal request for ${amount} Keys (₦${withdrawalAmountNaira.toLocaleString()}) has been submitted. You will receive ₦${netAmountNaira.toLocaleString()} after 10% fee within 24 hours.`
       });
 
       // Reset form
@@ -181,18 +195,21 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold">{wallet?.keys_balance || 0} 🪝</div>
               <div className="text-sm opacity-90">Available Balance</div>
+              <div className="text-xs opacity-75">₦{convertKeysToNaira(wallet?.keys_balance || 0).toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card className="bg-yellow-50 border-yellow-200">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-yellow-600">{pendingWithdrawals}</div>
               <div className="text-sm text-yellow-700">Pending Withdrawals</div>
+              <div className="text-xs text-yellow-600">₦{convertKeysToNaira(pendingWithdrawals).toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card className="bg-gray-50">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-600">1000</div>
+              <div className="text-2xl font-bold text-gray-600">{MINIMUM_WITHDRAWAL}</div>
               <div className="text-sm text-gray-700">Min. Withdrawal</div>
+              <div className="text-xs text-gray-600">₦{convertKeysToNaira(MINIMUM_WITHDRAWAL).toLocaleString()}</div>
             </CardContent>
           </Card>
         </div>
@@ -273,14 +290,22 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
           </TabsContent>
 
           <TabsContent value="withdraw" className="space-y-6 mt-6">
-            {wallet && wallet.keys_balance < 1000 ? (
+            {wallet && wallet.keys_balance < MINIMUM_WITHDRAWAL ? (
               <Alert className="border-yellow-200 bg-yellow-50">
                 <AlertDescription className="text-yellow-800">
-                  You need at least 1000 Keys to request a withdrawal. Purchase more Keys to reach the minimum!
+                  You need at least {MINIMUM_WITHDRAWAL} Keys to request a withdrawal. Purchase more Keys to reach the minimum!
                 </AlertDescription>
               </Alert>
             ) : (
               <form onSubmit={handleWithdrawal} className="space-y-4">
+                {/* Withdrawal Fee Notice */}
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-blue-800">
+                    <strong>Withdrawal Fee:</strong> 10% fee applies to all withdrawals. You will receive your funds within 24 hours of request.
+                  </AlertDescription>
+                </Alert>
+
                 {/* Quick Amounts */}
                 <div className="space-y-2">
                   <Label>Quick Amounts</Label>
@@ -295,7 +320,10 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
                         disabled={withdrawalLoading || (wallet && wallet.keys_balance < amount)}
                         className={withdrawalAmount === amount.toString() ? "bg-hooks-coral hover:bg-hooks-coral/80" : ""}
                       >
-                        {amount}
+                        <div className="text-center">
+                          <div>{amount}</div>
+                          <div className="text-xs opacity-75">₦{convertKeysToNaira(amount).toLocaleString()}</div>
+                        </div>
                       </Button>
                     ))}
                   </div>
@@ -306,15 +334,43 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
                   <Input
                     id="withdrawal-amount"
                     type="number"
-                    placeholder="Minimum 1000 Keys"
+                    placeholder={`Minimum ${MINIMUM_WITHDRAWAL} Keys`}
                     value={withdrawalAmount}
                     onChange={(e) => setWithdrawalAmount(e.target.value)}
-                    min="1000"
+                    min={MINIMUM_WITHDRAWAL}
                     max={wallet?.keys_balance || 0}
                     required
                     disabled={withdrawalLoading}
                   />
+                  {withdrawalAmountNumber > 0 && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      ≈ ₦{withdrawalAmountNaira.toLocaleString()}
+                    </div>
+                  )}
                 </div>
+
+                {/* Fee Breakdown */}
+                {withdrawalAmountNumber >= MINIMUM_WITHDRAWAL && (
+                  <Card className="bg-gray-50">
+                    <CardContent className="p-4">
+                      <h4 className="font-medium mb-3">Withdrawal Breakdown</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Withdrawal Amount:</span>
+                          <span>{withdrawalAmountNumber} Keys (₦{withdrawalAmountNaira.toLocaleString()})</span>
+                        </div>
+                        <div className="flex justify-between text-red-600">
+                          <span>Fee (10%):</span>
+                          <span>-{withdrawalFee} Keys (₦{feeAmountNaira.toLocaleString()})</span>
+                        </div>
+                        <div className="flex justify-between font-medium text-green-600 border-t pt-2">
+                          <span>You'll Receive:</span>
+                          <span>{netAmount} Keys (₦{netAmountNaira.toLocaleString()})</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div>
                   <Label htmlFor="bank-name">Bank Name*</Label>
@@ -374,7 +430,7 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={withdrawalLoading || !wallet || wallet.keys_balance < 1000}
+                  disabled={withdrawalLoading || !wallet || wallet.keys_balance < MINIMUM_WITHDRAWAL}
                   size="lg"
                 >
                   {withdrawalLoading ? "Processing..." : "Request Withdrawal"}
@@ -383,9 +439,9 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
             )}
 
             <div className="text-xs text-gray-500 space-y-1">
-              <p>• Minimum withdrawal: 1000 Keys</p>
-              <p>• Processing time: 1-3 business days</p>
-              <p>• Withdrawal fees may apply</p>
+              <p>• Minimum withdrawal: {MINIMUM_WITHDRAWAL} Keys (₦{convertKeysToNaira(MINIMUM_WITHDRAWAL).toLocaleString()})</p>
+              <p>• Processing time: Within 24 hours</p>
+              <p>• Withdrawal fee: 10% (deducted from withdrawal amount)</p>
               <p>• Keys will be deducted immediately upon request</p>
             </div>
           </TabsContent>

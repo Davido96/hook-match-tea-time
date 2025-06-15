@@ -14,7 +14,7 @@ import WithdrawalHistoryTable from "./WithdrawalHistoryTable";
 const EarningsDashboard = () => {
   const { summary, earnings, loading } = useEarnings();
   const { wallet } = useWallet();
-  const { withdrawals, withdrawalsLoading, getPendingWithdrawals } = useWithdrawals();
+  const { withdrawals, withdrawalsLoading, getPendingWithdrawals, convertKeysToNaira, MINIMUM_WITHDRAWAL } = useWithdrawals();
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletModalTab, setWalletModalTab] = useState<"purchase" | "withdraw">("purchase");
 
@@ -66,7 +66,7 @@ const EarningsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{wallet?.keys_balance || 0} Keys</div>
-            <p className="text-xs text-muted-foreground">Available for withdrawal</p>
+            <p className="text-xs text-muted-foreground">₦{convertKeysToNaira(wallet?.keys_balance || 0).toLocaleString()} available</p>
           </CardContent>
         </Card>
 
@@ -77,7 +77,7 @@ const EarningsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary?.total || 0} Keys</div>
-            <p className="text-xs text-muted-foreground">All time earnings</p>
+            <p className="text-xs text-muted-foreground">₦{convertKeysToNaira(summary?.total || 0).toLocaleString()} all time</p>
           </CardContent>
         </Card>
 
@@ -123,7 +123,7 @@ const EarningsDashboard = () => {
               </Button>
               <Button 
                 onClick={() => openWalletModal("withdraw")}
-                disabled={!wallet || wallet.keys_balance < 1000}
+                disabled={!wallet || wallet.keys_balance < MINIMUM_WITHDRAWAL}
                 className="flex items-center gap-2 gradient-coral text-white"
               >
                 <ArrowDown className="w-4 h-4" />
@@ -137,21 +137,24 @@ const EarningsDashboard = () => {
             <div className="p-4 bg-gradient-to-r from-hooks-coral to-hooks-pink text-white rounded-lg">
               <div className="text-sm opacity-90">Available Balance</div>
               <div className="text-2xl font-bold">{wallet?.keys_balance || 0} Keys</div>
+              <div className="text-xs opacity-75">₦{convertKeysToNaira(wallet?.keys_balance || 0).toLocaleString()}</div>
             </div>
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="text-sm text-yellow-700">Pending Withdrawals</div>
               <div className="text-2xl font-bold text-yellow-600">{pendingWithdrawals} Keys</div>
+              <div className="text-xs text-yellow-600">₦{convertKeysToNaira(pendingWithdrawals).toLocaleString()}</div>
             </div>
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="text-sm text-gray-600">Minimum Withdrawal</div>
-              <div className="text-2xl font-bold text-gray-600">1000 Keys</div>
+              <div className="text-2xl font-bold text-gray-600">{MINIMUM_WITHDRAWAL} Keys</div>
+              <div className="text-xs text-gray-600">₦{convertKeysToNaira(MINIMUM_WITHDRAWAL).toLocaleString()}</div>
             </div>
           </div>
           
-          {wallet && wallet.keys_balance < 1000 && (
+          {wallet && wallet.keys_balance < MINIMUM_WITHDRAWAL && (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                You need at least 1000 Keys to request a withdrawal. Keep earning to reach the minimum!
+                You need at least {MINIMUM_WITHDRAWAL} Keys to request a withdrawal. Keep earning to reach the minimum!
               </p>
             </div>
           )}
@@ -185,9 +188,14 @@ const EarningsDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="font-bold">
-                    +{earning.amount} Keys
-                  </Badge>
+                  <div className="text-right">
+                    <Badge variant="secondary" className="font-bold">
+                      +{earning.amount} Keys
+                    </Badge>
+                    <div className="text-xs text-gray-500 mt-1">
+                      ₦{convertKeysToNaira(earning.amount).toLocaleString()}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
