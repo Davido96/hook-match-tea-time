@@ -22,17 +22,36 @@ export const useSubscriptionPlans = () => {
   const fetchCreatorPlans = async (creatorId: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('creator_id', creatorId)
-        .eq('is_active', true)
-        .order('price_keys');
+      console.log('Fetching subscription plans for creator:', creatorId);
+      
+      // Add retry logic with exponential backoff
+      let retries = 3;
+      let data = null;
+      
+      while (retries > 0 && !data) {
+        const { data: fetchedData, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('creator_id', creatorId)
+          .eq('is_active', true)
+          .order('price_keys');
 
-      if (error) throw error;
+        if (error) {
+          console.error(`Error fetching creator plans (attempt ${4 - retries}):`, error);
+          if (retries === 1) {
+            throw error;
+          }
+          retries--;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          data = fetchedData;
+          console.log('Successfully fetched plans:', data?.length || 0, 'plans found');
+        }
+      }
+      
       return data || [];
     } catch (error) {
-      console.error('Error fetching creator plans:', error);
+      console.error('Final error fetching creator plans:', error);
       return [];
     } finally {
       setLoading(false);
@@ -44,13 +63,20 @@ export const useSubscriptionPlans = () => {
     
     setLoading(true);
     try {
+      console.log('Fetching my subscription plans for user:', user.id);
+      
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('creator_id', user.id)
         .order('duration_days');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching my plans:', error);
+        throw error;
+      }
+      
+      console.log('Successfully fetched my plans:', data?.length || 0, 'plans found');
       setPlans(data || []);
     } catch (error) {
       console.error('Error fetching my plans:', error);
@@ -63,6 +89,8 @@ export const useSubscriptionPlans = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      console.log('Creating new subscription plan:', planData);
+      
       const { data, error } = await supabase
         .from('subscription_plans')
         .insert({
@@ -72,8 +100,12 @@ export const useSubscriptionPlans = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating plan:', error);
+        throw error;
+      }
       
+      console.log('Successfully created plan:', data);
       await fetchMyPlans();
       return { data, error: null };
     } catch (error) {
@@ -84,6 +116,8 @@ export const useSubscriptionPlans = () => {
 
   const updatePlan = async (planId: string, updates: Partial<SubscriptionPlan>) => {
     try {
+      console.log('Updating subscription plan:', planId, updates);
+      
       const { data, error } = await supabase
         .from('subscription_plans')
         .update(updates)
@@ -92,8 +126,12 @@ export const useSubscriptionPlans = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating plan:', error);
+        throw error;
+      }
       
+      console.log('Successfully updated plan:', data);
       await fetchMyPlans();
       return { data, error: null };
     } catch (error) {
@@ -104,14 +142,20 @@ export const useSubscriptionPlans = () => {
 
   const deletePlan = async (planId: string) => {
     try {
+      console.log('Deleting subscription plan:', planId);
+      
       const { error } = await supabase
         .from('subscription_plans')
         .update({ is_active: false })
         .eq('id', planId)
         .eq('creator_id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+      }
       
+      console.log('Successfully deleted plan:', planId);
       await fetchMyPlans();
       return { error: null };
     } catch (error) {

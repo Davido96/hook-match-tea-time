@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Crown, UserPlus } from "lucide-react";
+import { Heart, Crown, UserPlus, RefreshCw } from "lucide-react";
 import { useFollows } from "@/hooks/useFollows";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,17 +34,33 @@ const FollowSubscribeButtons = ({
   const [userIsFollowing, setUserIsFollowing] = useState(false);
   const [userIsSubscribed, setUserIsSubscribed] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
 
   useEffect(() => {
     if (user && targetUserId) {
-      checkFollowStatus();
-      checkSubscriptionStatus();
+      checkAllStatus();
     }
   }, [user, targetUserId]);
 
+  const checkAllStatus = async () => {
+    setStatusLoading(true);
+    try {
+      await Promise.all([
+        checkFollowStatus(),
+        checkSubscriptionStatus()
+      ]);
+    } catch (error) {
+      console.error('Error checking status:', error);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   const checkFollowStatus = async () => {
     try {
+      console.log('Checking follow status for user:', targetUserId);
       const following = await isFollowing(targetUserId);
+      console.log('Follow status result:', following);
       setUserIsFollowing(following);
     } catch (error) {
       console.error('Error checking follow status:', error);
@@ -53,7 +69,9 @@ const FollowSubscribeButtons = ({
 
   const checkSubscriptionStatus = async () => {
     try {
+      console.log('Checking subscription status for user:', targetUserId);
       const subscribed = await isSubscribed(targetUserId);
+      console.log('Subscription status result:', subscribed);
       setUserIsSubscribed(subscribed);
     } catch (error) {
       console.error('Error checking subscription status:', error);
@@ -93,10 +111,12 @@ const FollowSubscribeButtons = ({
       return;
     }
 
+    console.log('Opening subscription modal for creator:', targetUserId);
     setShowSubscriptionModal(true);
   };
 
   const handleSubscriptionComplete = () => {
+    console.log('Subscription completed, refreshing status');
     setUserIsSubscribed(true);
     checkSubscriptionStatus(); // Refresh status
   };
@@ -125,7 +145,7 @@ const FollowSubscribeButtons = ({
           variant={userIsFollowing ? "default" : "outline"}
           size={size}
           onClick={handleToggleFollow}
-          disabled={followLoading}
+          disabled={followLoading || statusLoading}
           className={cn(
             buttonSizeClasses[size],
             userIsFollowing 
@@ -133,7 +153,7 @@ const FollowSubscribeButtons = ({
               : "border-hooks-coral text-hooks-coral hover:bg-hooks-coral hover:text-white"
           )}
         >
-          {followLoading ? (
+          {followLoading || statusLoading ? (
             <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
           ) : (
             <>
@@ -153,7 +173,7 @@ const FollowSubscribeButtons = ({
             variant={userIsSubscribed ? "default" : "outline"}
             size={size}
             onClick={handleSubscribeClick}
-            disabled={subscribeLoading}
+            disabled={subscribeLoading || statusLoading}
             className={cn(
               buttonSizeClasses[size],
               userIsSubscribed 
@@ -161,7 +181,7 @@ const FollowSubscribeButtons = ({
                 : "border-hooks-pink text-hooks-pink hover:bg-hooks-pink hover:text-white"
             )}
           >
-            {subscribeLoading ? (
+            {subscribeLoading || statusLoading ? (
               <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
             ) : (
               <>

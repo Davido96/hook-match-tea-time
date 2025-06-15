@@ -8,7 +8,7 @@ import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Crown, Zap, Wallet, X } from "lucide-react";
+import { Clock, Crown, Zap, Wallet, RefreshCw, AlertCircle } from "lucide-react";
 
 interface SubscriptionPlanModalProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ const SubscriptionPlanModal = ({
   const { toast } = useToast();
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && creatorId) {
@@ -40,11 +41,19 @@ const SubscriptionPlanModal = ({
 
   const loadPlans = async () => {
     setLoading(true);
+    setError(null);
     try {
+      console.log('Loading subscription plans for creator:', creatorId);
       const creatorPlans = await fetchCreatorPlans(creatorId);
+      console.log('Loaded plans:', creatorPlans);
       setPlans(creatorPlans);
+      
+      if (creatorPlans.length === 0) {
+        console.log('No plans found for creator:', creatorId);
+      }
     } catch (error) {
       console.error('Error loading plans:', error);
+      setError('Failed to load subscription plans. Please try again.');
       toast({
         title: "Error Loading Plans",
         description: "Failed to load subscription plans. Please try again.",
@@ -53,6 +62,10 @@ const SubscriptionPlanModal = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    loadPlans();
   };
 
   const handleSubscribe = async (planId: string, planName: string, price: number) => {
@@ -110,7 +123,31 @@ const SubscriptionPlanModal = ({
           <DialogHeader>
             <DialogTitle>Subscribe to {creatorName}</DialogTitle>
           </DialogHeader>
-          <div className="text-center py-8">Loading subscription plans...</div>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hooks-coral mx-auto mb-4"></div>
+            <div>Loading subscription plans...</div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Subscribe to {creatorName}</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <AlertCircle className="w-12 h-12 mx-auto text-red-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">Failed to Load Plans</h3>
+            <p className="text-gray-500 mb-4">{error}</p>
+            <Button onClick={handleRetry} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     );
@@ -126,7 +163,11 @@ const SubscriptionPlanModal = ({
           <div className="text-center py-8">
             <Crown className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-600 mb-2">No Subscription Plans Available</h3>
-            <p className="text-gray-500">This creator hasn't set up any subscription plans yet.</p>
+            <p className="text-gray-500 mb-4">This creator hasn't set up any subscription plans yet.</p>
+            <Button onClick={handleRetry} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
