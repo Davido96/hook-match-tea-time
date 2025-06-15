@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -242,14 +243,20 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
               <h3 className="font-semibold text-hooks-coral">Creator Settings</h3>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Subscription Fee (₦/month)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Default Monthly Rate (Keys)
+                  <span className="text-xs text-gray-500 block">This is just a suggested rate. You can create custom subscription plans with different durations and prices.</span>
+                </label>
                 <Input
                   type="number"
                   min="0"
                   value={formData.subscription_fee}
                   onChange={(e) => handleInputChange('subscription_fee', parseInt(e.target.value) || 0)}
-                  placeholder="Monthly subscription fee"
+                  placeholder="Default monthly subscription rate in Keys"
                 />
+                <div className="text-xs text-gray-500 mt-1">
+                  💡 Tip: Lower prices often lead to more subscribers
+                </div>
               </div>
 
               <div>
