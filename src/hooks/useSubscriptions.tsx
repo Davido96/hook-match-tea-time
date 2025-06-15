@@ -11,30 +11,22 @@ export const useSubscriptions = () => {
   const [loading, setLoading] = useState(false);
 
   const subscribeToCreator = async (creatorId: string, planId: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      console.error('User not authenticated');
+      throw new Error('You must be logged in to subscribe');
+    }
+
+    if (user.id === creatorId) {
+      console.error('Cannot subscribe to yourself');
+      throw new Error('You cannot subscribe to yourself');
+    }
     
-    // Get plan details
-    const { data: plan, error: planError } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .eq('id', planId)
-      .eq('creator_id', creatorId)
-      .eq('is_active', true)
-      .single();
-
-    if (planError || !plan) {
-      throw new Error('Invalid subscription plan');
-    }
-
-    // Check if user has enough balance
-    if (!wallet || wallet.keys_balance < plan.price_keys) {
-      throw new Error('Insufficient balance');
-    }
-
     setLoading(true);
     try {
-      // Check if already subscribed
-      const { data: existingSubscription } = await supabase
+      console.log('Attempting to subscribe to creator:', creatorId, 'with plan:', planId);
+
+      // Check if already subscribed to prevent duplicates
+      const { data: existingSubscription, error: checkError } = await supabase
         .from('subscriptions')
         .select('id')
         .eq('subscriber_id', user.id)
@@ -43,8 +35,34 @@ export const useSubscriptions = () => {
         .gte('expires_at', new Date().toISOString())
         .maybeSingle();
 
+      if (checkError) {
+        console.error('Error checking existing subscription:', checkError);
+        throw new Error('Failed to check subscription status');
+      }
+
       if (existingSubscription) {
-        throw new Error('Already subscribed to this creator');
+        console.log('Already subscribed to this creator');
+        throw new Error('You are already subscribed to this creator');
+      }
+
+      // Get plan details
+      const { data: plan, error: planError } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('id', planId)
+        .eq('creator_id', creatorId)
+        .eq('is_active', true)
+        .single();
+
+      if (planError || !plan) {
+        console.error('Error fetching plan:', planError);
+        throw new Error('Invalid subscription plan or plan not found');
+      }
+
+      // Check if user has enough balance
+      if (!wallet || wallet.keys_balance < plan.price_keys) {
+        console.error('Insufficient balance. Required:', plan.price_keys, 'Available:', wallet?.keys_balance || 0);
+        throw new Error(`Insufficient balance. You need ${plan.price_keys} Keys but only have ${wallet?.keys_balance || 0} Keys`);
       }
 
       // Calculate expiry date based on plan duration
@@ -64,7 +82,10 @@ export const useSubscriptions = () => {
         .select()
         .single();
 
-      if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) {
+        console.error('Error creating subscription:', subscriptionError);
+        throw new Error(`Failed to create subscription: ${subscriptionError.message}`);
+      }
 
       // Deduct from subscriber's wallet
       const newBalance = wallet.keys_balance - plan.price_keys;
@@ -73,7 +94,10 @@ export const useSubscriptions = () => {
         .update({ keys_balance: newBalance })
         .eq('user_id', user.id);
 
-      if (walletError) throw walletError;
+      if (walletError) {
+        console.error('Error updating subscriber wallet:', walletError);
+        throw new Error('Failed to update your wallet balance');
+      }
 
       // Add to creator's wallet
       const { data: creatorWallet, error: getCreatorWalletError } = await supabase
@@ -82,7 +106,10 @@ export const useSubscriptions = () => {
         .eq('user_id', creatorId)
         .maybeSingle();
 
-      if (getCreatorWalletError) throw getCreatorWalletError;
+      if (getCreatorWalletError) {
+        console.error('Error getting creator wallet:', getCreatorWalletError);
+        throw new Error('Failed to process payment to creator');
+      }
 
       if (!creatorWallet) {
         // Create wallet for creator if it doesn't exist
@@ -93,14 +120,20 @@ export const useSubscriptions = () => {
             keys_balance: plan.price_keys 
           });
 
-        if (createWalletError) throw createWalletError;
+        if (createWalletError) {
+          console.error('Error creating creator wallet:', createWalletError);
+          throw new Error('Failed to create creator wallet');
+        }
       } else {
         const { error: updateCreatorWalletError } = await supabase
           .from('wallets')
           .update({ keys_balance: (creatorWallet?.keys_balance || 0) + plan.price_keys })
           .eq('user_id', creatorId);
 
-        if (updateCreatorWalletError) throw updateCreatorWalletError;
+        if (updateCreatorWalletError) {
+          console.error('Error updating creator wallet:', updateCreatorWalletError);
+          throw new Error('Failed to pay creator');
+        }
       }
 
       // Record earning for creator
@@ -124,17 +157,26 @@ export const useSubscriptions = () => {
   };
 
   const unsubscribeFromCreator = async (creatorId: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      console.error('User not authenticated');
+      throw new Error('You must be logged in to unsubscribe');
+    }
     
     setLoading(true);
     try {
+      console.log('Attempting to unsubscribe from creator:', creatorId);
+
       const { error } = await supabase
         .from('subscriptions')
         .update({ is_active: false })
         .eq('subscriber_id', user.id)
         .eq('creator_id', creatorId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error unsubscribing from creator:', error);
+        throw new Error(`Failed to unsubscribe: ${error.message}`);
+      }
+      
       console.log('Successfully unsubscribed from creator');
     } catch (error) {
       console.error('Error unsubscribing from creator:', error);
@@ -145,9 +187,14 @@ export const useSubscriptions = () => {
   };
 
   const isSubscribed = async (creatorId: string): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      console.log('User not authenticated, cannot check subscription status');
+      return false;
+    }
     
     try {
+      console.log('Checking subscription status for creator:', creatorId);
+      
       const { data, error } = await supabase
         .from('subscriptions')
         .select('id')
@@ -157,8 +204,14 @@ export const useSubscriptions = () => {
         .gte('expires_at', new Date().toISOString())
         .maybeSingle();
 
-      if (error) throw error;
-      return !!data;
+      if (error) {
+        console.error('Error checking subscription status:', error);
+        return false;
+      }
+      
+      const isSubscribedResult = !!data;
+      console.log('Subscription status result:', isSubscribedResult);
+      return isSubscribedResult;
     } catch (error) {
       console.error('Error checking subscription status:', error);
       return false;
