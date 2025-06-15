@@ -22,6 +22,7 @@ interface Profile {
   services_offered?: string;
   verification_status: 'pending' | 'verified' | 'rejected';
   is_age_verified: boolean;
+  withdrawal_pin_hash?: string | null;
 }
 
 export const useProfile = () => {
@@ -59,7 +60,8 @@ export const useProfile = () => {
           user_type: data.user_type as 'creator' | 'consumer',
           gender: data.gender as 'male' | 'female' | 'non-binary',
           gender_preference: data.gender_preference as 'male' | 'female' | 'both',
-          verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
+          verification_status: data.verification_status as 'pending' | 'verified' | 'rejected',
+          withdrawal_pin_hash: data.withdrawal_pin_hash
         };
         setProfile(profileData);
       } else {
@@ -82,7 +84,6 @@ export const useProfile = () => {
     try {
       console.log('Creating profile for user:', user.id, profileData);
       
-      // Ensure required fields have default values
       const dataToInsert = {
         user_id: user.id,
         name: profileData.name || '',
@@ -101,7 +102,8 @@ export const useProfile = () => {
         subscription_fee: profileData.subscription_fee || 0,
         services_offered: profileData.services_offered || '',
         verification_status: 'pending',
-        is_age_verified: profileData.is_age_verified || false
+        is_age_verified: profileData.is_age_verified || false,
+        withdrawal_pin_hash: null
       };
 
       const { data, error } = await supabase
@@ -121,7 +123,8 @@ export const useProfile = () => {
         user_type: data.user_type as 'creator' | 'consumer',
         gender: data.gender as 'male' | 'female' | 'non-binary',
         gender_preference: data.gender_preference as 'male' | 'female' | 'both',
-        verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
+        verification_status: data.verification_status as 'pending' | 'verified' | 'rejected',
+        withdrawal_pin_hash: data.withdrawal_pin_hash
       };
       
       setProfile(newProfile);
@@ -161,7 +164,8 @@ export const useProfile = () => {
         user_type: data.user_type as 'creator' | 'consumer',
         gender: data.gender as 'male' | 'female' | 'non-binary',
         gender_preference: data.gender_preference as 'male' | 'female' | 'both',
-        verification_status: data.verification_status as 'pending' | 'verified' | 'rejected'
+        verification_status: data.verification_status as 'pending' | 'verified' | 'rejected',
+        withdrawal_pin_hash: data.withdrawal_pin_hash
       };
       
       setProfile(updatedProfile);

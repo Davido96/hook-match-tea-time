@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { nigerianStates } from "@/data/nigerianLocations";
 import AvatarUpload from "./AvatarUpload";
+import PinManagement from "./PinManagement";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -269,6 +269,11 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
                 />
               </div>
             </div>
+          )}
+
+          {/* Security Settings */}
+          {profile.user_type === 'creator' && (
+            <PinManagement />
           )}
 
           {/* Action Buttons */}

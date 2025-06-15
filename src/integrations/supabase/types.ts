@@ -285,6 +285,7 @@ export type Database = {
           location_city: string
           location_state: string
           name: string
+          pin_last_updated_at: string | null
           search_radius_km: number
           services_offered: string | null
           subscription_fee: number | null
@@ -292,6 +293,7 @@ export type Database = {
           user_id: string
           user_type: string
           verification_status: string | null
+          withdrawal_pin_hash: string | null
         }
         Insert: {
           age: number
@@ -308,6 +310,7 @@ export type Database = {
           location_city: string
           location_state: string
           name: string
+          pin_last_updated_at?: string | null
           search_radius_km?: number
           services_offered?: string | null
           subscription_fee?: number | null
@@ -315,6 +318,7 @@ export type Database = {
           user_id: string
           user_type: string
           verification_status?: string | null
+          withdrawal_pin_hash?: string | null
         }
         Update: {
           age?: number
@@ -331,6 +335,7 @@ export type Database = {
           location_city?: string
           location_state?: string
           name?: string
+          pin_last_updated_at?: string | null
           search_radius_km?: number
           services_offered?: string | null
           subscription_fee?: number | null
@@ -338,6 +343,7 @@ export type Database = {
           user_id?: string
           user_type?: string
           verification_status?: string | null
+          withdrawal_pin_hash?: string | null
         }
         Relationships: []
       }
@@ -707,6 +713,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_withdrawal_pin: {
+        Args: { pin: string }
+        Returns: undefined
+      }
       update_user_presence: {
         Args: { user_uuid: string; online_status?: boolean }
         Returns: undefined
@@ -714,6 +724,10 @@ export type Database = {
       update_user_streak: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      verify_withdrawal_pin: {
+        Args: { pin: string }
+        Returns: boolean
       }
     }
     Enums: {

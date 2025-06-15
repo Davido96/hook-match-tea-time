@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, Wallet } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { usePin } from "@/hooks/usePin";
+import PinVerificationModal from "./PinVerificationModal";
 
 interface WithdrawalModalProps {
   isOpen: boolean;
@@ -26,13 +28,31 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // New states for PIN verification flow
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [withdrawalData, setWithdrawalData] = useState<any>(null);
+
   const { wallet, refetch: refetchWallet } = useWallet();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { toast } = useToast();
+  const { verifyPin, loading: pinLoading } = usePin();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setPinError(null);
+
+    if (!profile) {
+      setError("Profile is still loading. Please try again in a moment.");
+      return;
+    }
+
+    if (!profile.withdrawal_pin_hash) {
+      setError("Please set up a withdrawal PIN in your profile settings before making a withdrawal.");
+      return;
+    }
 
     const withdrawalAmount = parseInt(amount);
 
@@ -61,41 +81,56 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
       return;
     }
 
+    // Store data and open PIN modal
+    setWithdrawalData({
+      user_id: user.id,
+      amount: withdrawalAmount,
+      bank_name: bankName.trim(),
+      account_number: accountNumber.trim(),
+      account_name: accountName.trim(),
+      notes: notes.trim() || null,
+      status: 'pending'
+    });
+    setIsPinModalOpen(true);
+  };
+  
+  const handlePinVerifyAndWithdraw = async (pin: string) => {
+    setPinError(null);
+    const isPinValid = await verifyPin(pin);
+
+    if (!isPinValid) {
+      setPinError("Invalid PIN. Please try again.");
+      return;
+    }
+
+    if (!withdrawalData) {
+      setPinError("An error occurred. Please close this and try again.");
+      return;
+    }
+
     setLoading(true);
     try {
       // Create withdrawal request
       const { data: withdrawal, error: withdrawalError } = await supabase
         .from('withdrawals')
-        .insert({
-          user_id: user.id,
-          amount: withdrawalAmount,
-          bank_name: bankName.trim(),
-          account_number: accountNumber.trim(),
-          account_name: accountName.trim(),
-          notes: notes.trim() || null,
-          status: 'pending'
-        })
+        .insert(withdrawalData)
         .select()
         .single();
 
-      if (withdrawalError) {
-        throw withdrawalError;
-      }
-
-      // Update wallet balance (put withdrawal amount on hold)
-      const newBalance = wallet.keys_balance - withdrawalAmount;
+      if (withdrawalError) throw withdrawalError;
+      
+      // Update wallet balance
+      const newBalance = wallet!.keys_balance - withdrawalData.amount;
       const { error: walletError } = await supabase
         .from('wallets')
         .update({ keys_balance: newBalance })
-        .eq('user_id', user.id);
+        .eq('user_id', user!.id);
 
-      if (walletError) {
-        throw walletError;
-      }
+      if (walletError) throw walletError;
 
       toast({
         title: "Withdrawal Requested",
-        description: "Your withdrawal request has been submitted successfully. It will be processed within 1-3 business days."
+        description: "Your withdrawal request has been submitted successfully."
       });
 
       // Reset form
@@ -105,127 +140,140 @@ const WithdrawalModal = ({ isOpen, onClose }: WithdrawalModalProps) => {
       setAccountName("");
       setNotes("");
       
-      // Refresh wallet
       await refetchWallet();
+      setIsPinModalOpen(false);
       onClose();
     } catch (err: any) {
       console.error('Withdrawal error:', err);
       setError(err.message || "Failed to request withdrawal");
+      setIsPinModalOpen(false);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Wallet className="w-5 h-5" />
-            Request Withdrawal
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet className="w-5 h-5" />
+              Request Withdrawal
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          {wallet && (
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <DollarSign className="w-4 h-4" />
-                Available Balance: {wallet.keys_balance} Keys
+          <div className="space-y-4">
+            {wallet && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <DollarSign className="w-4 h-4" />
+                  Available Balance: {wallet.keys_balance} Keys
+                </div>
               </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="amount">Amount (Keys)*</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="Minimum 1000 Keys"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                min="1000"
-                max={wallet?.keys_balance || 0}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="bankName">Bank Name*</Label>
-              <Input
-                id="bankName"
-                placeholder="e.g., First Bank Nigeria"
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="accountNumber">Account Number*</Label>
-              <Input
-                id="accountNumber"
-                placeholder="10-digit account number"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                maxLength={10}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="accountName">Account Name*</Label>
-              <Input
-                id="accountName"
-                placeholder="Full name as on bank account"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="notes">Additional Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Any additional information..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-                disabled={loading}
-              />
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
             )}
 
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1" disabled={loading}>
-                {loading ? "Processing..." : "Request Withdrawal"}
-              </Button>
-            </div>
-          </form>
+            <form onSubmit={handleDetailsSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="amount">Amount (Keys)*</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="Minimum 1000 Keys"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="1000"
+                  max={wallet?.keys_balance || 0}
+                  required
+                  disabled={loading || pinLoading}
+                />
+              </div>
 
-          <div className="text-xs text-gray-500">
-            <p>• Minimum withdrawal: 1000 Keys</p>
-            <p>• Processing time: 1-3 business days</p>
-            <p>• Withdrawal fees may apply</p>
-            <p>• Keys will be deducted immediately upon request</p>
+              <div>
+                <Label htmlFor="bankName">Bank Name*</Label>
+                <Input
+                  id="bankName"
+                  placeholder="e.g., First Bank Nigeria"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  required
+                  disabled={loading || pinLoading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="accountNumber">Account Number*</Label>
+                <Input
+                  id="accountNumber"
+                  placeholder="10-digit account number"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  maxLength={10}
+                  required
+                  disabled={loading || pinLoading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="accountName">Account Name*</Label>
+                <Input
+                  id="accountName"
+                  placeholder="Full name as on bank account"
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  required
+                  disabled={loading || pinLoading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Any additional information..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  disabled={loading || pinLoading}
+                />
+              </div>
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={loading || pinLoading}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1" disabled={loading || pinLoading}>
+                  {loading ? "Processing..." : "Request Withdrawal"}
+                </Button>
+              </div>
+            </form>
+
+            <div className="text-xs text-gray-500">
+              <p>• Minimum withdrawal: 1000 Keys</p>
+              <p>• Processing time: 1-3 business days</p>
+              <p>• A 4-digit PIN is required for withdrawals.</p>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      
+      <PinVerificationModal
+        isOpen={isPinModalOpen}
+        onClose={() => {
+          setIsPinModalOpen(false);
+          setPinError(null);
+        }}
+        onVerify={handlePinVerifyAndWithdraw}
+        loading={loading || pinLoading}
+        error={pinError}
+      />
+    </>
   );
 };
 
