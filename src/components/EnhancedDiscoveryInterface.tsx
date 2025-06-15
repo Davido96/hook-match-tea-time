@@ -255,6 +255,27 @@ const EnhancedDiscoveryInterface = () => {
     );
   }
 
+  // Convert DiscoveryUser to the format expected by CardStackPreview and EnhancedSwipeCard
+  const convertedUsers = users.map(user => ({
+    id: parseInt(user.id),
+    name: user.name,
+    age: user.age,
+    bio: user.bio,
+    image: user.avatar_url,
+    interests: user.interests,
+    distance: `${Math.floor(Math.random() * 10) + 1} km away`,
+    location_city: user.location_city,
+    location_state: user.location_state,
+    user_type: user.user_type,
+    verification_status: user.verification_status,
+    subscription_fee: user.subscription_fee,
+    last_active: user.last_active,
+    follower_count: Math.floor(Math.random() * 5000) + 100,
+    subscriber_count: user.user_type === 'creator' ? Math.floor(Math.random() * 1000) + 50 : undefined
+  }));
+
+  const currentConvertedUser = convertedUsers[currentIndex];
+
   return (
     <div className="max-w-sm mx-auto space-y-6">
       {/* Usage Stats for Premium Users */}
@@ -269,17 +290,10 @@ const EnhancedDiscoveryInterface = () => {
 
       {/* Card Stack */}
       <div className="relative h-[600px]">
-        <CardStackPreview users={users} currentIndex={currentIndex} />
+        <CardStackPreview users={convertedUsers} currentIndex={currentIndex} />
         
         <EnhancedSwipeCard
-          user={{
-            ...currentUser,
-            id: parseInt(currentUser.id),
-            image: currentUser.avatar_url,
-            distance: `${Math.floor(Math.random() * 10) + 1} km away`,
-            follower_count: Math.floor(Math.random() * 5000) + 100,
-            subscriber_count: currentUser.user_type === 'creator' ? Math.floor(Math.random() * 1000) + 50 : undefined
-          }}
+          user={currentConvertedUser}
           onSwipe={handleSwipe}
           onSuperLike={handleSuperLike}
           onViewProfile={() => {

@@ -9,6 +9,16 @@ const Index = () => {
   const { user } = useAuth();
   const { profile, loading } = useProfile();
 
+  const handleGetStarted = () => {
+    // This is handled by the landing page itself
+    console.log('Get started clicked');
+  };
+
+  const handleProfileComplete = () => {
+    // Profile setup completion is handled by the component itself
+    console.log('Profile setup completed');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -18,11 +28,11 @@ const Index = () => {
   }
 
   if (!user) {
-    return <LandingPage />;
+    return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
   if (!profile) {
-    return <ProfileSetup />;
+    return <ProfileSetup onComplete={handleProfileComplete} />;
   }
 
   return (

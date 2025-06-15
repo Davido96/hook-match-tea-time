@@ -91,7 +91,14 @@ export const useUserSubscription = () => {
         return;
       }
 
-      setSubscription(data);
+      if (data) {
+        // Type assertion to ensure tier is properly typed
+        const typedSubscription: UserSubscription = {
+          ...data,
+          tier: data.tier as 'free' | 'basic' | 'pro' | 'vip'
+        };
+        setSubscription(typedSubscription);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -222,7 +229,12 @@ export const useUserSubscription = () => {
         })
         .eq('user_id', user.id);
 
-      setSubscription(data);
+      // Type assertion for the new subscription
+      const typedSubscription: UserSubscription = {
+        ...data,
+        tier: data.tier as 'free' | 'basic' | 'pro' | 'vip'
+      };
+      setSubscription(typedSubscription);
       return { success: true, error: null };
     } catch (error) {
       console.error('Error upgrading tier:', error);
