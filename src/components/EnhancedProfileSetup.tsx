@@ -46,6 +46,15 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
 
   const totalSteps = formData.userType === 'creator' ? 5 : 4;
 
+  // Available interests for selection
+  const availableInterests = [
+    "Travel", "Photography", "Music", "Fitness", "Cooking", "Reading",
+    "Art", "Dancing", "Hiking", "Movies", "Coffee", "Wine", "Gaming",
+    "Yoga", "Running", "Dogs", "Cats", "Nature", "Fashion", "Technology",
+    "Sports", "Books", "Food", "Adventure", "Beach", "Mountains", "Pets",
+    "Comedy", "Meditation", "Business", "Learning", "Socializing"
+  ];
+
   // Nigerian states - simplified list
   const nigerianStates = [
     "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", "Cross River", "Delta",
