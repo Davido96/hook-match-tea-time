@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, Share, Lock, Play, Plus, Eye, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { usePostLikes } from "@/hooks/usePostLikes";
 import CreatePostModal from "./CreatePostModal";
 import ExclusiveContentModal from "./ExclusiveContentModal";
@@ -38,9 +38,11 @@ interface ProfilePostTimelineProps {
 
 const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptionStatusChange }: ProfilePostTimelineProps) => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showContentModal, setShowContentModal] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
@@ -90,9 +92,22 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
     }
   };
 
+  const handleCreatePostClick = () => {
+    if (profile?.user_type !== 'creator') {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setShowCreatePost(true);
+  };
+
   const handlePostCreated = () => {
     fetchPosts();
     setShowCreatePost(false);
+  };
+
+  const handleUpgradeSuccess = () => {
+    fetchPosts();
+    setShowUpgradeModal(false);
   };
 
   const handlePostClick = (post: Post) => {
@@ -146,12 +161,12 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
         <Card className="mb-6">
           <CardContent className="p-4">
             <Button
-              onClick={() => setShowCreatePost(true)}
+              onClick={handleCreatePostClick}
               className="w-full gradient-coral text-white"
               variant="outline"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create New Post
+              {profile?.user_type === 'creator' ? 'Create New Post' : 'Upgrade to Creator to Post'}
             </Button>
           </CardContent>
         </Card>
@@ -228,6 +243,14 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
           isOpen={showCreatePost}
           onClose={() => setShowCreatePost(false)}
           onPostCreated={handlePostCreated}
+        />
+      )}
+
+      {showUpgradeModal && (
+        <UpgradeToCreatorModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          onUpgradeSuccess={handleUpgradeSuccess}
         />
       )}
 

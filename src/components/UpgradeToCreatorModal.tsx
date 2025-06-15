@@ -17,6 +17,13 @@ interface UpgradeToCreatorModalProps {
   onUpgradeSuccess: () => void;
 }
 
+interface UpgradeResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+  new_balance?: number;
+}
+
 const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToCreatorModalProps) => {
   const { user } = useAuth();
   const { wallet, refetch: refetchWallet } = useWallet();
@@ -25,7 +32,7 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const upgradeCost = 2;
+  const upgradeCost = 1;
   const hasEnoughKeys = wallet && wallet.keys_balance >= upgradeCost;
 
   const handleUpgrade = async () => {
@@ -35,7 +42,7 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
     }
 
     if (!hasEnoughKeys) {
-      setError("You need at least 2 Keys to upgrade to Creator status");
+      setError("You need at least 1 Key to upgrade to Creator status");
       return;
     }
 
@@ -55,8 +62,10 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
 
       console.log('Upgrade result:', data);
 
-      if (!data.success) {
-        throw new Error(data.error || 'Upgrade failed');
+      const upgradeResult = data as UpgradeResponse;
+
+      if (!upgradeResult.success) {
+        throw new Error(upgradeResult.error || 'Upgrade failed');
       }
 
       // Refresh wallet and profile data
@@ -67,7 +76,7 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
 
       toast({
         title: "Upgrade Successful! 🎉",
-        description: data.message || "You are now a Creator! You can start creating and sharing content.",
+        description: upgradeResult.message || "You are now a Creator! You can start creating and sharing content.",
       });
 
       onUpgradeSuccess();
@@ -94,9 +103,9 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
           {/* Cost Display */}
           <div className="text-center bg-gradient-to-r from-hooks-coral/10 to-hooks-pink/10 rounded-lg p-4">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="text-2xl font-bold">2</span>
+              <span className="text-2xl font-bold">1</span>
               <HookLogo size="sm" />
-              <span className="text-sm text-gray-600">Keys</span>
+              <span className="text-sm text-gray-600">Key</span>
             </div>
             <p className="text-sm text-gray-600">One-time upgrade cost</p>
           </div>
@@ -144,7 +153,7 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
           {!hasEnoughKeys && (
             <Alert>
               <AlertDescription>
-                You need {upgradeCost - (wallet?.keys_balance || 0)} more Keys to upgrade. 
+                You need {upgradeCost - (wallet?.keys_balance || 0)} more Key to upgrade. 
                 You can purchase Keys in your wallet.
               </AlertDescription>
             </Alert>

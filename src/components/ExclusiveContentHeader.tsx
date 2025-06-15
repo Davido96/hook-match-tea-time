@@ -8,14 +8,23 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ExclusiveContentHeaderProps {
   onPostCreated?: () => void;
+  onBack?: () => void;
+  onCreatePost?: () => void;
+  userType?: string;
 }
 
-const ExclusiveContentHeader = ({ onPostCreated }: ExclusiveContentHeaderProps) => {
+const ExclusiveContentHeader = ({ onPostCreated, onBack, onCreatePost, userType }: ExclusiveContentHeaderProps) => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const { profile } = useProfile();
   const { toast } = useToast();
 
   const handleCreatePostClick = () => {
+    // If onCreatePost is provided, use it (for ExclusiveContentPage)
+    if (onCreatePost) {
+      onCreatePost();
+      return;
+    }
+
     // Verify user is a creator before allowing post creation
     if (profile?.user_type !== 'creator') {
       toast({
