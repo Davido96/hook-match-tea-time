@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
 import { useDiscoverUsers } from "@/hooks/useDiscoverUsers";
+import { useLikes } from "@/hooks/useLikes";
+import { useMatches } from "@/hooks/useMatches";
 import UnifiedWalletModal from "@/components/UnifiedWalletModal";
 import TipModal from "@/components/TipModal";
 import ProfileButton from "@/components/ProfileButton";
@@ -33,6 +35,8 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   const { profile } = useProfile();
   const { wallet } = useWallet();
   const { users: realUsers, loading: usersLoading, error: usersError, refetch } = useDiscoverUsers();
+  const { createLike, checkMutualLike, loading: likesLoading } = useLikes();
+  const { matches: realMatches, refetch: refetchMatches } = useMatches();
   const { toast } = useToast();
   
   // Modals state
@@ -112,9 +116,11 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     setCurrentUserIndex(0);
   }, [filters, realUsers]);
 
-  const handleSwipe = (direction: 'left' | 'right') => {
+  const handleSwipe = async (direction: 'left' | 'right') => {
     const currentUser = filteredUsers[currentUserIndex];
     if (!currentUser) return;
+
+    console.log(`Swiping ${direction} on user:`, currentUser.name, 'user_id:', currentUser.user_id);
 
     // Add current index to undo stack
     setUndoStack(prev => [...prev, currentUserIndex].slice(-5)); // Keep last 5 for undo
@@ -123,18 +129,56 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     setTodaySwipes(prev => prev + 1);
     
     if (direction === 'right') {
-      // It's a match! Add to matches
-      onMatchAdded(currentUser);
-      setCurrentMatch(currentUser);
-      setShowMatchModal(true);
-      setTodayMatches(prev => prev + 1);
-      
-      toast({
-        title: "It's a Match! 🎉",
-        description: `You matched with ${currentUser.name}!`,
-      });
-      
-      console.log(`Matched with ${currentUser.name}!`);
+      try {
+        console.log('Creating like for user:', currentUser.user_id);
+        const success = await createLike(currentUser.user_id, false);
+        
+        if (success) {
+          console.log('Like created successfully, checking for mutual like...');
+          // Check if this creates a match
+          const isMatch = await checkMutualLike(currentUser.user_id);
+          
+          if (isMatch) {
+            console.log('🎉 MUTUAL MATCH DETECTED!', currentUser.name);
+            
+            // Refresh matches to get the latest from database
+            await refetchMatches();
+            
+            // Show match modal
+            setCurrentMatch(currentUser);
+            setShowMatchModal(true);
+            setTodayMatches(prev => prev + 1);
+            
+            // Add to local matches for immediate UI update
+            onMatchAdded(currentUser);
+            
+            toast({
+              title: "It's a Match! 🎉",
+              description: `You matched with ${currentUser.name}!`,
+            });
+          } else {
+            console.log('Like sent, but no mutual match yet');
+            toast({
+              title: "Like Sent! 💕",
+              description: `Your like has been sent to ${currentUser.name}`,
+            });
+          }
+        } else {
+          console.error('Failed to create like');
+          toast({
+            title: "Error",
+            description: "Failed to send like. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error in handleSwipe:', error);
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
     
     // Move to next user
@@ -146,7 +190,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     }
   };
 
-  const handleSuperLike = () => {
+  const handleSuperLike = async () => {
     if (superLikesRemaining <= 0) {
       toast({
         title: "No Super Likes Left",
@@ -159,26 +203,61 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     const currentUser = filteredUsers[currentUserIndex];
     if (!currentUser) return;
 
-    setSuperLikesRemaining(prev => prev - 1);
-    setUndoStack(prev => [...prev, currentUserIndex].slice(-5));
-    setTodaySwipes(prev => prev + 1);
-    
-    // Super likes have higher match probability
-    onMatchAdded(currentUser);
-    setCurrentMatch(currentUser);
-    setShowMatchModal(true);
-    setTodayMatches(prev => prev + 1);
-    
-    toast({
-      title: "Super Like Sent! ⚡",
-      description: `${currentUser.name} will know you super liked them!`,
-    });
+    console.log('Super liking user:', currentUser.name, 'user_id:', currentUser.user_id);
 
-    // Move to next user
-    if (currentUserIndex < filteredUsers.length - 1) {
-      setCurrentUserIndex(prev => prev + 1);
-    } else {
-      setCurrentUserIndex(0);
+    try {
+      const success = await createLike(currentUser.user_id, true); // true for super like
+      
+      if (success) {
+        setSuperLikesRemaining(prev => prev - 1);
+        setUndoStack(prev => [...prev, currentUserIndex].slice(-5));
+        setTodaySwipes(prev => prev + 1);
+        
+        // Check for mutual match
+        const isMatch = await checkMutualLike(currentUser.user_id);
+        
+        if (isMatch) {
+          console.log('🎉 SUPER LIKE CREATED A MATCH!', currentUser.name);
+          
+          // Refresh matches to get the latest from database
+          await refetchMatches();
+          
+          setCurrentMatch(currentUser);
+          setShowMatchModal(true);
+          setTodayMatches(prev => prev + 1);
+          onMatchAdded(currentUser);
+          
+          toast({
+            title: "Super Match! ⚡",
+            description: `Your super like matched with ${currentUser.name}!`,
+          });
+        } else {
+          toast({
+            title: "Super Like Sent! ⚡",
+            description: `${currentUser.name} will know you super liked them!`,
+          });
+        }
+
+        // Move to next user
+        if (currentUserIndex < filteredUsers.length - 1) {
+          setCurrentUserIndex(prev => prev + 1);
+        } else {
+          setCurrentUserIndex(0);
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to send super like. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleSuperLike:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -224,7 +303,10 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     setCurrentMatch(null);
   };
 
-  const handleStartChatting = () => {
+  const handleStartChatting = async () => {
+    console.log('Starting chat, refreshing matches first...');
+    // Refresh matches before navigating to ensure latest data
+    await refetchMatches();
     setShowMatchModal(false);
     setCurrentMatch(null);
     setCurrentView('messages');
@@ -303,9 +385,9 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
                 className="text-white hover:bg-white/20 relative"
               >
                 <MessageCircle className="w-5 h-5" />
-                {matches.length > 0 && (
+                {realMatches.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {matches.length}
+                    {realMatches.length}
                   </span>
                 )}
               </Button>
@@ -363,7 +445,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
             todaySwipes={todaySwipes}
             todayMatches={todayMatches}
             streakDays={streakDays}
-            totalMatches={matches.length}
+            totalMatches={realMatches.length}
           />
 
           {/* Card Stack */}
@@ -416,13 +498,13 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
             onUndo={handleUndo}
             canUndo={undoStack.length > 0}
             superLikesRemaining={superLikesRemaining}
-            disabled={currentUserIndex >= filteredUsers.length}
+            disabled={currentUserIndex >= filteredUsers.length || likesLoading}
           />
 
-          {/* Discovery Counter - Updated to show user type variety */}
+          {/* Discovery Counter - Updated to show real match count */}
           <div className="text-center mt-6">
             <p className="text-white text-sm">
-              {matches.length} matches • {Math.max(0, filteredUsers.length - currentUserIndex)} profiles remaining
+              {realMatches.length} matches • {Math.max(0, filteredUsers.length - currentUserIndex)} profiles remaining
             </p>
             {superLikesRemaining > 0 && (
               <p className="text-white/80 text-xs mt-1">
