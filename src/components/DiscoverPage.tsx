@@ -81,9 +81,15 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
         return false;
       }
       
-      // Location filter
-      if (filters.location && !user.location?.toLowerCase().includes(filters.location.toLowerCase())) {
-        return false;
+      // Location filter - improved to handle state and city filtering
+      if (filters.location) {
+        const userLocation = user.location?.toLowerCase() || '';
+        const filterLocation = filters.location.toLowerCase();
+        
+        // Check if user location contains the filter location
+        if (!userLocation.includes(filterLocation)) {
+          return false;
+        }
       }
       
       // Age filter

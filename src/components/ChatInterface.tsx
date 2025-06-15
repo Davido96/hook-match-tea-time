@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import HookLogo from "@/components/HookLogo";
 import { useUserPresence } from "@/hooks/useUserPresence";
 
@@ -14,6 +15,7 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
+  const navigate = useNavigate();
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([
@@ -45,6 +47,10 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
     
     setMessages([...messages, newMessage]);
     setMessage("");
+  };
+
+  const handleProfileClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
   };
 
   if (!selectedMatch) {
@@ -92,12 +98,28 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={match.image} alt={match.name} />
-                          <AvatarFallback>{match.name[0]}</AvatarFallback>
-                        </Avatar>
+                        <div 
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProfileClick(match.user_id || match.id);
+                          }}
+                        >
+                          <Avatar className="w-16 h-16">
+                            <AvatarImage src={match.image} alt={match.name} />
+                            <AvatarFallback>{match.name[0]}</AvatarFallback>
+                          </Avatar>
+                        </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{match.name}</h3>
+                          <h3 
+                            className="font-semibold text-lg cursor-pointer hover:text-hooks-coral transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProfileClick(match.user_id || match.id);
+                            }}
+                          >
+                            {match.name}
+                          </h3>
                           <p className="text-gray-600">{match.bio}</p>
                           <p className="text-sm text-gray-500">{status.statusText}</p>
                         </div>
@@ -127,12 +149,22 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
             <Button variant="ghost" size="sm" onClick={() => setSelectedMatch(null)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={selectedMatch.image} alt={selectedMatch.name} />
-              <AvatarFallback>{selectedMatch.name[0]}</AvatarFallback>
-            </Avatar>
+            <div 
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => handleProfileClick(selectedMatch.user_id || selectedMatch.id)}
+            >
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={selectedMatch.image} alt={selectedMatch.name} />
+                <AvatarFallback>{selectedMatch.name[0]}</AvatarFallback>
+              </Avatar>
+            </div>
             <div>
-              <h2 className="font-semibold">{selectedMatch.name}</h2>
+              <h2 
+                className="font-semibold cursor-pointer hover:text-hooks-coral transition-colors"
+                onClick={() => handleProfileClick(selectedMatch.user_id || selectedMatch.id)}
+              >
+                {selectedMatch.name}
+              </h2>
               <p className={`text-sm ${
                 matchStatus === 'Online now' ? 'text-green-500' :
                 matchStatus === 'Recently active' ? 'text-yellow-600' :

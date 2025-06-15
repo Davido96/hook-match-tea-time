@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { getAllStates, getCitiesByState } from "@/data/nigerianLocations";
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -15,12 +15,38 @@ interface FilterModalProps {
     ageRange: [number, number];
     gender: string;
     location: string;
+    userType: string;
   };
   onApply: (filters: any) => void;
 }
 
 const FilterModal = ({ isOpen, onClose, filters, onApply }: FilterModalProps) => {
   const [localFilters, setLocalFilters] = useState(filters);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
+
+  const states = getAllStates();
+
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    setSelectedCity(""); // Reset city when state changes
+    
+    if (state === "all") {
+      setLocalFilters({ ...localFilters, location: "" });
+    } else {
+      setLocalFilters({ ...localFilters, location: state });
+    }
+  };
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    
+    if (city === "all") {
+      setLocalFilters({ ...localFilters, location: selectedState });
+    } else {
+      setLocalFilters({ ...localFilters, location: `${city}, ${selectedState}` });
+    }
+  };
 
   const handleApply = () => {
     onApply(localFilters);
@@ -31,10 +57,15 @@ const FilterModal = ({ isOpen, onClose, filters, onApply }: FilterModalProps) =>
       distance: 50,
       ageRange: [18, 35] as [number, number],
       gender: 'both',
-      location: ''
+      location: '',
+      userType: 'both'
     };
     setLocalFilters(defaultFilters);
+    setSelectedState("");
+    setSelectedCity("");
   };
+
+  const availableCities = selectedState && selectedState !== "all" ? getCitiesByState(selectedState) : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -93,15 +124,61 @@ const FilterModal = ({ isOpen, onClose, filters, onApply }: FilterModalProps) =>
             </Select>
           </div>
 
-          {/* Location */}
+          {/* User Type */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Location</Label>
-            <Input
-              placeholder="Enter city or state"
-              value={localFilters.location}
-              onChange={(e) => setLocalFilters({ ...localFilters, location: e.target.value })}
-            />
+            <Label className="text-sm font-medium mb-2 block">User Type</Label>
+            <Select
+              value={localFilters.userType}
+              onValueChange={(value) => setLocalFilters({ ...localFilters, userType: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Everyone</SelectItem>
+                <SelectItem value="creator">Creators</SelectItem>
+                <SelectItem value="consumer">Members</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Location - State */}
+          <div>
+            <Label className="text-sm font-medium mb-2 block">State</Label>
+            <Select value={selectedState} onValueChange={handleStateChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a state" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All States</SelectItem>
+                {states.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Location - City */}
+          {selectedState && selectedState !== "all" && (
+            <div>
+              <Label className="text-sm font-medium mb-2 block">City</Label>
+              <Select value={selectedCity} onValueChange={handleCityChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a city" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Cities in {selectedState}</SelectItem>
+                  {availableCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex space-x-4 pt-4">
