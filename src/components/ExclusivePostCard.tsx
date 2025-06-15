@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, Play } from "lucide-react";
 import { usePostLikes } from "@/hooks/usePostLikes";
+import { usePostCommentCount } from "@/hooks/usePostCommentCount";
 import HookLogo from "@/components/HookLogo";
 
 interface ExclusivePost {
@@ -40,6 +41,7 @@ const ExclusivePostCard = ({
   currentUserId 
 }: ExclusivePostCardProps) => {
   const { likeCount, isLiked, loading: likeLoading, toggleLike } = usePostLikes(post.id);
+  const { commentCount } = usePostCommentCount(post.id);
 
   return (
     <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
@@ -126,7 +128,8 @@ const ExclusivePostCard = ({
               className="text-gray-600"
               onClick={(e) => onCommentsClick(post.id, e)}
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4 mr-1" />
+              <span className="text-sm">{commentCount}</span>
             </Button>
           </div>
           {post.creator_id !== currentUserId && (
