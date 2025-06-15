@@ -37,7 +37,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   const { profile } = useProfile();
   const { wallet } = useWallet();
   const { users: realUsers, loading: usersLoading, error: usersError, refetch } = useDiscoverUsers();
-  const { createLike, checkMutualLike, loading: likesLoading } = useLikes();
+  const { createLike, checkMutualLike, checkExistingMatch, loading: likesLoading } = useLikes();
   const { matches: realMatches, refetch: refetchMatches } = useMatches();
   const { count: incomingLikesCount } = useIncomingLikes();
   const { toast } = useToast();
@@ -133,7 +133,25 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     
     if (direction === 'right') {
       try {
-        console.log('💕 Creating like for user:', currentUser.user_id);
+        console.log('💕 Processing like for user:', currentUser.user_id);
+        
+        // Check if we already have a match first
+        const hasExistingMatch = await checkExistingMatch(currentUser.user_id);
+        if (hasExistingMatch) {
+          console.log('ℹ️ Already matched with this user');
+          toast({
+            title: "Already Matched! 🎉",
+            description: `You already have a match with ${currentUser.name}! Check your messages.`,
+          });
+          // Still move to next user
+          if (currentUserIndex < filteredUsers.length - 1) {
+            setCurrentUserIndex(prev => prev + 1);
+          } else {
+            setCurrentUserIndex(0);
+          }
+          return;
+        }
+        
         const success = await createLike(currentUser.user_id, false);
         
         if (success) {
@@ -175,12 +193,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
             });
           }
         } else {
-          console.error('❌ Failed to create like');
-          toast({
-            title: "Error",
-            description: "Failed to send like. Please try again.",
-            variant: "destructive"
-          });
+          console.log('❌ Failed to create like, not moving to next user');
           return; // Don't move to next user if like failed
         }
       } catch (error) {
@@ -219,6 +232,24 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     console.log('⚡ Super liking user:', currentUser.name, 'user_id:', currentUser.user_id);
 
     try {
+      // Check if we already have a match first
+      const hasExistingMatch = await checkExistingMatch(currentUser.user_id);
+      if (hasExistingMatch) {
+        console.log('ℹ️ Already matched with this user');
+        toast({
+          title: "Already Matched! 🎉",
+          description: `You already have a match with ${currentUser.name}! Check your messages.`,
+        });
+        // Still move to next user and consume super like
+        setSuperLikesRemaining(prev => prev - 1);
+        if (currentUserIndex < filteredUsers.length - 1) {
+          setCurrentUserIndex(prev => prev + 1);
+        } else {
+          setCurrentUserIndex(0);
+        }
+        return;
+      }
+
       const success = await createLike(currentUser.user_id, true); // true for super like
       
       if (success) {

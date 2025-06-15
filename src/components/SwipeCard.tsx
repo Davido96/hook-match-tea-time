@@ -28,7 +28,7 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
   const [currentX, setCurrentX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { createLike, checkMutualLike, loading: likesLoading } = useLikes();
+  const { createLike, checkMutualLike, checkExistingMatch, loading: likesLoading } = useLikes();
 
   // Disable interactions while processing
   const isDisabled = isProcessing || likesLoading;
@@ -40,7 +40,7 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
     }
 
     if (direction === 'right') {
-      console.log('💕 Creating like for user:', {
+      console.log('💕 Processing right swipe for user:', {
         name: user.name,
         user_id: user.user_id,
         numeric_id: user.id
@@ -49,6 +49,15 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
       setIsProcessing(true);
       
       try {
+        // First check if we already have a match
+        const hasExistingMatch = await checkExistingMatch(user.user_id);
+        if (hasExistingMatch) {
+          console.log('ℹ️ Already matched with this user, skipping like creation');
+          setIsProcessing(false);
+          onSwipe(direction); // Still process the swipe to move to next user
+          return;
+        }
+
         // Use the UUID user_id, not the numeric id
         const success = await createLike(user.user_id, false);
         

@@ -14,6 +14,32 @@ export const useLikes = () => {
     return uuidRegex.test(id);
   };
 
+  const checkExistingMatch = async (recipientId: string): Promise<boolean> => {
+    if (!user || !validateUUID(recipientId) || !validateUUID(user.id)) {
+      return false;
+    }
+
+    try {
+      // Check if a match already exists between the two users
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .select('id')
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${recipientId}),and(user1_id.eq.${recipientId},user2_id.eq.${user.id})`)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (matchError) {
+        console.error('❌ Error checking for existing match:', matchError);
+        return false;
+      }
+
+      return matchData !== null;
+    } catch (error) {
+      console.error('❌ Error in checkExistingMatch:', error);
+      return false;
+    }
+  };
+
   const createLike = async (recipientId: string, isSuperLike: boolean = false, retryCount: number = 0): Promise<boolean> => {
     if (!user) {
       console.error('❌ User not authenticated');
@@ -39,6 +65,14 @@ export const useLikes = () => {
     if (!validateUUID(user.id)) {
       console.error('❌ Sender ID is not a valid UUID:', user.id);
       toast.error('Authentication error');
+      return false;
+    }
+
+    // Check for existing match first
+    const hasExistingMatch = await checkExistingMatch(recipientId);
+    if (hasExistingMatch) {
+      console.log('ℹ️ Already matched with this user');
+      toast.info('You already have a match with this person! Check your messages.');
       return false;
     }
 
@@ -92,7 +126,7 @@ export const useLikes = () => {
               toast.info('You already liked this profile');
             } else if (like.status === 'accepted') {
               console.log('ℹ️ Like already accepted, skipping');
-              toast.info('You already matched with this profile');
+              toast.info('You already matched with this profile! Check your messages.');
             } else if (like.status === 'rejected') {
               console.log('ℹ️ Like was previously rejected, skipping');
               toast.info('This like was previously declined');
@@ -219,6 +253,7 @@ export const useLikes = () => {
   return {
     createLike,
     checkMutualLike,
+    checkExistingMatch,
     loading
   };
 };

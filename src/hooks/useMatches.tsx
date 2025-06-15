@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,6 +79,7 @@ export const useMatches = () => {
           : undefined,
       }));
 
+      console.log('[useMatches] Successfully fetched matches:', transformedMatches.length);
       setMatches(transformedMatches);
       setRetryCount(0);
     } catch (error: any) {
@@ -104,7 +106,9 @@ export const useMatches = () => {
   // Real-time updates for new matches
   useEffect(() => {
     if (!user) return;
+    
     let debounceTimer: NodeJS.Timeout;
+    
     const channel = supabase
       .channel('matches-changes')
       .on(
@@ -117,6 +121,7 @@ export const useMatches = () => {
         (payload) => {
           const newMatch = payload.new as any;
           if (newMatch.user1_id === user.id || newMatch.user2_id === user.id) {
+            console.log('[useMatches] New match detected, refreshing matches');
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
               fetchMatches();
@@ -131,6 +136,17 @@ export const useMatches = () => {
       supabase.removeChannel(channel);
     };
   }, [user, fetchMatches]);
+
+  // Listen for custom match events from like acceptance
+  useEffect(() => {
+    const handleNewMatch = () => {
+      console.log('[useMatches] Custom newMatch event received, refreshing matches');
+      fetchMatches();
+    };
+
+    window.addEventListener('newMatch', handleNewMatch);
+    return () => window.removeEventListener('newMatch', handleNewMatch);
+  }, [fetchMatches]);
 
   return {
     matches,

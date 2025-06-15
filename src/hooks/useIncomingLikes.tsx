@@ -87,14 +87,17 @@ export const useIncomingLikes = () => {
       setIncomingLikes(prev => prev.filter(like => like.like_id !== likeId));
       
       if (response === 'accepted') {
-        toast.success('Like accepted! 💕 You have a new match! Check your messages.', {
-          duration: 4000,
+        toast.success('Like accepted! 💕 You have a new match!', {
+          duration: 3000,
         });
         
-        // Trigger a refresh of matches after a short delay to allow database triggers to complete
+        // Wait a moment for database triggers to complete, then notify about match
         setTimeout(() => {
-          // This will be picked up by real-time subscriptions in matches hook
           console.log('Match should be created and available now');
+          // Emit a custom event to notify other components about the new match
+          window.dispatchEvent(new CustomEvent('newMatch', { 
+            detail: { timestamp: Date.now() } 
+          }));
         }, 1000);
       } else {
         toast.success('Like declined', {
