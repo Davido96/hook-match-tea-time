@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,7 +69,8 @@ export const useUserPresence = () => {
         },
         async (payload) => {
           console.log('Presence update received:', payload);
-          if (payload.new && payload.new.user_id) {
+          // Type guard to check if payload.new exists and has user_id
+          if (payload.new && typeof payload.new === 'object' && 'user_id' in payload.new) {
             const userId = payload.new.user_id as string;
             const status = await getUserStatus(userId);
             setUserStatuses(prev => ({
