@@ -1,29 +1,37 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, Users } from "lucide-react";
+import { ArrowLeft, Heart, Users, MessageCircle } from "lucide-react";
 import { useIncomingLikes } from "@/hooks/useIncomingLikes";
 import IncomingLikeCard from "@/components/IncomingLikeCard";
 import HookLogo from "@/components/HookLogo";
 
 interface IncomingLikesPageProps {
   onBack: () => void;
+  onNavigateToMessages?: () => void;
 }
 
-const IncomingLikesPage = ({ onBack }: IncomingLikesPageProps) => {
+const IncomingLikesPage = ({ onBack, onNavigateToMessages }: IncomingLikesPageProps) => {
   const { incomingLikes, loading, processing, acceptLike, rejectLike } = useIncomingLikes();
-  const [selectedLike, setSelectedLike] = useState<string | null>(null);
+  const [processingLike, setProcessingLike] = useState<string | null>(null);
 
   const handleAccept = async (likeId: string) => {
-    setSelectedLike(likeId);
-    await acceptLike(likeId);
-    setSelectedLike(null);
+    setProcessingLike(likeId);
+    const success = await acceptLike(likeId);
+    setProcessingLike(null);
+    
+    if (success && onNavigateToMessages) {
+      // Show a brief success message then navigate to messages
+      setTimeout(() => {
+        onNavigateToMessages();
+      }, 2000);
+    }
   };
 
   const handleReject = async (likeId: string) => {
-    setSelectedLike(likeId);
+    setProcessingLike(likeId);
     await rejectLike(likeId);
-    setSelectedLike(null);
+    setProcessingLike(null);
   };
 
   if (loading) {
@@ -39,21 +47,36 @@ const IncomingLikesPage = ({ onBack }: IncomingLikesPageProps) => {
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              className="text-white hover:bg-white/20"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center space-x-2">
-              <Heart className="w-6 h-6 text-white" />
-              <h1 className="text-xl font-bold text-white">
-                Likes ({incomingLikes.length})
-              </h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                className="text-white hover:bg-white/20"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex items-center space-x-2">
+                <Heart className="w-6 h-6 text-white" />
+                <h1 className="text-xl font-bold text-white">
+                  Likes ({incomingLikes.length})
+                </h1>
+              </div>
             </div>
+            
+            {/* Messages Button */}
+            {onNavigateToMessages && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onNavigateToMessages}
+                className="text-white hover:bg-white/20"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Messages
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -97,7 +120,7 @@ const IncomingLikesPage = ({ onBack }: IncomingLikesPageProps) => {
                   like={like}
                   onAccept={handleAccept}
                   onReject={handleReject}
-                  processing={processing === selectedLike}
+                  processing={processing === like.like_id || processingLike === like.like_id}
                 />
               ))}
             </div>

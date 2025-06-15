@@ -96,6 +96,10 @@ const Index = () => {
     setCurrentView(view);
   };
 
+  const handleNavigateToMessages = () => {
+    setCurrentView('messages');
+  };
+
   // Show loading while checking auth/profile state
   if (authLoading || profileLoading) {
     return (
@@ -132,7 +136,12 @@ const Index = () => {
 
   // Show incoming likes page
   if (currentView === 'incoming-likes') {
-    return <IncomingLikesPage onBack={() => setCurrentView('discover')} />;
+    return (
+      <IncomingLikesPage 
+        onBack={() => setCurrentView('discover')}
+        onNavigateToMessages={handleNavigateToMessages}
+      />
+    );
   }
 
   // Main discover interface - this is the homepage after authentication

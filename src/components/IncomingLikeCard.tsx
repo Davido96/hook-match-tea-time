@@ -32,7 +32,7 @@ const IncomingLikeCard = ({ like, onAccept, onReject, processing }: IncomingLike
   const timeAgo = new Date(like.created_at).toLocaleDateString();
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow bg-white">
       <CardContent className="p-0">
         <div className="relative">
           {/* Profile Image */}
@@ -45,15 +45,20 @@ const IncomingLikeCard = ({ like, onAccept, onReject, processing }: IncomingLike
             
             {/* Super Like Badge */}
             {like.is_super_like && (
-              <div className="absolute top-3 left-3 bg-blue-500 text-white px-2 py-1 rounded-full flex items-center space-x-1 text-sm font-medium">
+              <div className="absolute top-3 left-3 bg-blue-500 text-white px-2 py-1 rounded-full flex items-center space-x-1 text-sm font-medium z-10">
                 <Star className="w-4 h-4 fill-current" />
                 <span>SUPER</span>
               </div>
             )}
 
             {/* User Type Badge */}
-            <div className="absolute top-3 right-3">
-              <Badge className={like.sender_user_type === 'creator' ? 'bg-hooks-coral' : 'bg-hooks-blue'}>
+            <div className="absolute top-3 right-3 z-10">
+              <Badge 
+                className={`${like.sender_user_type === 'creator' 
+                  ? 'bg-gradient-to-r from-hooks-coral to-hooks-pink text-white' 
+                  : 'bg-gradient-to-r from-hooks-blue to-blue-500 text-white'
+                } font-medium`}
+              >
                 {like.sender_user_type === 'creator' ? 'Creator' : 'Member'}
               </Badge>
             </div>
@@ -63,10 +68,10 @@ const IncomingLikeCard = ({ like, onAccept, onReject, processing }: IncomingLike
           <div className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-semibold">{like.sender_name}</h3>
-                <span className="text-gray-500">{like.sender_age}</span>
+                <h3 className="text-lg font-semibold text-gray-900">{like.sender_name}</h3>
+                <span className="text-gray-600">{like.sender_age}</span>
                 {like.sender_verification_status === 'verified' && (
-                  <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
+                  <Badge variant="outline" className="text-green-600 border-green-600 text-xs bg-green-50">
                     ✓
                   </Badge>
                 )}
@@ -88,32 +93,32 @@ const IncomingLikeCard = ({ like, onAccept, onReject, processing }: IncomingLike
             {like.sender_interests.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-4">
                 {like.sender_interests.slice(0, 3).map((interest, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
+                  <Badge key={index} variant="secondary" className="text-xs bg-gray-100 text-gray-700">
                     {interest}
                   </Badge>
                 ))}
                 {like.sender_interests.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
                     +{like.sender_interests.length - 3}
                   </Badge>
                 )}
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
+            {/* Action Buttons - Enhanced styling and functionality */}
+            <div className="flex space-x-3 mt-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onReject(like.like_id)}
                 disabled={processing}
-                className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                className="flex-1 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 font-medium h-11"
               >
                 {processing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <X className="w-4 h-4 mr-1" />
+                    <X className="w-4 h-4 mr-2" />
                     Pass
                   </>
                 )}
@@ -123,13 +128,13 @@ const IncomingLikeCard = ({ like, onAccept, onReject, processing }: IncomingLike
                 size="sm"
                 onClick={() => onAccept(like.like_id)}
                 disabled={processing}
-                className="flex-1 gradient-coral text-white"
+                className="flex-1 bg-gradient-to-r from-hooks-coral to-hooks-pink hover:from-hooks-coral/90 hover:to-hooks-pink/90 text-white font-medium h-11 shadow-md hover:shadow-lg transition-all duration-200"
               >
                 {processing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <Heart className="w-4 h-4 mr-1" />
+                    <Heart className="w-4 h-4 mr-2" />
                     Like Back
                   </>
                 )}
@@ -137,7 +142,7 @@ const IncomingLikeCard = ({ like, onAccept, onReject, processing }: IncomingLike
             </div>
 
             {/* Time stamp */}
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 mt-3 text-center">
               {like.is_super_like ? 'Super liked' : 'Liked'} you on {timeAgo}
             </p>
           </div>

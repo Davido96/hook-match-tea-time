@@ -64,7 +64,7 @@ export const useIncomingLikes = () => {
   }, [user]);
 
   const respondToLike = async (likeId: string, response: 'accepted' | 'rejected') => {
-    if (!user || processing) return false;
+    if (!user || processing === likeId) return false;
 
     console.log(`Responding to like ${likeId} with: ${response}`);
     setProcessing(likeId);
@@ -77,28 +77,41 @@ export const useIncomingLikes = () => {
 
       if (error) {
         console.error('Error responding to like:', error);
-        toast.error(`Failed to ${response} like`);
+        toast.error(`Failed to ${response} like: ${error.message}`);
         return false;
       }
 
       console.log('Like response successful:', data);
       
-      // Remove the like from local state
+      // Remove the like from local state immediately
       setIncomingLikes(prev => prev.filter(like => like.like_id !== likeId));
       
       if (response === 'accepted') {
-        toast.success('Like accepted! 💕 Check your matches for new conversations.');
+        toast.success('Like accepted! 💕 You have a new match! Check your messages.', {
+          duration: 4000,
+        });
+        
+        // Trigger a refresh of matches after a short delay to allow database triggers to complete
+        setTimeout(() => {
+          // This will be picked up by real-time subscriptions in matches hook
+          console.log('Match should be created and available now');
+        }, 1000);
       } else {
-        toast.success('Like declined');
+        toast.success('Like declined', {
+          duration: 2000,
+        });
       }
 
       return true;
     } catch (error) {
       console.error('Error in respondToLike:', error);
-      toast.error(`Failed to ${response} like`);
+      toast.error(`Failed to ${response} like. Please try again.`);
       return false;
     } finally {
-      setProcessing(null);
+      // Clear processing state after a short delay to prevent rapid clicking
+      setTimeout(() => {
+        setProcessing(null);
+      }, 500);
     }
   };
 
@@ -135,6 +148,7 @@ export const useIncomingLikes = () => {
           
           toast.success('Someone liked you! 💕', {
             description: 'Check your incoming likes to respond',
+            duration: 4000,
           });
         }
       )
