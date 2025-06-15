@@ -374,7 +374,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_or_update_recipient_wallet: {
+        Args: { recipient_user_id: string; tip_amount: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

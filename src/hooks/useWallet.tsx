@@ -73,8 +73,9 @@ export const useWallet = () => {
       return { success: false, error: 'Insufficient Keys balance' };
     }
 
+    console.log('Starting tip transaction...', { recipientUserId, amount, senderBalance: wallet.keys_balance });
+
     try {
-      // Start a transaction-like operation
       // First, record the tip
       const { data: tipData, error: tipError } = await supabase
         .from('tips')
@@ -89,8 +90,10 @@ export const useWallet = () => {
 
       if (tipError) {
         console.error('Error creating tip record:', tipError);
-        throw new Error('Failed to record tip');
+        throw new Error('Failed to create tip record');
       }
+
+      console.log('Tip record created successfully:', tipData);
 
       // Deduct from sender's wallet
       const newSenderBalance = wallet.keys_balance - amount;
@@ -104,44 +107,21 @@ export const useWallet = () => {
         throw new Error('Failed to update sender balance');
       }
 
-      // Get recipient's current balance
-      const { data: recipientWallet, error: getRecipientError } = await supabase
-        .from('wallets')
-        .select('keys_balance')
-        .eq('user_id', recipientUserId)
-        .maybeSingle();
+      console.log('Sender wallet updated successfully');
 
-      if (getRecipientError) {
-        console.error('Error getting recipient wallet:', getRecipientError);
-        throw new Error('Failed to get recipient wallet');
+      // Use the secure function to handle recipient wallet creation/update
+      const { error: recipientError } = await supabase
+        .rpc('create_or_update_recipient_wallet', {
+          recipient_user_id: recipientUserId,
+          tip_amount: amount
+        });
+
+      if (recipientError) {
+        console.error('Error updating recipient wallet:', recipientError);
+        throw new Error('Failed to update recipient wallet');
       }
 
-      // If recipient doesn't have a wallet, create one
-      if (!recipientWallet) {
-        const { error: createWalletError } = await supabase
-          .from('wallets')
-          .insert({ 
-            user_id: recipientUserId, 
-            keys_balance: amount 
-          });
-
-        if (createWalletError) {
-          console.error('Error creating recipient wallet:', createWalletError);
-          throw new Error('Failed to create recipient wallet');
-        }
-      } else {
-        // Update recipient's wallet
-        const newRecipientBalance = (recipientWallet.keys_balance || 0) + amount;
-        const { error: recipientWalletError } = await supabase
-          .from('wallets')
-          .update({ keys_balance: newRecipientBalance })
-          .eq('user_id', recipientUserId);
-
-        if (recipientWalletError) {
-          console.error('Error updating recipient wallet:', recipientWalletError);
-          throw new Error('Failed to update recipient balance');
-        }
-      }
+      console.log('Recipient wallet updated successfully');
 
       // Record earning for recipient
       await recordEarning({
@@ -151,6 +131,8 @@ export const useWallet = () => {
         description: message ? `Tip: ${message}` : 'Tip received'
       });
 
+      console.log('Earning recorded successfully');
+
       // Refresh sender's wallet
       await fetchWallet();
       
@@ -158,7 +140,19 @@ export const useWallet = () => {
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error sending tip:', error);
-      return { success: false, error: error.message || 'Failed to send tip' };
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to send tip. Please try again.';
+      
+      if (error.message?.includes('insufficient')) {
+        errorMessage = 'Insufficient balance to send this tip.';
+      } else if (error.message?.includes('recipient')) {
+        errorMessage = 'Unable to process tip for this recipient. Please try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      return { success: false, error: errorMessage };
     }
   };
 
