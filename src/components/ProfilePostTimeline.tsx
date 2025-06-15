@@ -10,6 +10,7 @@ import CreatePostModal from "./CreatePostModal";
 import ExclusiveContentModal from "./ExclusiveContentModal";
 import TipModal from "./TipModal";
 import PostCommentsModal from "./PostCommentsModal";
+import HookLogo from "./HookLogo";
 
 interface Post {
   id: string;
@@ -383,13 +384,13 @@ const PostCard = ({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-hooks-coral"
+                className="text-hooks-coral flex items-center gap-1"
                 onClick={(e) => {
                   e.stopPropagation();
                   onTipClick();
                 }}
               >
-                Send Keys 🪝
+                Send Tips <HookLogo size="sm" />
               </Button>
             )}
           </div>
