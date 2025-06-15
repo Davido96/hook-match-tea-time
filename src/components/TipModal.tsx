@@ -25,7 +25,10 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
   if (!isOpen) return null;
 
   const handleSendTip = async () => {
+    console.log('Starting tip send process...', { amount, recipientId, recipientName });
+    
     if (!wallet || wallet.keys_balance < amount) {
+      console.log('Insufficient balance check failed', { walletBalance: wallet?.keys_balance, amount });
       toast({
         title: "Insufficient Balance",
         description: "You don't have enough Keys to send this tip.",
@@ -36,9 +39,13 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
 
     setIsLoading(true);
     try {
+      console.log('Calling sendTip function...');
       const { success, error } = await sendTip(recipientId, amount, message);
       
+      console.log('sendTip result:', { success, error });
+      
       if (success) {
+        console.log('Tip sent successfully, showing success toast');
         toast({
           title: "Tip Sent Successfully! 🪝",
           description: `Successfully sent ${amount} Keys to ${recipientName}`,
@@ -49,6 +56,7 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
         setMessage("");
         onClose();
       } else {
+        console.log('Tip failed, showing error toast', error);
         toast({
           title: "Failed to Send Tip",
           description: error || "Something went wrong. Please try again.",
@@ -56,13 +64,14 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
         });
       }
     } catch (error: any) {
-      console.error('Tip error:', error);
+      console.error('Tip error in catch block:', error);
       toast({
         title: "Error",
-        description: "Failed to send tip. Please try again.",
+        description: error?.message || "Failed to send tip. Please try again.",
         variant: "destructive"
       });
     } finally {
+      console.log('Tip process completed, setting loading to false');
       setIsLoading(false);
     }
   };

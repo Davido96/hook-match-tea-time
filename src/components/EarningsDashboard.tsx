@@ -1,14 +1,21 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useEarnings } from "@/hooks/useEarnings";
 import { useWallet } from "@/hooks/useWallet";
-import { DollarSign, TrendingUp, Users, Gift } from "lucide-react";
+import { useWithdrawals } from "@/hooks/useWithdrawals";
+import { DollarSign, TrendingUp, Users, Gift, Wallet } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
+import WithdrawalModal from "./WithdrawalModal";
+import WithdrawalHistoryTable from "./WithdrawalHistoryTable";
 
 const EarningsDashboard = () => {
   const { summary, earnings, loading } = useEarnings();
   const { wallet } = useWallet();
+  const { withdrawals, withdrawalsLoading, getPendingWithdrawals } = useWithdrawals();
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
   if (loading) {
     return <div className="text-center py-8">Loading earnings data...</div>;
@@ -39,6 +46,8 @@ const EarningsDashboard = () => {
         return 'bg-gray-500';
     }
   };
+
+  const pendingWithdrawals = getPendingWithdrawals();
 
   return (
     <div className="space-y-6">
@@ -89,6 +98,50 @@ const EarningsDashboard = () => {
         </Card>
       </div>
 
+      {/* Withdrawal Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Wallet Management</CardTitle>
+              <CardDescription>Withdraw your earnings or view withdrawal history</CardDescription>
+            </div>
+            <Button 
+              onClick={() => setIsWithdrawalModalOpen(true)}
+              disabled={!wallet || wallet.keys_balance < 1000}
+              className="flex items-center gap-2"
+            >
+              <Wallet className="w-4 h-4" />
+              Request Withdrawal
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600">Available Balance</div>
+              <div className="text-2xl font-bold text-green-600">{wallet?.keys_balance || 0} Keys</div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600">Pending Withdrawals</div>
+              <div className="text-2xl font-bold text-yellow-600">{pendingWithdrawals} Keys</div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600">Minimum Withdrawal</div>
+              <div className="text-2xl font-bold text-gray-600">1000 Keys</div>
+            </div>
+          </div>
+          
+          {wallet && wallet.keys_balance < 1000 && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                You need at least 1000 Keys to request a withdrawal. Keep earning to reach the minimum!
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Recent Earnings */}
       <Card>
         <CardHeader>
@@ -125,6 +178,18 @@ const EarningsDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Withdrawal History */}
+      <WithdrawalHistoryTable 
+        withdrawals={withdrawals} 
+        loading={withdrawalsLoading} 
+      />
+
+      {/* Withdrawal Modal */}
+      <WithdrawalModal 
+        isOpen={isWithdrawalModalOpen}
+        onClose={() => setIsWithdrawalModalOpen(false)}
+      />
     </div>
   );
 };
