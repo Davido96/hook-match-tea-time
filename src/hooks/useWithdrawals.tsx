@@ -51,7 +51,14 @@ export const useWithdrawals = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWithdrawals(data || []);
+      
+      // Type assertion to ensure status matches our expected union type
+      const typedWithdrawals = (data || []).map(withdrawal => ({
+        ...withdrawal,
+        status: withdrawal.status as 'pending' | 'approved' | 'rejected' | 'completed'
+      }));
+      
+      setWithdrawals(typedWithdrawals);
     } catch (error) {
       console.error('Error fetching withdrawals:', error);
       toast({
