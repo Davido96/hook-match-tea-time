@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_usage: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          message_credits_used: number
+          rewinds_used: number
+          super_likes_used: number
+          swipes_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          message_credits_used?: number
+          rewinds_used?: number
+          super_likes_used?: number
+          swipes_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          message_credits_used?: number
+          rewinds_used?: number
+          super_likes_used?: number
+          swipes_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       earnings: {
         Row: {
           amount: number
@@ -101,6 +137,99 @@ export type Database = {
           following_id?: string
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      likes: {
+        Row: {
+          created_at: string
+          id: string
+          is_super_like: boolean
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_super_like?: boolean
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_super_like?: boolean
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      media_messages: {
+        Row: {
+          caption: string | null
+          created_at: string
+          credits_cost: number
+          disappears_at: string | null
+          id: string
+          is_disappearing: boolean
+          media_type: string
+          media_url: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          credits_cost?: number
+          disappears_at?: string | null
+          id?: string
+          is_disappearing?: boolean
+          media_type: string
+          media_url: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          credits_cost?: number
+          disappears_at?: string | null
+          id?: string
+          is_disappearing?: boolean
+          media_type?: string
+          media_url?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      message_credits: {
+        Row: {
+          created_at: string
+          credits_balance: number
+          id: string
+          total_earned: number
+          total_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_balance?: number
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_balance?: number
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -298,6 +427,27 @@ export type Database = {
           },
         ]
       }
+      super_likes: {
+        Row: {
+          created_at: string
+          id: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       tips: {
         Row: {
           amount: number
@@ -332,6 +482,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          keys_paid: number
+          starts_at: string
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          keys_paid?: number
+          starts_at?: string
+          tier: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          keys_paid?: number
+          starts_at?: string
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       wallets: {
         Row: {
@@ -410,6 +596,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_daily_limit: {
+        Args: { user_uuid: string; action_type: string; limit_amount: number }
+        Returns: boolean
+      }
       create_or_update_recipient_wallet: {
         Args: { recipient_user_id: string; tip_amount: number }
         Returns: undefined
@@ -420,6 +610,18 @@ export type Database = {
           sender_name: string
           tip_amount: number
           tip_message?: string
+        }
+        Returns: undefined
+      }
+      get_user_tier: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
+      increment_daily_usage: {
+        Args: {
+          user_uuid: string
+          action_type: string
+          increment_amount?: number
         }
         Returns: undefined
       }
