@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface DiscoverUser {
   id: number;
+  user_id: string; // Preserve original database user_id for navigation
   name: string;
   age: number;
   bio: string;
@@ -55,7 +56,8 @@ export const useDiscoverUsers = () => {
 
       // Transform database users to discover user format
       const transformedUsers: DiscoverUser[] = (data || []).map((profile, index) => ({
-        id: parseInt(profile.id?.substring(0, 8) || index.toString(), 16) || index,
+        id: parseInt(profile.id?.substring(0, 8) || index.toString(), 16) || index, // Keep numeric ID for UI purposes
+        user_id: profile.user_id, // Preserve original UUID for navigation
         name: profile.name || 'Unknown User',
         age: profile.age || 18,
         bio: profile.bio || 'No bio available',
@@ -72,7 +74,7 @@ export const useDiscoverUsers = () => {
         last_active: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString()
       }));
 
-      console.log('Transformed users:', transformedUsers.length);
+      console.log('Transformed users with preserved user_ids:', transformedUsers.map(u => ({ name: u.name, user_id: u.user_id })));
       setUsers(transformedUsers);
     } catch (error) {
       console.error('Error in fetchUsers:', error);

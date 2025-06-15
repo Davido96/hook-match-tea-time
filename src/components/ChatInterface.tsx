@@ -49,8 +49,16 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
     setMessage("");
   };
 
-  const handleProfileClick = (userId: string) => {
-    navigate(`/profile/${userId}`);
+  const handleProfileClick = (match: any) => {
+    // Use user_id (UUID) for navigation, fallback to id if user_id is not available
+    const profileId = match.user_id || match.id;
+    console.log('Navigating to profile:', { 
+      matchName: match.name, 
+      user_id: match.user_id, 
+      id: match.id, 
+      navigatingTo: profileId 
+    });
+    navigate(`/profile/${profileId}`);
   };
 
   if (!selectedMatch) {
@@ -102,7 +110,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
                           className="cursor-pointer hover:opacity-80 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleProfileClick(match.user_id || match.id);
+                            handleProfileClick(match);
                           }}
                         >
                           <Avatar className="w-16 h-16">
@@ -115,7 +123,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
                             className="font-semibold text-lg cursor-pointer hover:text-hooks-coral transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleProfileClick(match.user_id || match.id);
+                              handleProfileClick(match);
                             }}
                           >
                             {match.name}
@@ -151,7 +159,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
             </Button>
             <div 
               className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => handleProfileClick(selectedMatch.user_id || selectedMatch.id)}
+              onClick={() => handleProfileClick(selectedMatch)}
             >
               <Avatar className="w-10 h-10">
                 <AvatarImage src={selectedMatch.image} alt={selectedMatch.name} />
@@ -161,7 +169,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
             <div>
               <h2 
                 className="font-semibold cursor-pointer hover:text-hooks-coral transition-colors"
-                onClick={() => handleProfileClick(selectedMatch.user_id || selectedMatch.id)}
+                onClick={() => handleProfileClick(selectedMatch)}
               >
                 {selectedMatch.name}
               </h2>
