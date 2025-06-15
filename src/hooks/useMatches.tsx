@@ -36,8 +36,9 @@ export const useMatches = () => {
       setLoading(true);
       setError(null);
 
-      // Use the custom Supabase RPC to fetch matches with the other user's profile
-      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
+      // Bypass TS error for custom RPC for now
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error: rpcError } = await (supabase as any).rpc('get_user_matches', {
         user_uuid: user.id
       });
 
@@ -47,8 +48,16 @@ export const useMatches = () => {
         return;
       }
 
+      // Ensure 'data' is an array before mapping.
+      if (!data || !Array.isArray(data)) {
+        console.error('[useMatches] RPC returned invalid data:', data);
+        setMatches([]);
+        setError('Failed to load matches');
+        return;
+      }
+
       // Transform data: Every row is a match with the other user's details
-      const transformedMatches: Match[] = (data || []).map((row: any) => ({
+      const transformedMatches: Match[] = data.map((row: any) => ({
         id: row.match_id || row.id,
         user_id: row.other_user_id,
         name: row.other_name || 'Unknown User',
