@@ -102,7 +102,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
             <h1 className="text-6xl font-bold text-white font-playfair">Hooks</h1>
           </div>
           <p className="text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in-delay">
-            Empowering Black creators to build meaningful connections and monetize their content
+            Creating magical connections and unforgettable moments through exclusive content and personalized dating experiences
           </p>
           
           {/* Dual CTA for Creators vs Consumers */}
