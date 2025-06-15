@@ -271,10 +271,8 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
             </div>
           )}
 
-          {/* Security Settings */}
-          {profile.user_type === 'creator' && (
-            <PinManagement />
-          )}
+          {/* Security Settings - PIN Management now available for all users */}
+          <PinManagement />
 
           {/* Action Buttons */}
           <div className="flex space-x-3 pt-4">
