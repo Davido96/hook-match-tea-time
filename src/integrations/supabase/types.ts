@@ -952,6 +952,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      upgrade_to_creator: {
+        Args: { user_uuid: string }
+        Returns: Json
+      }
       verify_withdrawal_pin: {
         Args: { pin: string }
         Returns: boolean
