@@ -1,24 +1,28 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Heart, MessageCircle, Smile, RefreshCw } from "lucide-react";
+import { ArrowLeft, Search, Heart, MessageCircle, Smile, RefreshCw, Gift } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMatches } from "@/hooks/useMatches";
 import { useMessages } from "@/hooks/useMessages";
+import { useNavigate } from "react-router-dom";
+import TipModal from "./TipModal";
 
 interface ChatInterfaceProps {
   onBack: () => void;
 }
 
 const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
+  const navigate = useNavigate();
   const { matches, loading: matchesLoading, error: matchesError, refetch: refetchMatches, retryCount } = useMatches();
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showRetryButton, setShowRetryButton] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
   
   const { messages, loading: messagesLoading, sendMessage } = useMessages(selectedMatch?.user_id);
 
@@ -66,6 +70,14 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleAvatarClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
+  const handleOpenTipModal = () => {
+    setShowTipModal(true);
   };
 
   const getLastActiveText = (lastActive: string) => {
@@ -219,8 +231,18 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
             </div>
             
             {selectedMatch && (
-              <div className="text-white text-sm">
-                <span>{selectedMatch.name}</span>
+              <div className="flex items-center space-x-3">
+                <div className="text-white text-sm">
+                  <span>{selectedMatch.name}</span>
+                </div>
+                <Button
+                  onClick={handleOpenTipModal}
+                  size="sm"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                >
+                  <Gift className="w-4 h-4 mr-1" />
+                  Send Tip
+                </Button>
               </div>
             )}
           </div>
@@ -262,7 +284,13 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                           onClick={() => setSelectedMatch(match)}
                           className="flex items-center space-x-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer transition-colors"
                         >
-                          <Avatar className="w-12 h-12">
+                          <Avatar 
+                            className="w-12 h-12 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAvatarClick(match.user_id);
+                            }}
+                          >
                             <AvatarImage src={match.image} alt={match.name} />
                             <AvatarFallback>{match.name[0]}</AvatarFallback>
                           </Avatar>
@@ -325,7 +353,13 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                             : 'hover:bg-white/10'
                         }`}
                       >
-                        <Avatar className="w-8 h-8">
+                        <Avatar 
+                          className="w-8 h-8 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAvatarClick(match.user_id);
+                          }}
+                        >
                           <AvatarImage src={match.image} alt={match.name} />
                           <AvatarFallback className="text-xs">{match.name[0]}</AvatarFallback>
                         </Avatar>
@@ -353,7 +387,10 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                         <ArrowLeft className="w-4 h-4" />
                       </Button>
                       
-                      <Avatar className="w-10 h-10">
+                      <Avatar 
+                        className="w-10 h-10 cursor-pointer"
+                        onClick={() => handleAvatarClick(selectedMatch.user_id)}
+                      >
                         <AvatarImage src={selectedMatch.image} alt={selectedMatch.name} />
                         <AvatarFallback>{selectedMatch.name[0]}</AvatarFallback>
                       </Avatar>
@@ -365,6 +402,15 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
                         </p>
                       </div>
                     </div>
+
+                    <Button
+                      onClick={handleOpenTipModal}
+                      size="sm"
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                    >
+                      <Gift className="w-4 h-4 mr-1" />
+                      Send Tip
+                    </Button>
                   </div>
                 </div>
 
@@ -431,6 +477,16 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
           </div>
         )}
       </div>
+
+      {/* Tip Modal */}
+      {selectedMatch && (
+        <TipModal
+          isOpen={showTipModal}
+          onClose={() => setShowTipModal(false)}
+          recipientName={selectedMatch.name}
+          recipientId={selectedMatch.user_id}
+        />
+      )}
     </div>
   );
 };

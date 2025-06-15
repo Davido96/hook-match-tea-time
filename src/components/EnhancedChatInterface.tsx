@@ -1,23 +1,26 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, MessageCircle, Send } from "lucide-react";
+import { ArrowLeft, Search, MessageCircle, Send, Gift } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useConversations } from "@/hooks/useConversations";
 import { useEnhancedMessages } from "@/hooks/useEnhancedMessages";
+import { useNavigate } from "react-router-dom";
+import TipModal from "./TipModal";
 
 interface EnhancedChatInterfaceProps {
   onBack: () => void;
 }
 
 const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
+  const navigate = useNavigate();
   const { conversations, loading: conversationsLoading, markAsRead } = useConversations();
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showTipModal, setShowTipModal] = useState(false);
   
   const { 
     messages, 
@@ -55,6 +58,14 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
     if (conversation.unread_count > 0) {
       markAsRead(conversation.conversation_id);
     }
+  };
+
+  const handleAvatarClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
+  const handleOpenTipModal = () => {
+    setShowTipModal(true);
   };
 
   const getLastActiveText = (lastActive?: string) => {
@@ -102,8 +113,18 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
             </div>
             
             {selectedConversation && (
-              <div className="text-white text-sm">
-                <span>{selectedConversation.other_name}</span>
+              <div className="flex items-center space-x-3">
+                <div className="text-white text-sm">
+                  <span>{selectedConversation.other_name}</span>
+                </div>
+                <Button
+                  onClick={handleOpenTipModal}
+                  size="sm"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                >
+                  <Gift className="w-4 h-4 mr-1" />
+                  Send Tip
+                </Button>
               </div>
             )}
           </div>
@@ -147,7 +168,13 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                           onClick={() => handleConversationSelect(conversation)}
                           className="flex items-center space-x-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer transition-colors"
                         >
-                          <Avatar className="w-12 h-12">
+                          <Avatar 
+                            className="w-12 h-12 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAvatarClick(conversation.other_user_id);
+                            }}
+                          >
                             <AvatarImage src={conversation.other_avatar_url} alt={conversation.other_name} />
                             <AvatarFallback>{conversation.other_name[0]}</AvatarFallback>
                           </Avatar>
@@ -220,7 +247,10 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
                   
-                  <Avatar className="w-10 h-10">
+                  <Avatar 
+                    className="w-10 h-10 cursor-pointer"
+                    onClick={() => handleAvatarClick(selectedConversation.other_user_id)}
+                  >
                     <AvatarImage src={selectedConversation.other_avatar_url} alt={selectedConversation.other_name} />
                     <AvatarFallback>{selectedConversation.other_name[0]}</AvatarFallback>
                   </Avatar>
@@ -232,6 +262,15 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                     </p>
                   </div>
                 </div>
+
+                <Button
+                  onClick={handleOpenTipModal}
+                  size="sm"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                >
+                  <Gift className="w-4 h-4 mr-1" />
+                  Send Tip
+                </Button>
               </div>
             </div>
 
@@ -308,6 +347,16 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
           </div>
         )}
       </div>
+
+      {/* Tip Modal */}
+      {selectedConversation && (
+        <TipModal
+          isOpen={showTipModal}
+          onClose={() => setShowTipModal(false)}
+          recipientName={selectedConversation.other_name}
+          recipientId={selectedConversation.other_user_id}
+        />
+      )}
     </div>
   );
 };

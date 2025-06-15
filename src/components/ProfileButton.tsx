@@ -5,24 +5,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Settings, LogOut, Edit } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileButtonProps {
   onEditProfile?: () => void;
 }
 
 const ProfileButton = ({ onEditProfile }: ProfileButtonProps) => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { profile } = useProfile();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleViewProfile = () => {
+    if (user?.id) {
+      navigate(`/profile/${user.id}`);
+    }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-10 w-10 rounded-full p-0">
-          <Avatar className="h-10 w-10">
+          <Avatar className="h-10 w-10 cursor-pointer">
             <AvatarImage src={profile?.avatar_url || ""} alt={profile?.name || "User"} />
             <AvatarFallback className="bg-white text-hooks-coral">
               {profile?.name ? profile.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
@@ -42,6 +50,10 @@ const ProfileButton = ({ onEditProfile }: ProfileButtonProps) => {
           </div>
         </div>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleViewProfile}>
+          <User className="mr-2 h-4 w-4" />
+          <span>View Profile</span>
+        </DropdownMenuItem>
         {onEditProfile && (
           <DropdownMenuItem onClick={onEditProfile}>
             <Edit className="mr-2 h-4 w-4" />
