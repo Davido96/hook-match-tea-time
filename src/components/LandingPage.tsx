@@ -71,6 +71,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
         <EnhancedProfileSetup 
           onComplete={handleProfileSetupComplete} 
           onBack={handleBackToAuth}
+          initialUserType={userType}
         />
       </div>
     );
@@ -84,6 +85,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           onAuthSuccess={handleAuthSuccess}
           onSignupSuccess={handleSignupSuccess}
           onBack={handleBackToLanding}
+          userType={userType}
         />
       </div>
     );

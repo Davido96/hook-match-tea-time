@@ -15,19 +15,21 @@ import { useToast } from "@/hooks/use-toast";
 interface EnhancedProfileSetupProps {
   onComplete: () => void;
   onBack?: () => void;
+  initialUserType?: 'creator' | 'consumer' | null;
 }
 
-const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps) => {
-  const [step, setStep] = useState(1);
+const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedProfileSetupProps) => {
+  // If we have an initial user type, start at step 2, otherwise start at step 1
+  const [step, setStep] = useState(initialUserType ? 2 : 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   
-  // Form data
+  // Form data with initial user type if provided
   const [formData, setFormData] = useState({
-    userType: '',
+    userType: initialUserType || '',
     name: '',
     age: '',
     bio: '',
@@ -44,7 +46,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   const { signOut } = useAuth();
   const { toast } = useToast();
 
-  const totalSteps = formData.userType === 'creator' ? 5 : 4;
+  const totalSteps = formData.userType === 'creator' ? 4 : 3; // Reduced by 1 since we skip user type selection
 
   // Available interests for selection
   const availableInterests = [
@@ -130,27 +132,29 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   const handleNext = () => {
     setError(null);
     
-    // Validation for each step
+    // Updated validation logic for the new step flow
     if (step === 1 && !formData.userType) {
       setError("Please select your user type");
       return;
     }
     
-    if (step === 2) {
+    if ((initialUserType && step === 2) || (!initialUserType && step === 2)) {
       if (!formData.name.trim() || !formData.age || parseInt(formData.age) < 18) {
         setError("Please provide valid name and age (18+)");
         return;
       }
     }
 
-    if (step === 3) {
+    const locationStep = initialUserType ? 3 : 4;
+    if (step === locationStep) {
       if (!formData.gender || !formData.genderPreference || !formData.locationState || !formData.locationCity.trim()) {
         setError("Please fill in all location and preference fields");
         return;
       }
     }
 
-    if (step === 4 && formData.userType === 'creator') {
+    const creatorSettingsStep = initialUserType ? 4 : 5;
+    if (step === creatorSettingsStep && formData.userType === 'creator') {
       if (!formData.subscriptionFee || parseInt(formData.subscriptionFee) < 100) {
         setError("Subscription fee must be at least 100 Keys");
         return;
@@ -162,6 +166,9 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
 
   const handleBack = () => {
     if (step === 1 && onBack) {
+      onBack();
+    } else if (step === 2 && initialUserType && onBack) {
+      // If we started at step 2 due to initial user type, go back to auth
       onBack();
     } else {
       setStep(step - 1);
@@ -250,7 +257,19 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             <span className="text-3xl">🪝</span>
             <h1 className="text-2xl font-bold text-gradient">Hooks</h1>
           </div>
-          <CardTitle>Complete Your Profile</CardTitle>
+          
+          {/* Updated title to be less confusing */}
+          <CardTitle>
+            {initialUserType ? (
+              <>
+                Welcome! Set up your profile
+                <p className="text-sm text-gray-600 mt-2">You're joining as a {initialUserType}</p>
+              </>
+            ) : (
+              "Set up your profile"
+            )}
+          </CardTitle>
+          
           <div className="flex justify-center mt-4">
             <div className="flex space-x-2">
               {Array.from({ length: totalSteps }, (_, i) => (
@@ -266,8 +285,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
         </CardHeader>
 
         <CardContent>
-          {/* Step 1: User Type Selection */}
-          {step === 1 && (
+          {/* Step 1: User Type Selection - only show if no initial user type */}
+          {step === 1 && !initialUserType && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-4">Choose Your Experience</h3>
@@ -311,8 +330,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             </div>
           )}
 
-          {/* Step 2: Basic Info + Avatar */}
-          {step === 2 && (
+          {/* Step 2: Basic Info + Avatar (adjusted step numbers) */}
+          {((initialUserType && step === 2) || (!initialUserType && step === 2)) && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
@@ -384,7 +403,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             </div>
           )}
 
-          {step === 3 && (
+          {/* Adjust remaining steps based on whether we have initial user type */}
+          {((initialUserType && step === 3) || (!initialUserType && step === 3)) && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
@@ -451,7 +471,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             </div>
           )}
 
-          {step === 4 && formData.userType === 'creator' && (
+          {((initialUserType && step === 4) || (!initialUserType && step === 4)) && formData.userType === 'creator' && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
