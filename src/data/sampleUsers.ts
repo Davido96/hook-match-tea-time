@@ -12,8 +12,12 @@ export const sampleUsers = [
     isVerified: true,
     subscriptionFee: 5000,
     location: "Lagos, Nigeria",
-    gender: "female",
-    user_type: "creator"
+    gender: "female" as const,
+    user_type: "creator" as const,
+    verification_status: "verified" as const,
+    subscriber_count: 1250,
+    last_active: "2024-01-15T10:00:00Z",
+    follower_count: 2340
   },
   {
     id: 2,
@@ -26,8 +30,12 @@ export const sampleUsers = [
     isVerified: true,
     subscriptionFee: 3000,
     location: "Abuja, Nigeria",
-    gender: "female",
-    user_type: "creator"
+    gender: "female" as const,
+    user_type: "creator" as const,
+    verification_status: "verified" as const,
+    subscriber_count: 850,
+    last_active: "2024-01-15T08:30:00Z",
+    follower_count: 1890
   },
   {
     id: 3,
@@ -40,7 +48,47 @@ export const sampleUsers = [
     isVerified: true,
     subscriptionFee: 4000,
     location: "Ibadan, Nigeria",
-    gender: "male",
-    user_type: "creator"
+    gender: "male" as const,
+    user_type: "creator" as const,
+    verification_status: "verified" as const,
+    subscriber_count: 650,
+    last_active: "2024-01-14T22:15:00Z",
+    follower_count: 1200
+  },
+  {
+    id: 4,
+    name: "Adunni Style",
+    age: 22,
+    bio: "Fashion enthusiast and style blogger showcasing African fashion trends",
+    image: "/placeholder.svg",
+    interests: ["Fashion", "Style", "Photography", "Modeling"],
+    distance: "1 km away",
+    isVerified: true,
+    subscriptionFee: 2500,
+    location: "Lagos, Nigeria",
+    gender: "female" as const,
+    user_type: "creator" as const,
+    verification_status: "verified" as const,
+    subscriber_count: 980,
+    last_active: "2024-01-15T12:45:00Z",
+    follower_count: 1654
+  },
+  {
+    id: 5,
+    name: "Ola Tech",
+    age: 30,
+    bio: "Tech entrepreneur and gadget reviewer sharing the latest in Nigerian tech",
+    image: "/placeholder.svg",
+    interests: ["Technology", "Innovation", "Business", "Reviews"],
+    distance: "7 km away",
+    isVerified: true,
+    subscriptionFee: 6000,
+    location: "Abuja, Nigeria",
+    gender: "male" as const,
+    user_type: "creator" as const,
+    verification_status: "verified" as const,
+    subscriber_count: 2100,
+    last_active: "2024-01-15T09:20:00Z",
+    follower_count: 3200
   }
 ];

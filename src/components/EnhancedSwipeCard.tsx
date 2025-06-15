@@ -109,6 +109,14 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
     }
   };
 
+  const handleMouseEnter = () => setShowQuickActions(true);
+  const handleMouseLeave = () => {
+    setShowQuickActions(false);
+    if (isDragging) {
+      handleMouseUp();
+    }
+  };
+
   const rotation = currentX * 0.1;
   const opacity = 1 - Math.abs(currentX) / 300;
   const scale = 1 - Math.abs(currentY) / 1000;
@@ -138,12 +146,11 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onMouseEnter={() => setShowQuickActions(true)}
-      onMouseLeave={() => setShowQuickActions(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <CardContent className="p-0 h-full relative">
         {/* Background Image */}
