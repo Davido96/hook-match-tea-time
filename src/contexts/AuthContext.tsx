@@ -109,9 +109,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updatePassword = async (password: string) => {
     try {
+      // First check if we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        return { error: sessionError };
+      }
+      
+      if (!session) {
+        return { error: { message: 'No active session found. Please request a new password reset.' } };
+      }
+      
+      console.log('Updating password for user:', session.user.id);
+      
       const { error } = await supabase.auth.updateUser({
         password: password
       });
+      
+      if (error) {
+        console.error('Password update error:', error);
+      } else {
+        console.log('Password updated successfully');
+      }
       
       return { error };
     } catch (error) {
