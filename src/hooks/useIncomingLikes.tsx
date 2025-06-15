@@ -47,7 +47,14 @@ export const useIncomingLikes = () => {
       }
 
       console.log('Incoming likes data:', data);
-      setIncomingLikes(data || []);
+      
+      // Type assertion to ensure proper typing
+      const typedData = data?.map((like: any) => ({
+        ...like,
+        sender_user_type: like.sender_user_type as 'creator' | 'consumer'
+      })) as IncomingLike[] || [];
+      
+      setIncomingLikes(typedData);
     } catch (error) {
       console.error('Error in fetchIncomingLikes:', error);
       toast.error('Failed to load incoming likes');
