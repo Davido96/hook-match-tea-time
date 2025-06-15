@@ -8,7 +8,7 @@ import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Crown, Zap, Wallet, RefreshCw, AlertCircle } from "lucide-react";
+import { Clock, Crown, Zap, Wallet, RefreshCw, AlertCircle, Store } from "lucide-react";
 
 interface SubscriptionPlanModalProps {
   isOpen: boolean;
@@ -25,13 +25,13 @@ const SubscriptionPlanModal = ({
   creatorName, 
   onSubscriptionComplete 
 }: SubscriptionPlanModalProps) => {
-  const { fetchCreatorPlans } = useSubscriptionPlans();
+  const { fetchCreatorPlans, error: plansError } = useSubscriptionPlans();
   const { subscribeToCreator, loading: subscriptionLoading } = useSubscriptions();
   const { wallet } = useWallet();
   const { toast } = useToast();
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [currentError, setCurrentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && creatorId) {
@@ -41,24 +41,19 @@ const SubscriptionPlanModal = ({
 
   const loadPlans = async () => {
     setLoading(true);
-    setError(null);
+    setCurrentError(null);
     try {
       console.log('Loading subscription plans for creator:', creatorId);
       const creatorPlans = await fetchCreatorPlans(creatorId);
       console.log('Loaded plans:', creatorPlans);
-      setPlans(creatorPlans);
+      setPlans(creatorPlans || []);
       
-      if (creatorPlans.length === 0) {
-        console.log('No plans found for creator:', creatorId);
+      if (plansError) {
+        setCurrentError(plansError);
       }
     } catch (error) {
       console.error('Error loading plans:', error);
-      setError('Failed to load subscription plans. Please try again.');
-      toast({
-        title: "Error Loading Plans",
-        description: "Failed to load subscription plans. Please try again.",
-        variant: "destructive"
-      });
+      setCurrentError('Failed to load subscription plans. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -132,7 +127,36 @@ const SubscriptionPlanModal = ({
     );
   }
 
-  if (error) {
+  if (currentError === 'No subscription plans available' || plans.length === 0) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Subscribe to {creatorName}</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <Store className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">No Subscription Plans Available</h3>
+            <p className="text-gray-500 mb-4">
+              {creatorName} hasn't created any subscription plans yet. 
+              They need to set up their plans before you can subscribe.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleRetry} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Check Again
+              </Button>
+              <Button onClick={onClose}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (currentError && currentError !== 'No subscription plans available') {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
@@ -141,32 +165,11 @@ const SubscriptionPlanModal = ({
           </DialogHeader>
           <div className="text-center py-8">
             <AlertCircle className="w-12 h-12 mx-auto text-red-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">Failed to Load Plans</h3>
-            <p className="text-gray-500 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">Error Loading Plans</h3>
+            <p className="text-gray-500 mb-4">{currentError}</p>
             <Button onClick={handleRetry} variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (plans.length === 0) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Subscribe to {creatorName}</DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-8">
-            <Crown className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">No Subscription Plans Available</h3>
-            <p className="text-gray-500 mb-4">This creator hasn't set up any subscription plans yet.</p>
-            <Button onClick={handleRetry} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
             </Button>
           </div>
         </DialogContent>

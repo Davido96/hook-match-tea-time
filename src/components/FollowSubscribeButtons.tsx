@@ -35,6 +35,7 @@ const FollowSubscribeButtons = ({
   const [userIsSubscribed, setUserIsSubscribed] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && targetUserId) {
@@ -44,6 +45,7 @@ const FollowSubscribeButtons = ({
 
   const checkAllStatus = async () => {
     setStatusLoading(true);
+    setSubscriptionError(null);
     try {
       await Promise.all([
         checkFollowStatus(),
@@ -51,6 +53,7 @@ const FollowSubscribeButtons = ({
       ]);
     } catch (error) {
       console.error('Error checking status:', error);
+      setSubscriptionError('Failed to load status');
     } finally {
       setStatusLoading(false);
     }
@@ -75,6 +78,7 @@ const FollowSubscribeButtons = ({
       setUserIsSubscribed(subscribed);
     } catch (error) {
       console.error('Error checking subscription status:', error);
+      setSubscriptionError('Failed to check subscription status');
     }
   };
 
@@ -189,6 +193,18 @@ const FollowSubscribeButtons = ({
                 {userIsSubscribed ? "Subscribed" : "Subscribe"}
               </>
             )}
+          </Button>
+        )}
+
+        {subscriptionError && (
+          <Button
+            variant="ghost"
+            size={size}
+            onClick={checkAllStatus}
+            className={cn(buttonSizeClasses[size], "text-red-500")}
+          >
+            <RefreshCw className={cn(iconSizeClasses[size], "mr-1")} />
+            Retry
           </Button>
         )}
       </div>

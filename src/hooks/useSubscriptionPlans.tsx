@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,40 +17,38 @@ export const useSubscriptionPlans = () => {
   const { user } = useAuth();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchCreatorPlans = async (creatorId: string) => {
     setLoading(true);
+    setError(null);
     try {
       console.log('Fetching subscription plans for creator:', creatorId);
       
-      // Add retry logic with exponential backoff
-      let retries = 3;
-      let data = null;
-      
-      while (retries > 0 && !data) {
-        const { data: fetchedData, error } = await supabase
-          .from('subscription_plans')
-          .select('*')
-          .eq('creator_id', creatorId)
-          .eq('is_active', true)
-          .order('price_keys');
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('creator_id', creatorId)
+        .eq('is_active', true)
+        .order('price_keys');
 
-        if (error) {
-          console.error(`Error fetching creator plans (attempt ${4 - retries}):`, error);
-          if (retries === 1) {
-            throw error;
-          }
-          retries--;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else {
-          data = fetchedData;
-          console.log('Successfully fetched plans:', data?.length || 0, 'plans found');
-        }
+      if (error) {
+        console.error('Error fetching creator plans:', error);
+        setError('Failed to load subscription plans');
+        throw error;
       }
       
-      return data || [];
+      console.log('Successfully fetched plans:', data?.length || 0, 'plans found');
+      
+      if (!data || data.length === 0) {
+        setError('No subscription plans available');
+        return [];
+      }
+      
+      return data;
     } catch (error) {
       console.error('Final error fetching creator plans:', error);
+      setError('Failed to load subscription plans');
       return [];
     } finally {
       setLoading(false);
@@ -62,6 +59,7 @@ export const useSubscriptionPlans = () => {
     if (!user) return;
     
     setLoading(true);
+    setError(null);
     try {
       console.log('Fetching my subscription plans for user:', user.id);
       
@@ -73,6 +71,7 @@ export const useSubscriptionPlans = () => {
 
       if (error) {
         console.error('Error fetching my plans:', error);
+        setError('Failed to load your plans');
         throw error;
       }
       
@@ -80,14 +79,20 @@ export const useSubscriptionPlans = () => {
       setPlans(data || []);
     } catch (error) {
       console.error('Error fetching my plans:', error);
+      setError('Failed to load your plans');
     } finally {
       setLoading(false);
     }
   };
 
   const createPlan = async (planData: Omit<SubscriptionPlan, 'id' | 'creator_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      setError('User not authenticated');
+      throw new Error('User not authenticated');
+    }
 
+    setLoading(true);
+    setError(null);
     try {
       console.log('Creating new subscription plan:', planData);
       
@@ -95,13 +100,17 @@ export const useSubscriptionPlans = () => {
         .from('subscription_plans')
         .insert({
           creator_id: user.id,
-          ...planData
+          name: planData.name,
+          duration_days: planData.duration_days,
+          price_keys: planData.price_keys,
+          is_active: planData.is_active
         })
         .select()
         .single();
 
       if (error) {
         console.error('Error creating plan:', error);
+        setError('Failed to create subscription plan');
         throw error;
       }
       
@@ -110,7 +119,10 @@ export const useSubscriptionPlans = () => {
       return { data, error: null };
     } catch (error) {
       console.error('Error creating plan:', error);
+      setError('Failed to create subscription plan');
       return { data: null, error };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -173,10 +185,12 @@ export const useSubscriptionPlans = () => {
   return {
     plans,
     loading,
+    error,
     fetchCreatorPlans,
     fetchMyPlans,
     createPlan,
     updatePlan,
-    deletePlan
+    deletePlan,
+    clearError: () => setError(null)
   };
 };
