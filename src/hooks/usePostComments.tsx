@@ -36,7 +36,7 @@ export const usePostComments = (postId: string) => {
         .from('post_comments')
         .select(`
           *,
-          profiles:user_id (
+          profiles!post_comments_user_id_fkey (
             name,
             avatar_url
           )
@@ -75,7 +75,7 @@ export const usePostComments = (postId: string) => {
         })
         .select(`
           *,
-          profiles:user_id (
+          profiles!post_comments_user_id_fkey (
             name,
             avatar_url
           )

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -166,7 +165,6 @@ const UserProfile = () => {
                     targetUserId={userId!}
                     targetUserType={profile.user_type}
                     className="flex gap-2 w-full"
-                    onSubscriptionChange={handleSubscriptionChange}
                   />
                 </div>
               )}
