@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -10,6 +9,7 @@ import ExclusiveContentPage from "@/components/ExclusiveContentPage";
 import LandingPage from "@/components/LandingPage";
 import DiscoverPage from "@/components/DiscoverPage";
 import ChatInterface from "@/components/ChatInterface";
+import EnhancedChatInterface from "@/components/EnhancedChatInterface";
 import IncomingLikesPage from "@/components/IncomingLikesPage";
 
 type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages' | 'incoming-likes';
@@ -129,9 +129,9 @@ const Index = () => {
     return <ExclusiveContentPage onBack={() => setCurrentView('discover')} />;
   }
 
-  // Show messages interface
+  // Show messages interface with enhanced functionality
   if (currentView === 'messages') {
-    return <ChatInterface onBack={() => setCurrentView('discover')} />;
+    return <EnhancedChatInterface onBack={() => setCurrentView('discover')} />;
   }
 
   // Show incoming likes page

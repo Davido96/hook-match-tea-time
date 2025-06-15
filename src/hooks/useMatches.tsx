@@ -17,6 +17,10 @@ interface Match {
   user_type?: 'creator' | 'consumer';
   verification_status?: 'verified' | 'pending' | 'rejected';
   last_active?: string;
+  conversation_id?: string;
+  last_message?: string;
+  last_message_at?: string;
+  unread_count?: number;
 }
 
 export const useMatches = () => {
@@ -36,9 +40,9 @@ export const useMatches = () => {
       setLoading(true);
       setError(null);
 
-      // Use type cast to 'any' to allow calling custom RPC without TS error
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: rpcError } = await (supabase as any).rpc('get_user_matches', {
+      console.log('Fetching matches for user:', user.id);
+
+      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
         user_uuid: user.id
       });
 
@@ -65,7 +69,7 @@ export const useMatches = () => {
         image: row.other_avatar_url ||
           'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
         interests: row.other_interests || [],
-        distance: '2 km away', // Placeholder; real geodata can be added later
+        distance: '2 km away', // Placeholder
         location:
           row.other_location_city && row.other_location_state
             ? `${row.other_location_city}, ${row.other_location_state}`
@@ -77,6 +81,10 @@ export const useMatches = () => {
         last_active: row.other_last_active
           ? new Date(row.other_last_active).toISOString()
           : undefined,
+        conversation_id: row.conversation_id,
+        last_message: row.last_message_content,
+        last_message_at: row.last_message_at,
+        unread_count: row.unread_count || 0
       }));
 
       console.log('[useMatches] Successfully fetched matches:', transformedMatches.length);
@@ -98,35 +106,49 @@ export const useMatches = () => {
     }
   }, [user, retryCount]);
 
-  // Initial fetch when user is set
   useEffect(() => {
     if (user !== undefined) fetchMatches();
   }, [user, fetchMatches]);
 
-  // Real-time updates for new matches
+  // Real-time updates for new matches and conversations
   useEffect(() => {
     if (!user) return;
     
     let debounceTimer: NodeJS.Timeout;
     
     const channel = supabase
-      .channel('matches-changes')
+      .channel('matches-conversations-changes')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'matches'
         },
         (payload) => {
-          const newMatch = payload.new as any;
-          if (newMatch.user1_id === user.id || newMatch.user2_id === user.id) {
-            console.log('[useMatches] New match detected, refreshing matches');
+          const match = payload.new as any;
+          if (match && (match.user1_id === user.id || match.user2_id === user.id)) {
+            console.log('[useMatches] Match change detected, refreshing');
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
               fetchMatches();
             }, 1000);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          console.log('[useMatches] Conversation change detected, refreshing');
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            fetchMatches();
+          }, 1000);
         }
       )
       .subscribe();
@@ -137,7 +159,7 @@ export const useMatches = () => {
     };
   }, [user, fetchMatches]);
 
-  // Listen for custom match events from like acceptance
+  // Listen for custom match events
   useEffect(() => {
     const handleNewMatch = () => {
       console.log('[useMatches] Custom newMatch event received, refreshing matches');
