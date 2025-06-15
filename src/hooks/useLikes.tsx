@@ -58,9 +58,9 @@ export const useLikes = () => {
         .select('id')
         .eq('sender_id', user.id)
         .eq('recipient_id', recipientId)
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" which is expected
+      if (checkError) {
         console.error('❌ Error checking existing like:', checkError);
         toast.error('Failed to check existing like');
         return false;
@@ -106,6 +106,16 @@ export const useLikes = () => {
 
       console.log('✅ Like created successfully:', data);
       toast.success(`${isSuperLike ? 'Super like' : 'Like'} sent successfully!`);
+      
+      // Check for match after a short delay to allow trigger to process
+      setTimeout(async () => {
+        const isMatch = await checkMutualLike(recipientId);
+        if (isMatch) {
+          console.log('🎉 Match detected with:', recipientId);
+          toast.success('🎉 It\'s a Match! You can now chat with this user.');
+        }
+      }, 500);
+      
       return true;
     } catch (error) {
       console.error('❌ Unexpected error in createLike:', error);
@@ -128,27 +138,25 @@ export const useLikes = () => {
     }
 
     try {
-      console.log('🔍 Checking mutual like between:', user.id, 'and', recipientId);
+      console.log('🔍 Checking for existing match between:', user.id, 'and', recipientId);
       
-      // Check if both users have liked each other
-      const { data, error } = await supabase
-        .from('likes')
-        .select('id, sender_id, recipient_id')
-        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`);
+      // Check if a match exists between the two users
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .select('id, user1_id, user2_id')
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${recipientId}),and(user1_id.eq.${recipientId},user2_id.eq.${user.id})`)
+        .eq('is_active', true)
+        .maybeSingle();
 
-      if (error) {
-        console.error('❌ Error checking mutual like:', error);
+      if (matchError) {
+        console.error('❌ Error checking for match:', matchError);
         return false;
       }
 
-      console.log('🔍 Mutual like check results:', data);
-      const isMutualLike = data && data.length >= 2;
+      const hasMatch = matchData !== null;
+      console.log('🔍 Match check result:', { hasMatch, matchData });
       
-      if (isMutualLike) {
-        console.log('🎉 Mutual like detected!');
-      }
-
-      return isMutualLike;
+      return hasMatch;
     } catch (error) {
       console.error('❌ Error in checkMutualLike:', error);
       return false;

@@ -47,6 +47,7 @@ export const useMatches = () => {
           created_at,
           is_active
         `)
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
         .eq('is_active', true);
 
       if (matchesError) {
@@ -94,7 +95,9 @@ export const useMatches = () => {
         image: profile.avatar_url || 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
         interests: profile.interests || [],
         distance: '2 km away', // Default distance - could be calculated based on location
-        location: `${profile.location_city}, ${profile.location_state}`,
+        location: profile.location_city && profile.location_state 
+          ? `${profile.location_city}, ${profile.location_state}` 
+          : 'Location not specified',
         gender: profile.gender,
         user_type: profile.user_type as 'creator' | 'consumer',
         verification_status: profile.verification_status as 'verified' | 'pending' | 'rejected',
@@ -119,6 +122,8 @@ export const useMatches = () => {
   useEffect(() => {
     if (!user) return;
 
+    console.log('Setting up real-time match subscription for user:', user.id);
+
     const channel = supabase
       .channel('matches-changes')
       .on(
@@ -126,17 +131,23 @@ export const useMatches = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'matches',
-          filter: `user1_id=eq.${user.id},user2_id=eq.${user.id}`
+          table: 'matches'
         },
-        () => {
-          console.log('New match detected, refetching matches');
-          fetchMatches();
+        (payload) => {
+          console.log('New match detected:', payload);
+          const newMatch = payload.new as any;
+          
+          // Check if this match involves the current user
+          if (newMatch.user1_id === user.id || newMatch.user2_id === user.id) {
+            console.log('Match involves current user, refetching matches');
+            fetchMatches();
+          }
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up match subscription');
       supabase.removeChannel(channel);
     };
   }, [user]);

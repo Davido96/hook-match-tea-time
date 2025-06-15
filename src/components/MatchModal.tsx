@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Heart, MessageCircle, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   id: number;
@@ -18,12 +19,22 @@ interface User {
 interface MatchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  match: User | null; // Changed from matchedUser to match
-  onStartChatting: () => void; // Changed from onSendMessage and onKeepSwiping
+  match: User | null;
+  onStartChatting: () => void;
 }
 
 const MatchModal = ({ isOpen, onClose, match, onStartChatting }: MatchModalProps) => {
+  const navigate = useNavigate();
+
   if (!match) return null;
+
+  const handleStartChatting = () => {
+    console.log('Starting chat with match:', match.name, match.user_id);
+    onStartChatting();
+    onClose();
+    // Navigate to chat interface if needed
+    // navigate(`/chat/${match.user_id}`);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -81,7 +92,7 @@ const MatchModal = ({ isOpen, onClose, match, onStartChatting }: MatchModalProps
           {/* Action buttons */}
           <div className="space-y-3">
             <Button
-              onClick={onStartChatting}
+              onClick={handleStartChatting}
               className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold py-3"
             >
               <MessageCircle className="w-5 h-5 mr-2" />
