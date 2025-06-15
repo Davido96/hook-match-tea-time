@@ -24,6 +24,16 @@ interface UpgradeResponse {
   new_balance?: number;
 }
 
+// Type guard to validate the upgrade response
+const isUpgradeResponse = (data: unknown): data is UpgradeResponse => {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'success' in data &&
+    typeof (data as any).success === 'boolean'
+  );
+};
+
 const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToCreatorModalProps) => {
   const { user } = useAuth();
   const { wallet, refetch: refetchWallet } = useWallet();
@@ -62,10 +72,14 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
 
       console.log('Upgrade result:', data);
 
-      const upgradeResult = data as UpgradeResponse;
+      // Validate the response structure
+      if (!isUpgradeResponse(data)) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from server');
+      }
 
-      if (!upgradeResult.success) {
-        throw new Error(upgradeResult.error || 'Upgrade failed');
+      if (!data.success) {
+        throw new Error(data.error || 'Upgrade failed');
       }
 
       // Refresh wallet and profile data
@@ -76,7 +90,7 @@ const UpgradeToCreatorModal = ({ isOpen, onClose, onUpgradeSuccess }: UpgradeToC
 
       toast({
         title: "Upgrade Successful! 🎉",
-        description: upgradeResult.message || "You are now a Creator! You can start creating and sharing content.",
+        description: data.message || "You are now a Creator! You can start creating and sharing content.",
       });
 
       onUpgradeSuccess();
