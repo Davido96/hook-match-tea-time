@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart, X } from "lucide-react";
+import { MapPin, Heart, X, Loader2 } from "lucide-react";
 import { useLikes } from "@/hooks/useLikes";
 
 interface User {
@@ -26,9 +27,18 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
   const [startX, setStartX] = useState(0);
   const [currentX, setCurrentX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const { createLike, checkMutualLike } = useLikes();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { createLike, checkMutualLike, loading: likesLoading } = useLikes();
+
+  // Disable interactions while processing
+  const isDisabled = isProcessing || likesLoading;
 
   const handleSwipeComplete = async (direction: 'left' | 'right') => {
+    if (isDisabled) {
+      console.log('⏸️ Swipe ignored - operation in progress');
+      return;
+    }
+
     if (direction === 'right') {
       console.log('💕 Creating like for user:', {
         name: user.name,
@@ -36,16 +46,24 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
         numeric_id: user.id
       });
       
-      // Use the UUID user_id, not the numeric id
-      const success = await createLike(user.user_id, false);
+      setIsProcessing(true);
       
-      if (success) {
-        // Check if this creates a match
-        const isMatch = await checkMutualLike(user.user_id);
-        if (isMatch && onMatch) {
-          console.log('🎉 Match detected with:', user.name);
-          onMatch(user);
+      try {
+        // Use the UUID user_id, not the numeric id
+        const success = await createLike(user.user_id, false);
+        
+        if (success) {
+          // Check if this creates a match
+          const isMatch = await checkMutualLike(user.user_id);
+          if (isMatch && onMatch) {
+            console.log('🎉 Match detected with:', user.name);
+            onMatch(user);
+          }
         }
+      } catch (error) {
+        console.error('❌ Error in handleSwipeComplete:', error);
+      } finally {
+        setIsProcessing(false);
       }
     }
     
@@ -53,17 +71,18 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isDisabled) return;
     setStartX(e.clientX);
     setIsDragging(true);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || isDisabled) return;
     setCurrentX(e.clientX - startX);
   };
 
   const handleMouseUp = () => {
-    if (!isDragging) return;
+    if (!isDragging || isDisabled) return;
     setIsDragging(false);
     
     const threshold = 100;
@@ -77,17 +96,18 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isDisabled) return;
     setStartX(e.touches[0].clientX);
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || isDisabled) return;
     setCurrentX(e.touches[0].clientX - startX);
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging) return;
+    if (!isDragging || isDisabled) return;
     setIsDragging(false);
     
     const threshold = 100;
@@ -105,10 +125,10 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
 
   return (
     <Card 
-      className={`absolute inset-0 cursor-grab active:cursor-grabbing card-swipe transition-transform duration-200 overflow-hidden shadow-lg ${
+      className={`absolute inset-0 card-swipe transition-transform duration-200 overflow-hidden shadow-lg ${
         swipeDirection === 'right' ? 'animate-swipe-right' : 
         swipeDirection === 'left' ? 'animate-swipe-left' : ''
-      }`}
+      } ${isDisabled ? 'cursor-not-allowed opacity-75' : 'cursor-grab active:cursor-grabbing'}`}
       style={{
         transform: `translateX(${currentX}px) rotate(${rotation}deg)`,
         opacity: isDragging ? opacity : 1,
@@ -131,14 +151,23 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
+        {/* Loading Overlay */}
+        {isDisabled && (
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20">
+            <div className="bg-white/90 rounded-full p-3">
+              <Loader2 className="w-6 h-6 animate-spin text-hooks-coral" />
+            </div>
+          </div>
+        )}
+        
         {/* Swipe Indicators */}
-        {currentX > 50 && (
+        {currentX > 50 && !isDisabled && (
           <div className="absolute top-8 right-8 bg-green-500 text-white px-4 py-2 rounded-full flex items-center space-x-2 font-bold shadow-lg">
             <Heart className="w-5 h-5" />
             <span>LIKE</span>
           </div>
         )}
-        {currentX < -50 && (
+        {currentX < -50 && !isDisabled && (
           <div className="absolute top-8 left-8 bg-red-500 text-white px-4 py-2 rounded-full flex items-center space-x-2 font-bold shadow-lg">
             <X className="w-5 h-5" />
             <span>NOPE</span>
