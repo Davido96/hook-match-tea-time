@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Heart, X, User, Crown, Zap, CheckCircle, Clock } from "lucide-react";
 import FollowSubscribeButtons from "./FollowSubscribeButtons";
+import { useLikes } from "@/hooks/useLikes";
 
 interface User {
   id: number;
+  user_id?: string; // Add optional user_id for UUID operations
   name: string;
   age: number;
   bio: string;
@@ -39,6 +41,55 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
   const [currentY, setCurrentY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const { createLike, checkMutualLike } = useLikes();
+
+  const handleSuperLike = async () => {
+    if (!user.user_id) {
+      console.error('❌ No user_id available for super like');
+      return;
+    }
+
+    console.log('⚡ Creating super like for user:', {
+      name: user.name,
+      user_id: user.user_id,
+      numeric_id: user.id
+    });
+    
+    const success = await createLike(user.user_id, true);
+    
+    if (success) {
+      // Check if this creates a match
+      const isMatch = await checkMutualLike(user.user_id);
+      if (isMatch) {
+        console.log('🎉 Super like created a match with:', user.name);
+      }
+    }
+
+    if (onSuperLike) {
+      onSuperLike();
+    }
+  };
+
+  const handleSwipeComplete = async (direction: 'left' | 'right') => {
+    if (direction === 'right' && user.user_id) {
+      console.log('💕 Creating like for user:', {
+        name: user.name,
+        user_id: user.user_id,
+        numeric_id: user.id
+      });
+      
+      const success = await createLike(user.user_id, false);
+      
+      if (success) {
+        const isMatch = await checkMutualLike(user.user_id);
+        if (isMatch) {
+          console.log('🎉 Like created a match with:', user.name);
+        }
+      }
+    }
+    
+    onSwipe(direction);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setStartX(e.clientX);
@@ -61,13 +112,13 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
     const threshold = 100;
     const superLikeThreshold = -150;
     
-    if (currentY < superLikeThreshold && onSuperLike) {
+    if (currentY < superLikeThreshold) {
       setSwipeDirection('super');
-      setTimeout(() => onSuperLike(), 100);
+      setTimeout(() => handleSuperLike(), 100);
     } else if (Math.abs(currentX) > threshold) {
       const direction = currentX > 0 ? 'right' : 'left';
       setSwipeDirection(direction);
-      setTimeout(() => onSwipe(direction), 100);
+      setTimeout(() => handleSwipeComplete(direction), 100);
     } else {
       setCurrentX(0);
       setCurrentY(0);
@@ -95,13 +146,13 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
     const threshold = 100;
     const superLikeThreshold = -150;
     
-    if (currentY < superLikeThreshold && onSuperLike) {
+    if (currentY < superLikeThreshold) {
       setSwipeDirection('super');
-      setTimeout(() => onSuperLike(), 100);
+      setTimeout(() => handleSuperLike(), 100);
     } else if (Math.abs(currentX) > threshold) {
       const direction = currentX > 0 ? 'right' : 'left';
       setSwipeDirection(direction);
-      setTimeout(() => onSwipe(direction), 100);
+      setTimeout(() => handleSwipeComplete(direction), 100);
     } else {
       setCurrentX(0);
       setCurrentY(0);
@@ -178,7 +229,7 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
         )}
 
         {/* Super Like Indicator */}
-        {currentY < -50 && onSuperLike && (
+        {currentY < -50 && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white px-6 py-3 rounded-full flex items-center space-x-2 font-bold shadow-lg text-lg">
             <Zap className="w-6 h-6" />
             <span>SUPER LIKE</span>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,14 +30,20 @@ const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
 
   const handleSwipeComplete = async (direction: 'left' | 'right') => {
     if (direction === 'right') {
-      console.log('Creating like for user:', user.user_id);
+      console.log('💕 Creating like for user:', {
+        name: user.name,
+        user_id: user.user_id,
+        numeric_id: user.id
+      });
+      
+      // Use the UUID user_id, not the numeric id
       const success = await createLike(user.user_id, false);
       
       if (success) {
         // Check if this creates a match
         const isMatch = await checkMutualLike(user.user_id);
         if (isMatch && onMatch) {
-          console.log('Match detected!', user.name);
+          console.log('🎉 Match detected with:', user.name);
           onMatch(user);
         }
       }
