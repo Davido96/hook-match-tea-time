@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +23,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
   const [error, setError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -40,17 +40,11 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     servicesOffered: ''
   });
 
-  const { createProfile, uploadAvatar } = useProfile();
+  const { createProfile, uploadAvatarDuringSetup } = useProfile();
   const { signOut } = useAuth();
   const { toast } = useToast();
 
   const totalSteps = formData.userType === 'creator' ? 5 : 4;
-
-  const availableInterests = [
-    "Music", "Art", "Fashion", "Fitness", "Travel", "Food", "Technology", 
-    "Photography", "Reading", "Movies", "Gaming", "Sports", "Dancing", 
-    "Cooking", "Nature", "Business", "Education", "Health"
-  ];
 
   // Nigerian states - simplified list
   const nigerianStates = [
@@ -77,7 +71,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
@@ -92,6 +86,26 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
       };
       reader.readAsDataURL(file);
       setError(null);
+
+      // Upload avatar immediately during setup
+      try {
+        console.log('Uploading avatar during setup...');
+        const { data: avatarUrl, error: uploadError } = await uploadAvatarDuringSetup(file);
+        if (uploadError) {
+          console.error('Avatar upload error:', uploadError);
+          setError("Failed to upload avatar: " + uploadError.message);
+        } else if (avatarUrl) {
+          setUploadedAvatarUrl(avatarUrl);
+          console.log('Avatar uploaded successfully during setup:', avatarUrl);
+          toast({
+            title: "Avatar Uploaded",
+            description: "Your profile picture has been uploaded successfully.",
+          });
+        }
+      } catch (error) {
+        console.error('Avatar upload failed:', error);
+        setError("Failed to upload avatar. Please try again.");
+      }
     }
   };
 
@@ -151,19 +165,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
     setError(null);
 
     try {
-      let avatarUrl = '';
-      
-      // Upload avatar if provided
-      if (avatarFile) {
-        console.log('Uploading avatar...');
-        const { data: uploadData, error: uploadError } = await uploadAvatar(avatarFile);
-        if (uploadError) {
-          console.error('Avatar upload error:', uploadError);
-          throw new Error("Failed to upload avatar: " + uploadError.message);
-        }
-        avatarUrl = uploadData || '';
-        console.log('Avatar uploaded successfully:', avatarUrl);
-      }
+      // Use the uploaded avatar URL or empty string
+      const avatarUrl = uploadedAvatarUrl || '';
 
       // Create profile
       const profileData = {
@@ -327,7 +330,12 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
                     className="hidden"
                   />
                 </div>
-                <p className="text-sm text-gray-600">Upload your profile picture</p>
+                <div>
+                  <p className="text-sm text-gray-600">Upload your profile picture</p>
+                  {uploadedAvatarUrl && (
+                    <p className="text-xs text-green-600 mt-1">✓ Avatar uploaded successfully</p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">

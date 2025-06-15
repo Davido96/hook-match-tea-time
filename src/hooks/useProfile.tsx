@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -173,6 +172,61 @@ export const useProfile = () => {
     }
   };
 
+  const uploadAvatarDuringSetup = async (file: File) => {
+    if (!user) {
+      console.error('Avatar upload: User not authenticated');
+      return { data: null, error: new Error('User not authenticated') };
+    }
+
+    try {
+      console.log('Starting avatar upload during setup for user:', user.id);
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        return { data: null, error: new Error('File must be an image') };
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        return { data: null, error: new Error('File size must be less than 5MB') };
+      }
+
+      // Create a unique filename with proper folder structure for RLS
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      console.log('Uploading file to path:', filePath);
+
+      // Upload the file
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        return { data: null, error: uploadError };
+      }
+
+      console.log('Upload successful:', uploadData);
+
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      console.log('Public URL generated:', urlData.publicUrl);
+
+      return { data: urlData.publicUrl, error: null };
+    } catch (error) {
+      console.error('Avatar upload during setup failed:', error);
+      return { data: null, error };
+    }
+  };
+
   const uploadAvatar = async (file: File) => {
     if (!user) {
       console.error('Avatar upload: User not authenticated');
@@ -253,6 +307,7 @@ export const useProfile = () => {
     createProfile,
     updateProfile,
     uploadAvatar,
+    uploadAvatarDuringSetup,
     refetch: fetchProfile
   };
 };
