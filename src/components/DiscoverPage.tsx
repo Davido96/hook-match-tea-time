@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Wallet, X, User, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
-import WalletModal from "@/components/WalletModal";
+import UnifiedWalletModal from "@/components/UnifiedWalletModal";
 import TipModal from "@/components/TipModal";
 import ProfileButton from "@/components/ProfileButton";
 import ProfileViewModal from "@/components/ProfileViewModal";
@@ -262,9 +261,10 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
 
       {/* Modals */}
       {showWallet && (
-        <WalletModal 
+        <UnifiedWalletModal 
           isOpen={showWallet} 
           onClose={() => setShowWallet(false)} 
+          defaultTab="purchase"
         />
       )}
 
