@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEarnings } from '@/hooks/useEarnings';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Wallet {
   id: string;
@@ -13,6 +14,7 @@ interface Wallet {
 export const useWallet = () => {
   const { user } = useAuth();
   const { recordEarning } = useEarnings();
+  const { toast } = useToast();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,6 +78,15 @@ export const useWallet = () => {
     console.log('Starting tip transaction...', { recipientUserId, amount, senderBalance: wallet.keys_balance });
 
     try {
+      // Get sender's profile for notification
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .single();
+
+      const senderName = senderProfile?.name || 'Someone';
+
       // First, record the tip
       const { data: tipData, error: tipError } = await supabase
         .from('tips')
@@ -122,6 +133,22 @@ export const useWallet = () => {
       }
 
       console.log('Recipient wallet updated successfully');
+
+      // Create notification for recipient
+      const { error: notificationError } = await supabase
+        .rpc('create_tip_notification', {
+          recipient_user_id: recipientUserId,
+          sender_name: senderName,
+          tip_amount: amount,
+          tip_message: message || null
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Don't fail the transaction for notification errors
+      } else {
+        console.log('Tip notification created successfully');
+      }
 
       // Record earning for recipient
       await recordEarning({
