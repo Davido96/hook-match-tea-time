@@ -179,6 +179,7 @@ export type Database = {
           is_super_like: boolean
           recipient_id: string
           sender_id: string
+          status: string
         }
         Insert: {
           created_at?: string
@@ -186,6 +187,7 @@ export type Database = {
           is_super_like?: boolean
           recipient_id: string
           sender_id: string
+          status?: string
         }
         Update: {
           created_at?: string
@@ -193,6 +195,7 @@ export type Database = {
           is_super_like?: boolean
           recipient_id?: string
           sender_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -861,6 +864,24 @@ export type Database = {
           total_discovery_days: number
         }[]
       }
+      get_incoming_likes: {
+        Args: { user_uuid: string }
+        Returns: {
+          like_id: string
+          sender_id: string
+          sender_name: string
+          sender_age: number
+          sender_bio: string
+          sender_avatar_url: string
+          sender_interests: string[]
+          sender_location_city: string
+          sender_location_state: string
+          sender_user_type: string
+          sender_verification_status: string
+          is_super_like: boolean
+          created_at: string
+        }[]
+      }
       get_user_status: {
         Args: { user_uuid: string }
         Returns: {
@@ -880,6 +901,10 @@ export type Database = {
           increment_amount?: number
         }
         Returns: undefined
+      }
+      respond_to_like: {
+        Args: { like_id_param: string; response_status: string }
+        Returns: boolean
       }
       set_withdrawal_pin: {
         Args: { pin: string }

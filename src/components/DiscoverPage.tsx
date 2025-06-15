@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Wallet, Filter, Settings, RefreshCw } from "lucide-react";
+import { MessageCircle, Wallet, Filter, Settings, RefreshCw, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
 import { useDiscoverUsers } from "@/hooks/useDiscoverUsers";
 import { useLikes } from "@/hooks/useLikes";
 import { useMatches } from "@/hooks/useMatches";
+import { useIncomingLikes } from "@/hooks/useIncomingLikes";
 import UnifiedWalletModal from "@/components/UnifiedWalletModal";
 import TipModal from "@/components/TipModal";
 import ProfileButton from "@/components/ProfileButton";
@@ -18,10 +19,11 @@ import DiscoveryStats from "@/components/DiscoveryStats";
 import EditProfileModal from "@/components/EditProfileModal";
 import MatchModal from "@/components/MatchModal";
 import FilterModal from "@/components/FilterModal";
+import IncomingLikesPage from "@/components/IncomingLikesPage";
 import { useToast } from "@/hooks/use-toast";
 import HookLogo from "@/components/HookLogo";
 
-type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages';
+type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages' | 'incoming-likes';
 
 interface DiscoverPageProps {
   currentView: ViewType;
@@ -37,6 +39,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   const { users: realUsers, loading: usersLoading, error: usersError, refetch } = useDiscoverUsers();
   const { createLike, checkMutualLike, loading: likesLoading } = useLikes();
   const { matches: realMatches, refetch: refetchMatches } = useMatches();
+  const { count: incomingLikesCount } = useIncomingLikes();
   const { toast } = useToast();
   
   // Modals state
@@ -375,6 +378,15 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     );
   }
 
+  // Show incoming likes page if that's the current view
+  if (currentView === 'incoming-likes') {
+    return (
+      <IncomingLikesPage 
+        onBack={() => setCurrentView('discover')} 
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
       {/* Header */}
@@ -405,6 +417,21 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
                 className="text-white hover:bg-white/20"
               >
                 <Filter className="w-5 h-5" />
+              </Button>
+
+              {/* Incoming Likes */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView('incoming-likes')}
+                className="text-white hover:bg-white/20 relative"
+              >
+                <Heart className="w-5 h-5" />
+                {incomingLikesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {incomingLikesCount}
+                  </span>
+                )}
               </Button>
               
               {/* Messages */}
@@ -544,6 +571,19 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
             <p className="text-white/60 text-xs mt-1">
               Showing {realUsers.length} real users • Use filters to customize
             </p>
+            {incomingLikesCount > 0 && (
+              <p className="text-white/80 text-xs mt-1">
+                {incomingLikesCount} people liked you! 
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  onClick={() => setCurrentView('incoming-likes')}
+                  className="text-white underline p-0 ml-1 h-auto"
+                >
+                  View likes
+                </Button>
+              </p>
+            )}
           </div>
         </div>
       </div>

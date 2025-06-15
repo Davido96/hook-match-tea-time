@@ -59,10 +59,10 @@ export const useLikes = () => {
           
           setLoading(true);
 
-          // More robust check for existing like using the new index
+          // Check for existing like using the new status field
           const { data: existingLike, error: checkError } = await supabase
             .from('likes')
-            .select('id, created_at')
+            .select('id, status, created_at')
             .eq('sender_id', user.id)
             .eq('recipient_id', recipientId)
             .limit(1);
@@ -86,20 +86,30 @@ export const useLikes = () => {
           }
 
           if (existingLike && existingLike.length > 0) {
-            console.log('ℹ️ Like already exists, skipping');
-            toast.info('You already liked this profile');
+            const like = existingLike[0];
+            if (like.status === 'pending') {
+              console.log('ℹ️ Like already pending, skipping');
+              toast.info('You already liked this profile');
+            } else if (like.status === 'accepted') {
+              console.log('ℹ️ Like already accepted, skipping');
+              toast.info('You already matched with this profile');
+            } else if (like.status === 'rejected') {
+              console.log('ℹ️ Like was previously rejected, skipping');
+              toast.info('This like was previously declined');
+            }
             setLoading(false);
             resolve(false);
             return;
           }
 
-          // Create the like with proper error handling
+          // Create the like with pending status (default)
           const { data, error } = await supabase
             .from('likes')
             .insert({
               sender_id: user.id,
               recipient_id: recipientId,
-              is_super_like: isSuperLike
+              is_super_like: isSuperLike,
+              status: 'pending'
             })
             .select()
             .single();
@@ -145,21 +155,7 @@ export const useLikes = () => {
           }
 
           console.log('✅ Like created successfully:', data);
-          toast.success(`${isSuperLike ? 'Super like' : 'Like'} sent successfully!`);
-          
-          // Check for match after a short delay to allow trigger to process
-          setTimeout(async () => {
-            try {
-              const isMatch = await checkMutualLike(recipientId);
-              if (isMatch) {
-                console.log('🎉 Match detected with:', recipientId);
-                toast.success('🎉 It\'s a Match! You can now chat with this user.');
-              }
-            } catch (matchError) {
-              console.error('❌ Error checking for match:', matchError);
-              // Don't show error to user for match check failure
-            }
-          }, 500);
+          toast.success(`${isSuperLike ? 'Super like' : 'Like'} sent! They'll see it in their likes.`);
           
           setLoading(false);
           resolve(true);
