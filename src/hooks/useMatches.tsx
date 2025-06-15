@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,8 +35,9 @@ export const useMatches = () => {
       setLoading(true);
       setError(null);
 
-      // Get matches for this user (returns "other" user's details for each match)
-      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
+      // Use type cast to 'any' to allow calling custom RPC without TS error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error: rpcError } = await (supabase as any).rpc('get_user_matches', {
         user_uuid: user.id
       });
 
@@ -48,7 +48,6 @@ export const useMatches = () => {
         return;
       }
 
-      // Data must be an array if not error
       if (!Array.isArray(data)) {
         console.error('[useMatches] RPC returned invalid data (not array):', data);
         setError('Failed to load matches');
@@ -56,7 +55,6 @@ export const useMatches = () => {
         return;
       }
 
-      // Each row = match with other user's details, as defined by function
       const transformedMatches: Match[] = data.map((row: any) => ({
         id: row.match_id,
         user_id: row.other_user_id,
