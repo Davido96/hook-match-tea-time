@@ -9,68 +9,74 @@ import LandingPage from "@/components/LandingPage";
 import DiscoverPage from "@/components/DiscoverPage";
 import ChatInterface from "@/components/ChatInterface";
 
-type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages' | 'auth';
+type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const [currentView, setCurrentView] = useState<ViewType>('landing');
   const [matches, setMatches] = useState<any[]>([]);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [forceShowLanding, setForceShowLanding] = useState(false);
 
   // Handle navigation based on auth and profile state
   useEffect(() => {
-    if (authLoading || profileLoading) return;
-
-    if (!user) {
-      // No user - show landing page
-      setCurrentView('landing');
-      return;
-    }
-    
-    if (user && !profile) {
-      // User exists but no profile - show profile setup
-      setCurrentView('profile-setup');
-      return;
-    }
-    
-    if (user && profile) {
-      // User and profile exist - show discover if currently on landing/auth
-      if (currentView === 'landing' || currentView === 'auth' || currentView === 'profile-setup') {
-        setCurrentView('discover');
+    if (!authLoading && !profileLoading) {
+      // If force showing landing, respect that
+      if (forceShowLanding) {
+        setCurrentView('landing');
+        return;
       }
-      return;
+
+      if (!user) {
+        setCurrentView('landing');
+        return;
+      }
+      
+      // If user exists but no profile, show profile setup
+      if (user && !profile) {
+        setCurrentView('profile-setup');
+        return;
+      }
+      
+      // If user and profile exist, and we're still on landing, go to discover
+      if (user && profile && currentView === 'landing') {
+        setCurrentView('discover');
+        return;
+      }
     }
-  }, [user, profile, authLoading, profileLoading, currentView]);
+  }, [user, profile, authLoading, profileLoading, currentView, forceShowLanding]);
 
   const handleGetStarted = () => {
-    setAuthMode('signup');
-    setCurrentView('auth');
-  };
-
-  const handleSignInClick = () => {
-    setAuthMode('signin');
-    setCurrentView('auth');
-  };
-
-  const handleAuthSuccess = () => {
-    // Will be handled by useEffect based on profile state
-  };
-
-  const handleSignupSuccess = () => {
-    // After successful signup, useEffect will direct to profile setup
+    setForceShowLanding(false);
+    // This will be called from LandingPage when user clicks get started
+    // If user is authenticated and has profile, go directly to discover
+    if (user && profile) {
+      setCurrentView('discover');
+    } else if (user && !profile) {
+      setCurrentView('profile-setup');
+    } else {
+      // User needs to authenticate first - this is handled by LandingPage
+      setCurrentView('landing');
+    }
   };
 
   const handleProfileSetupComplete = () => {
     setCurrentView('discover');
   };
 
-  const handleBackToLanding = () => {
+  const handleProfileSetupBack = () => {
+    // This allows users to go back to landing from profile setup
+    setForceShowLanding(true);
     setCurrentView('landing');
   };
 
   const handleMatchAdded = (match: any) => {
     setMatches(prev => [...prev, match]);
+  };
+
+  const handleBackToLanding = () => {
+    setForceShowLanding(true);
+    setCurrentView('landing');
   };
 
   // Show loading while checking auth/profile state
@@ -82,26 +88,9 @@ const Index = () => {
     );
   }
 
-  // Show authentication page
-  if (currentView === 'auth') {
-    return (
-      <AuthPage 
-        initialMode={authMode}
-        onAuthSuccess={handleAuthSuccess}
-        onSignupSuccess={handleSignupSuccess}
-        onBack={handleBackToLanding}
-      />
-    );
-  }
-
-  // Show landing page if no user or explicitly requested
-  if (!user || currentView === 'landing') {
-    return (
-      <LandingPage 
-        onGetStarted={handleGetStarted}
-        onSignIn={handleSignInClick}
-      />
-    );
+  // Show landing page if no user or force showing landing
+  if (!user || currentView === 'landing' || forceShowLanding) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
   // Show profile setup if user exists but no profile
@@ -109,7 +98,7 @@ const Index = () => {
     return (
       <EnhancedProfileSetup 
         onComplete={handleProfileSetupComplete}
-        onBack={handleBackToLanding}
+        onBack={handleProfileSetupBack}
       />
     );
   }

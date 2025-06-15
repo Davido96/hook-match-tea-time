@@ -70,8 +70,6 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
         title: "Signed Out",
         description: "You have been signed out successfully.",
       });
-      // Navigation will be handled by the parent component (Index.tsx)
-      onBack?.();
     } catch (error) {
       console.error('Sign out error:', error);
       toast({
@@ -229,7 +227,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack }: EnhancedProfileSetupProps)
             <Button
               variant="ghost"
               size="sm"
-              onClick={onBack}
+              onClick={handleBack}
               className="p-2"
             >
               <ArrowLeft className="w-4 h-4" />
