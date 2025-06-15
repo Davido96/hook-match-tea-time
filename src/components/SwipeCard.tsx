@@ -3,9 +3,11 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Heart, X } from "lucide-react";
+import { useLikes } from "@/hooks/useLikes";
 
 interface User {
   id: number;
+  user_id: string;
   name: string;
   age: number;
   bio: string;
@@ -17,13 +19,33 @@ interface User {
 interface SwipeCardProps {
   user: User;
   onSwipe: (direction: 'left' | 'right') => void;
+  onMatch?: (user: User) => void;
 }
 
-const SwipeCard = ({ user, onSwipe }: SwipeCardProps) => {
+const SwipeCard = ({ user, onSwipe, onMatch }: SwipeCardProps) => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [startX, setStartX] = useState(0);
   const [currentX, setCurrentX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const { createLike, checkMutualLike } = useLikes();
+
+  const handleSwipeComplete = async (direction: 'left' | 'right') => {
+    if (direction === 'right') {
+      console.log('Creating like for user:', user.user_id);
+      const success = await createLike(user.user_id, false);
+      
+      if (success) {
+        // Check if this creates a match
+        const isMatch = await checkMutualLike(user.user_id);
+        if (isMatch && onMatch) {
+          console.log('Match detected!', user.name);
+          onMatch(user);
+        }
+      }
+    }
+    
+    onSwipe(direction);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setStartX(e.clientX);
@@ -43,7 +65,7 @@ const SwipeCard = ({ user, onSwipe }: SwipeCardProps) => {
     if (Math.abs(currentX) > threshold) {
       const direction = currentX > 0 ? 'right' : 'left';
       setSwipeDirection(direction);
-      setTimeout(() => onSwipe(direction), 100);
+      setTimeout(() => handleSwipeComplete(direction), 100);
     } else {
       setCurrentX(0);
     }
@@ -67,7 +89,7 @@ const SwipeCard = ({ user, onSwipe }: SwipeCardProps) => {
     if (Math.abs(currentX) > threshold) {
       const direction = currentX > 0 ? 'right' : 'left';
       setSwipeDirection(direction);
-      setTimeout(() => onSwipe(direction), 100);
+      setTimeout(() => handleSwipeComplete(direction), 100);
     } else {
       setCurrentX(0);
     }

@@ -8,23 +8,23 @@ import { ArrowLeft, Send, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import HookLogo from "@/components/HookLogo";
 import { useUserPresence } from "@/hooks/useUserPresence";
+import { useMatches } from "@/hooks/useMatches";
+import { useMessages } from "@/hooks/useMessages";
 
 interface ChatInterfaceProps {
   onBack: () => void;
-  matches: any[];
 }
 
-const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
+const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
   const navigate = useNavigate();
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hey! Thanks for the match 😊", sender: "them", time: "2:30 PM" },
-    { id: 2, text: "Hi! Great to meet you! How's your day going?", sender: "me", time: "2:32 PM" },
-    { id: 3, text: "It's going great! I love your hiking photos 🏔️", sender: "them", time: "2:35 PM" },
-  ]);
   const { getUserStatus, userStatuses } = useUserPresence();
-  const [matchStatus, setMatchStatus] = useState<string>("Online now");
+  const [matchStatus, setMatchStatus] = useState<string>("Loading...");
+  
+  // Use real data hooks
+  const { matches, loading: matchesLoading, error: matchesError } = useMatches();
+  const { messages, sendMessage, loading: messagesLoading } = useMessages(selectedMatch?.user_id);
 
   // Fetch status when a match is selected
   useEffect(() => {
@@ -35,18 +35,13 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
     }
   }, [selectedMatch, getUserStatus]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
     
-    const newMessage = {
-      id: messages.length + 1,
-      text: message,
-      sender: "me",
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    
-    setMessages([...messages, newMessage]);
-    setMessage("");
+    const success = await sendMessage(message);
+    if (success) {
+      setMessage("");
+    }
   };
 
   const handleProfileClick = (match: any) => {
@@ -81,7 +76,17 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
 
         {/* Matches List */}
         <div className="container mx-auto px-4 py-8">
-          {matches.length === 0 ? (
+          {matchesLoading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hooks-coral mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading your matches...</p>
+            </div>
+          ) : matchesError ? (
+            <div className="text-center py-16">
+              <p className="text-red-500 mb-4">{matchesError}</p>
+              <Button onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          ) : matches.length === 0 ? (
             <div className="text-center py-16">
               <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
               <h2 className="text-2xl font-bold text-gray-600 mb-2">No matches yet</h2>
@@ -95,7 +100,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
             </div>
           ) : (
             <div className="max-w-md mx-auto space-y-4">
-              <h2 className="text-2xl font-bold text-center mb-6">Your Matches</h2>
+              <h2 className="text-2xl font-bold text-center mb-6">Your Matches ({matches.length})</h2>
               {matches.map((match) => {
                 const status = userStatuses[match.user_id] || { statusText: "Loading..." };
                 return (
@@ -187,29 +192,41 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
 
       {/* Messages */}
       <div className="flex-1 container mx-auto px-4 py-4 max-w-2xl">
-        <div className="space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                  msg.sender === 'me'
-                    ? 'bg-hooks-coral text-white'
-                    : 'bg-white border shadow-sm'
-                }`}
-              >
-                <p className="text-sm">{msg.text}</p>
-                <p className={`text-xs mt-1 ${
-                  msg.sender === 'me' ? 'text-white/70' : 'text-gray-500'
-                }`}>
-                  {msg.time}
-                </p>
+        {messagesLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hooks-coral"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No messages yet. Say hello!</p>
               </div>
-            </div>
-          ))}
-        </div>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                      msg.sender === 'me'
+                        ? 'bg-hooks-coral text-white'
+                        : 'bg-white border shadow-sm'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.text}</p>
+                    <p className={`text-xs mt-1 ${
+                      msg.sender === 'me' ? 'text-white/70' : 'text-gray-500'
+                    }`}>
+                      {msg.time}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Message Input */}
@@ -226,6 +243,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
             <Button 
               onClick={handleSendMessage}
               className="gradient-coral text-white"
+              disabled={!message.trim()}
             >
               <Send className="w-4 h-4" />
             </Button>
