@@ -58,26 +58,35 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   const [todayMatches, setTodayMatches] = useState(0);
   const [streakDays, setStreakDays] = useState(1);
   
-  // Filters state
+  // Updated filters to include user type
   const [filters, setFilters] = useState({
     distance: 50,
     ageRange: [18, 35] as [number, number],
     gender: 'both',
-    location: ''
+    location: '',
+    userType: 'both' // New filter for user type
   });
 
-  // Apply filters to users
+  // Apply filters to users - updated to handle both creators and consumers
   useEffect(() => {
     let filtered = sampleUsers.filter(user => {
+      // Gender filter
       if (filters.gender !== 'both' && user.gender !== filters.gender) {
         return false;
       }
       
+      // Location filter
       if (filters.location && !user.location?.toLowerCase().includes(filters.location.toLowerCase())) {
         return false;
       }
       
+      // Age filter
       if (user.age < filters.ageRange[0] || user.age > filters.ageRange[1]) {
+        return false;
+      }
+      
+      // User type filter
+      if (filters.userType !== 'both' && user.user_type !== filters.userType) {
         return false;
       }
       
@@ -370,7 +379,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
             disabled={currentUserIndex >= filteredUsers.length}
           />
 
-          {/* Discovery Counter */}
+          {/* Discovery Counter - Updated to show user type variety */}
           <div className="text-center mt-6">
             <p className="text-white text-sm">
               {matches.length} matches • {Math.max(0, filteredUsers.length - currentUserIndex)} profiles remaining
@@ -380,6 +389,9 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
                 {superLikesRemaining} Super Likes remaining today
               </p>
             )}
+            <p className="text-white/60 text-xs mt-1">
+              Showing creators and members • Use filters to customize
+            </p>
           </div>
         </div>
       </div>

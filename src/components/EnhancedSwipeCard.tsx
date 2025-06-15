@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +19,7 @@ interface User {
   verification_status?: 'verified' | 'pending' | 'rejected';
   subscriber_count?: number;
   last_active?: string;
-  subscription_fee?: number;
+  subscriptionFee?: number;
   follower_count?: number;
 }
 
@@ -170,7 +169,7 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
           </div>
         )}
 
-        {/* Creator Badge */}
+        {/* Creator Badge - Only show for creators */}
         {user.user_type === 'creator' && (
           <div className="absolute top-4 right-4 bg-gradient-to-r from-hooks-coral to-hooks-pink text-white px-2 py-1 rounded-full flex items-center space-x-1 text-xs font-bold shadow-lg">
             <Crown className="w-3 h-3" />
@@ -214,12 +213,13 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
               <User className="w-5 h-5 text-white" />
             </Button>
             
-            {user.user_type === 'creator' && (
+            {/* Only show FollowSubscribeButtons for creators */}
+            {user.user_type === 'creator' && user.subscriptionFee && (
               <div className="w-12">
                 <FollowSubscribeButtons
                   targetUserId={user.id.toString()}
                   targetUserType="creator"
-                  subscriptionFee={user.subscription_fee}
+                  subscriptionFee={user.subscriptionFee}
                   className="flex flex-col space-y-1"
                 />
               </div>
@@ -250,11 +250,12 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
               <span className="text-sm">{user.distance}</span>
             </div>
             
-            {/* Social Proof */}
+            {/* Social Proof - Show different stats based on user type */}
             <div className="flex items-center space-x-4 text-sm text-white/80">
               {user.follower_count && (
                 <span>{user.follower_count} followers</span>
               )}
+              {/* Only show subscriber count for creators */}
               {user.user_type === 'creator' && user.subscriber_count && (
                 <span>{user.subscriber_count} subscribers</span>
               )}
