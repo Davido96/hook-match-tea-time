@@ -120,9 +120,9 @@ const Index = () => {
     return <ExclusiveContentPage onBack={() => setCurrentView('discover')} />;
   }
 
-  // Show messages interface
+  // Show messages interface - removed matches prop
   if (currentView === 'messages') {
-    return <ChatInterface onBack={() => setCurrentView('discover')} matches={matches} />;
+    return <ChatInterface onBack={() => setCurrentView('discover')} />;
   }
 
   // Main discover interface - this is the homepage after authentication

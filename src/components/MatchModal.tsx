@@ -18,13 +18,12 @@ interface User {
 interface MatchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  matchedUser: User | null;
-  onSendMessage: () => void;
-  onKeepSwiping: () => void;
+  match: User | null; // Changed from matchedUser to match
+  onStartChatting: () => void; // Changed from onSendMessage and onKeepSwiping
 }
 
-const MatchModal = ({ isOpen, onClose, matchedUser, onSendMessage, onKeepSwiping }: MatchModalProps) => {
-  if (!matchedUser) return null;
+const MatchModal = ({ isOpen, onClose, match, onStartChatting }: MatchModalProps) => {
+  if (!match) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -56,7 +55,7 @@ const MatchModal = ({ isOpen, onClose, matchedUser, onSendMessage, onKeepSwiping
             </h2>
             
             <p className="text-gray-600">
-              You and {matchedUser.name} liked each other
+              You and {match.name} liked each other
             </p>
           </div>
 
@@ -64,8 +63,8 @@ const MatchModal = ({ isOpen, onClose, matchedUser, onSendMessage, onKeepSwiping
           <div className="flex justify-center">
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={matchedUser.image} alt={matchedUser.name} />
-                <AvatarFallback className="text-2xl">{matchedUser.name[0]}</AvatarFallback>
+                <AvatarImage src={match.image} alt={match.name} />
+                <AvatarFallback className="text-2xl">{match.name[0]}</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-2 -right-2 bg-green-500 text-white rounded-full p-2">
                 <Heart className="w-4 h-4" fill="currentColor" />
@@ -75,22 +74,22 @@ const MatchModal = ({ isOpen, onClose, matchedUser, onSendMessage, onKeepSwiping
 
           {/* User info */}
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold">{matchedUser.name}, {matchedUser.age}</h3>
-            <p className="text-gray-600 text-sm">{matchedUser.bio}</p>
+            <h3 className="text-xl font-semibold">{match.name}, {match.age}</h3>
+            <p className="text-gray-600 text-sm">{match.bio}</p>
           </div>
 
           {/* Action buttons */}
           <div className="space-y-3">
             <Button
-              onClick={onSendMessage}
+              onClick={onStartChatting}
               className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold py-3"
             >
               <MessageCircle className="w-5 h-5 mr-2" />
-              Send Message
+              Start Chatting
             </Button>
             
             <Button
-              onClick={onKeepSwiping}
+              onClick={onClose}
               variant="outline"
               className="w-full border-2 border-gray-300 hover:border-gray-400"
             >
