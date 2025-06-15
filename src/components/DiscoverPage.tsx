@@ -276,7 +276,8 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
                 className="flex items-center space-x-2 text-white hover:bg-white/20"
               >
                 <Wallet className="w-4 h-4" />
-                <span>{wallet?.keys_balance || 0} 🪝</span>
+                <span>{wallet?.keys_balance || 0}</span>
+                <HookLogo size="sm" />
               </Button>
               
               {/* Profile */}

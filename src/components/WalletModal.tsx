@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { X, Wallet, Plus } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
+import HookLogo from "@/components/HookLogo";
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -74,7 +74,10 @@ const WalletModal = ({ isOpen, onClose }: WalletModalProps) => {
         <CardContent className="space-y-6">
           {/* Current Balance */}
           <div className="bg-gradient-to-r from-hooks-coral to-hooks-pink text-white p-4 rounded-lg text-center">
-            <div className="text-2xl font-bold">{wallet?.keys_balance || 0} 🪝</div>
+            <div className="flex items-center justify-center gap-2 text-2xl font-bold">
+              {wallet?.keys_balance || 0}
+              <HookLogo size="md" />
+            </div>
             <div className="text-sm opacity-90">Current Keys Balance</div>
           </div>
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import CreatePostModal from "./CreatePostModal";
 import TipModal from "./TipModal";
 import ExclusiveContentModal from "./ExclusiveContentModal";
+import HookLogo from "@/components/HookLogo";
 
 interface ExclusivePost {
   id: string;
@@ -203,13 +203,13 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-hooks-coral"
+                      className="text-hooks-coral flex items-center gap-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSendTip(post.creator_id, post.profiles.name);
                       }}
                     >
-                      Send Keys 🪝
+                      Send Keys <HookLogo size="sm" />
                     </Button>
                   )}
                 </div>

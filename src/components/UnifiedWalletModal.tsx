@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import HookLogo from "@/components/HookLogo";
 
 interface UnifiedWalletModalProps {
   isOpen: boolean;
@@ -193,21 +193,30 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="bg-gradient-to-r from-hooks-coral to-hooks-pink text-white">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold">{wallet?.keys_balance || 0} 🪝</div>
+              <div className="flex justify-center items-center gap-2 text-2xl font-bold">
+                {wallet?.keys_balance || 0}
+                <HookLogo size="md" />
+              </div>
               <div className="text-sm opacity-90">Available Balance</div>
               <div className="text-xs opacity-75">₦{convertKeysToNaira(wallet?.keys_balance || 0).toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card className="bg-yellow-50 border-yellow-200">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">{pendingWithdrawals}</div>
+              <div className="flex justify-center items-center gap-2 text-2xl font-bold text-yellow-600">
+                {pendingWithdrawals}
+                <HookLogo size="md" />
+              </div>
               <div className="text-sm text-yellow-700">Pending Withdrawals</div>
               <div className="text-xs text-yellow-600">₦{convertKeysToNaira(pendingWithdrawals).toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card className="bg-gray-50">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-600">{MINIMUM_WITHDRAWAL}</div>
+              <div className="flex justify-center items-center gap-2 text-2xl font-bold text-gray-600">
+                {MINIMUM_WITHDRAWAL}
+                <HookLogo size="md" />
+              </div>
               <div className="text-sm text-gray-700">Min. Withdrawal</div>
               <div className="text-xs text-gray-600">₦{convertKeysToNaira(MINIMUM_WITHDRAWAL).toLocaleString()}</div>
             </CardContent>
@@ -321,7 +330,10 @@ const UnifiedWalletModal = ({ isOpen, onClose, defaultTab = "purchase" }: Unifie
                         className={withdrawalAmount === amount.toString() ? "bg-hooks-coral hover:bg-hooks-coral/80" : ""}
                       >
                         <div className="text-center">
-                          <div>{amount}</div>
+                          <div>
+                            {amount}
+                            <HookLogo size="sm" className="inline" />
+                          </div>
                           <div className="text-xs opacity-75">₦{convertKeysToNaira(amount).toLocaleString()}</div>
                         </div>
                       </Button>

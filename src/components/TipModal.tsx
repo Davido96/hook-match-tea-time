@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { X, Heart, Plus } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
 import UnifiedWalletModal from "./UnifiedWalletModal";
+import HookLogo from "@/components/HookLogo";
 
 interface TipModalProps {
   isOpen: boolean;
@@ -88,7 +88,7 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2">
-                <span className="text-xl">🪝</span>
+                <HookLogo size="md" />
                 <span>Send Keys Tip</span>
               </CardTitle>
               <Button variant="ghost" size="sm" onClick={onClose}>
@@ -104,7 +104,9 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
                 {recipientName.charAt(0).toUpperCase()}
               </div>
               <h3 className="font-semibold text-lg">Sending tip to {recipientName}</h3>
-              <p className="text-sm text-gray-600">Your current balance: {wallet?.keys_balance || 0} Keys</p>
+              <p className="text-sm text-gray-600">
+                Your current balance: {wallet?.keys_balance || 0} <HookLogo size="sm" />
+              </p>
             </div>
 
             {/* Balance Warning */}
@@ -137,7 +139,7 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
                     onClick={() => setAmount(quickAmount)}
                     disabled={isLoading}
                   >
-                    {quickAmount} 🪝
+                    {quickAmount} <HookLogo size="sm" />
                   </Button>
                 ))}
               </div>
@@ -173,7 +175,9 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="font-semibold">Total</span>
-                <span className="text-hooks-coral font-bold">{amount} Keys (₦{(amount * 1000).toLocaleString()})</span>
+                <span className="text-hooks-coral font-bold flex items-center gap-1">
+                  {amount} <HookLogo size="sm" /> (₦{(amount * 1000).toLocaleString()})
+                </span>
               </div>
             </div>
 
@@ -181,10 +185,14 @@ const TipModal = ({ isOpen, onClose, recipientName, recipientId }: TipModalProps
             <Button 
               onClick={handleSendTip}
               disabled={isLoading || amount < 1 || hasInsufficientBalance}
-              className="w-full gradient-coral text-white"
+              className="w-full gradient-coral text-white flex items-center justify-center"
             >
               <Heart className="w-4 h-4 mr-2" />
-              {isLoading ? 'Sending...' : `Send ${amount} Keys`}
+              {isLoading ? 'Sending...' : (
+                <>
+                  Send {amount} <HookLogo size="sm" /> Tip
+                </>
+              )}
             </Button>
 
             {/* Info */}

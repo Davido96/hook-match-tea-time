@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { X, Heart, MessageCircle, Share } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import TipModal from "./TipModal";
 import ProfileViewModal from "./ProfileViewModal";
+import HookLogo from "@/components/HookLogo";
 
 interface ExclusiveContentModalProps {
   isOpen: boolean;
@@ -155,10 +155,10 @@ const ExclusiveContentModal = ({ isOpen, onClose, post }: ExclusiveContentModalP
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-hooks-coral border-hooks-coral hover:bg-hooks-coral hover:text-white"
+                    className="text-hooks-coral border-hooks-coral hover:bg-hooks-coral hover:text-white flex items-center gap-1"
                     onClick={handleSendTip}
                   >
-                    Send Keys 🪝
+                    Send Keys <HookLogo size="sm" />
                   </Button>
                 )}
               </div>
