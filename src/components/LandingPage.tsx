@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Shield, Zap, Star, TrendingUp } from "lucide-react";
 import { useState } from "react";
@@ -8,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import CreatorShowcase from "@/components/CreatorShowcase";
 import FloatingStats from "@/components/FloatingStats";
 import InteractiveButton from "@/components/InteractiveButton";
+import HookLogo from "@/components/HookLogo";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -98,7 +98,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center space-x-3 mb-8 animate-fade-in">
-            <span className="text-6xl animate-float">🪝</span>
+            <HookLogo size="hero" />
             <h1 className="text-6xl font-bold text-white font-playfair">Hooks</h1>
           </div>
           <p className="text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in-delay">

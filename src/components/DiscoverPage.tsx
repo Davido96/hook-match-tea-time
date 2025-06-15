@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Wallet, Filter, Settings, RefreshCw } from "lucide-react";
@@ -18,6 +17,7 @@ import MatchModal from "@/components/MatchModal";
 import FilterModal from "@/components/FilterModal";
 import { sampleUsers } from "@/data/sampleUsers";
 import { useToast } from "@/hooks/use-toast";
+import HookLogo from "@/components/HookLogo";
 
 type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages';
 
@@ -228,7 +228,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl">🪝</span>
+              <HookLogo size="md" />
               <h1 className="text-xl font-bold text-white">Hooks</h1>
             </div>
             

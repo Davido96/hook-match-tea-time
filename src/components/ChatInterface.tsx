@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Heart } from "lucide-react";
+import HookLogo from "@/components/HookLogo";
 
 interface ChatInterfaceProps {
   onBack: () => void;
@@ -45,7 +45,7 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex items-center space-x-2">
-                <span className="text-2xl">🪝</span>
+                <HookLogo size="md" />
                 <h1 className="text-xl font-bold text-gradient">Your Matches</h1>
               </div>
             </div>

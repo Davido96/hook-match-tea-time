@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import HookLogo from "@/components/HookLogo";
 
 interface AuthPageProps {
   initialMode?: 'signin' | 'signup';
@@ -102,7 +102,7 @@ const AuthPage = ({
             </Button>
           )}
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <span className="text-3xl">🪝</span>
+            <HookLogo size="lg" />
             <h1 className="text-2xl font-bold text-gradient">Hooks</h1>
           </div>
           <CardTitle>{isSignUp ? 'Join Hooks' : 'Welcome Back'}</CardTitle>
