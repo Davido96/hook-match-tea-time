@@ -1,10 +1,12 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Heart } from "lucide-react";
 import HookLogo from "@/components/HookLogo";
+import { useUserPresence } from "@/hooks/useUserPresence";
 
 interface ChatInterfaceProps {
   onBack: () => void;
@@ -19,6 +21,17 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
     { id: 2, text: "Hi! Great to meet you! How's your day going?", sender: "me", time: "2:32 PM" },
     { id: 3, text: "It's going great! I love your hiking photos 🏔️", sender: "them", time: "2:35 PM" },
   ]);
+  const { getUserStatus, userStatuses } = useUserPresence();
+  const [matchStatus, setMatchStatus] = useState<string>("Online now");
+
+  // Fetch status when a match is selected
+  useEffect(() => {
+    if (selectedMatch?.user_id) {
+      getUserStatus(selectedMatch.user_id).then(status => {
+        setMatchStatus(status.statusText);
+      });
+    }
+  }, [selectedMatch, getUserStatus]);
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -69,28 +82,35 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
           ) : (
             <div className="max-w-md mx-auto space-y-4">
               <h2 className="text-2xl font-bold text-center mb-6">Your Matches</h2>
-              {matches.map((match) => (
-                <Card 
-                  key={match.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setSelectedMatch(match)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={match.image} alt={match.name} />
-                        <AvatarFallback>{match.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{match.name}</h3>
-                        <p className="text-gray-600">{match.bio}</p>
-                        <p className="text-sm text-gray-500">Matched recently</p>
+              {matches.map((match) => {
+                const status = userStatuses[match.user_id] || { statusText: "Loading..." };
+                return (
+                  <Card 
+                    key={match.id}
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setSelectedMatch(match)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={match.image} alt={match.name} />
+                          <AvatarFallback>{match.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{match.name}</h3>
+                          <p className="text-gray-600">{match.bio}</p>
+                          <p className="text-sm text-gray-500">{status.statusText}</p>
+                        </div>
+                        <div className={`w-3 h-3 rounded-full ${
+                          status.statusText === 'Online now' ? 'bg-green-500' : 
+                          status.statusText === 'Recently active' ? 'bg-yellow-500' : 
+                          'bg-gray-400'
+                        }`}></div>
                       </div>
-                      <div className="w-3 h-3 bg-hooks-coral rounded-full"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
@@ -113,7 +133,13 @@ const ChatInterface = ({ onBack, matches }: ChatInterfaceProps) => {
             </Avatar>
             <div>
               <h2 className="font-semibold">{selectedMatch.name}</h2>
-              <p className="text-sm text-green-500">Online now</p>
+              <p className={`text-sm ${
+                matchStatus === 'Online now' ? 'text-green-500' :
+                matchStatus === 'Recently active' ? 'text-yellow-600' :
+                'text-gray-500'
+              }`}>
+                {matchStatus}
+              </p>
             </div>
           </div>
         </div>

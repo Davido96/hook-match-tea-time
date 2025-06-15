@@ -483,6 +483,69 @@ export type Database = {
           },
         ]
       }
+      user_activity: {
+        Row: {
+          created_at: string
+          current_streak_days: number
+          id: string
+          last_active_date: string
+          longest_streak_days: number
+          total_discovery_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak_days?: number
+          id?: string
+          last_active_date?: string
+          longest_streak_days?: number
+          total_discovery_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak_days?: number
+          id?: string
+          last_active_date?: string
+          longest_streak_days?: number
+          total_discovery_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          created_at: string
+          id: string
+          is_online: boolean
+          last_seen: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -613,6 +676,25 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_daily_stats: {
+        Args: { user_uuid: string }
+        Returns: {
+          today_swipes: number
+          today_matches: number
+          today_super_likes: number
+          current_streak: number
+          longest_streak: number
+          total_discovery_days: number
+        }[]
+      }
+      get_user_status: {
+        Args: { user_uuid: string }
+        Returns: {
+          is_online: boolean
+          last_seen: string
+          status_text: string
+        }[]
+      }
       get_user_tier: {
         Args: { user_uuid: string }
         Returns: string
@@ -623,6 +705,14 @@ export type Database = {
           action_type: string
           increment_amount?: number
         }
+        Returns: undefined
+      }
+      update_user_presence: {
+        Args: { user_uuid: string; online_status?: boolean }
+        Returns: undefined
+      }
+      update_user_streak: {
+        Args: { user_uuid: string }
         Returns: undefined
       }
     }

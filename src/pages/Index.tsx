@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useUserPresence } from "@/hooks/useUserPresence";
 import AuthPage from "@/components/AuthPage";
 import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
 import ExclusiveContentPage from "@/components/ExclusiveContentPage";
@@ -14,9 +16,19 @@ type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messag
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
+  const { updateStreak } = useActivityTracker();
+  const { updatePresence } = useUserPresence();
   const [currentView, setCurrentView] = useState<ViewType>('landing');
   const [matches, setMatches] = useState<any[]>([]);
   const [forceShowLanding, setForceShowLanding] = useState(false);
+
+  // Initialize activity tracking and presence when user logs in
+  useEffect(() => {
+    if (user && profile) {
+      updateStreak();
+      updatePresence(true);
+    }
+  }, [user, profile, updateStreak, updatePresence]);
 
   // Handle navigation based on auth and profile state
   useEffect(() => {
