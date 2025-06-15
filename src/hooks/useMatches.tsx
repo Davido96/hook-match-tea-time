@@ -36,29 +36,29 @@ export const useMatches = () => {
       setLoading(true);
       setError(null);
 
-      // Bypass TS error for custom RPC for now
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: rpcError } = await (supabase as any).rpc('get_user_matches', {
+      // Get matches for this user (returns "other" user's details for each match)
+      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
         user_uuid: user.id
       });
 
       if (rpcError) {
         console.error('[useMatches] RPC error fetching matches:', rpcError);
         setError('Failed to load matches');
-        return;
-      }
-
-      // Ensure 'data' is an array before mapping.
-      if (!data || !Array.isArray(data)) {
-        console.error('[useMatches] RPC returned invalid data:', data);
         setMatches([]);
-        setError('Failed to load matches');
         return;
       }
 
-      // Transform data: Every row is a match with the other user's details
+      // Data must be an array if not error
+      if (!Array.isArray(data)) {
+        console.error('[useMatches] RPC returned invalid data (not array):', data);
+        setError('Failed to load matches');
+        setMatches([]);
+        return;
+      }
+
+      // Each row = match with other user's details, as defined by function
       const transformedMatches: Match[] = data.map((row: any) => ({
-        id: row.match_id || row.id,
+        id: row.match_id,
         user_id: row.other_user_id,
         name: row.other_name || 'Unknown User',
         age: row.other_age || 18,
@@ -66,7 +66,7 @@ export const useMatches = () => {
         image: row.other_avatar_url ||
           'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
         interests: row.other_interests || [],
-        distance: '2 km away', // Placeholder; real value not available without geodata.
+        distance: '2 km away', // Placeholder; real geodata can be added later
         location:
           row.other_location_city && row.other_location_state
             ? `${row.other_location_city}, ${row.other_location_state}`
@@ -85,6 +85,7 @@ export const useMatches = () => {
     } catch (error: any) {
       console.error('[useMatches] Error:', error);
       setError('Failed to load matches');
+      setMatches([]);
       if (retryCount < 3) {
         const delay = Math.pow(2, retryCount) * 1000;
         setTimeout(() => {
@@ -95,17 +96,14 @@ export const useMatches = () => {
     } finally {
       setLoading(false);
     }
-  // only re-run if user or retryCount changes
   }, [user, retryCount]);
 
-  // Initial fetch with dependency on user being ready
+  // Initial fetch when user is set
   useEffect(() => {
-    if (user !== undefined) {
-      fetchMatches();
-    }
+    if (user !== undefined) fetchMatches();
   }, [user, fetchMatches]);
 
-  // Real-time updates for matches — Listen for INSERT on matches table
+  // Real-time updates for new matches
   useEffect(() => {
     if (!user) return;
     let debounceTimer: NodeJS.Timeout;
