@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, Share, Lock, Play, Plus, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePostLikes } from "@/hooks/usePostLikes";
 import CreatePostModal from "./CreatePostModal";
 import ExclusiveContentModal from "./ExclusiveContentModal";
 import TipModal from "./TipModal";
+import PostCommentsModal from "./PostCommentsModal";
 
 interface Post {
   id: string;
@@ -40,6 +41,8 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showContentModal, setShowContentModal] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -99,6 +102,12 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
     console.log('Opening post:', post.id, 'isPublic:', post.is_public);
     setSelectedPost(post);
     setShowContentModal(true);
+  };
+
+  const handleCommentsClick = (postId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPostForComments(postId);
+    setShowCommentsModal(true);
   };
 
   const formatTimeAgo = (dateString: string) => {
@@ -178,107 +187,16 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
           const canAccess = post.is_public || canViewPrivatePosts;
           
           return (
-            <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                {/* Post Header */}
-                <div className="p-4 pb-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      {formatTimeAgo(post.created_at)}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      {!post.is_public && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Lock className="w-3 h-3 mr-1" />
-                          Subscribers Only
-                        </Badge>
-                      )}
-                      {canAccess && (
-                        <Badge variant="outline" className="text-xs text-green-600 border-green-600">
-                          <Eye className="w-3 h-3 mr-1" />
-                          Accessible
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Post Media */}
-                <div 
-                  className="relative cursor-pointer"
-                  onClick={() => handlePostClick(post)}
-                >
-                  {canAccess ? (
-                    <div className="flex justify-center bg-gray-50">
-                      {post.media_type === 'video' ? (
-                        <div className="relative w-full">
-                          <video
-                            src={post.media_url}
-                            className="w-full max-h-80 object-contain"
-                            preload="metadata"
-                          />
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <Play className="w-12 h-12 text-white" />
-                          </div>
-                        </div>
-                      ) : (
-                        <img
-                          src={post.media_url}
-                          alt="Post content"
-                          className="w-full max-h-80 object-contain"
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                      <div className="text-center">
-                        <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-gray-600 font-medium">Subscribe to view this content</p>
-                        <p className="text-sm text-gray-500">Exclusive content for subscribers</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Post Content */}
-                <div className="p-4">
-                  {post.caption && canAccess && (
-                    <p className="text-gray-800 mb-3">{post.caption}</p>
-                  )}
-
-                  {/* Post Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Button variant="ghost" size="sm" className="text-gray-600">
-                        <Heart className="w-4 h-4 mr-1" />
-                        <span className="text-sm">0</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        <span className="text-sm">0</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600">
-                        <Share className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    {!isOwnProfile && user && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-hooks-coral"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowTipModal(true);
-                        }}
-                      >
-                        Send Keys 🪝
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              canAccess={canAccess}
+              isOwnProfile={isOwnProfile}
+              onPostClick={handlePostClick}
+              onCommentsClick={handleCommentsClick}
+              onTipClick={() => setShowTipModal(true)}
+              formatTimeAgo={formatTimeAgo}
+            />
           );
         })}
 
@@ -329,7 +247,155 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
           recipientId={userId}
         />
       )}
+
+      {showCommentsModal && selectedPostForComments && (
+        <PostCommentsModal
+          isOpen={showCommentsModal}
+          onClose={() => {
+            setShowCommentsModal(false);
+            setSelectedPostForComments(null);
+          }}
+          postId={selectedPostForComments}
+        />
+      )}
     </div>
+  );
+};
+
+// Separate PostCard component to handle individual post rendering
+const PostCard = ({ 
+  post, 
+  canAccess, 
+  isOwnProfile, 
+  onPostClick, 
+  onCommentsClick, 
+  onTipClick, 
+  formatTimeAgo 
+}: {
+  post: any;
+  canAccess: boolean;
+  isOwnProfile: boolean;
+  onPostClick: (post: any) => void;
+  onCommentsClick: (postId: string, e: React.MouseEvent) => void;
+  onTipClick: () => void;
+  formatTimeAgo: (dateString: string) => string;
+}) => {
+  const { user } = useAuth();
+  const { likeCount, isLiked, loading: likeLoading, toggleLike } = usePostLikes(post.id);
+
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <CardContent className="p-0">
+        {/* Post Header */}
+        <div className="p-4 pb-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">
+              {formatTimeAgo(post.created_at)}
+            </span>
+            <div className="flex items-center space-x-2">
+              {!post.is_public && (
+                <Badge variant="secondary" className="text-xs">
+                  <Lock className="w-3 h-3 mr-1" />
+                  Subscribers Only
+                </Badge>
+              )}
+              {canAccess && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                  <Eye className="w-3 h-3 mr-1" />
+                  Accessible
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Post Media */}
+        <div 
+          className="relative cursor-pointer"
+          onClick={() => onPostClick(post)}
+        >
+          {canAccess ? (
+            <div className="flex justify-center bg-gray-50">
+              {post.media_type === 'video' ? (
+                <div className="relative w-full">
+                  <video
+                    src={post.media_url}
+                    className="w-full max-h-80 object-contain"
+                    preload="metadata"
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <Play className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+              ) : (
+                <img
+                  src={post.media_url}
+                  alt="Post content"
+                  className="w-full max-h-80 object-contain"
+                />
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
+              <div className="text-center">
+                <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-gray-600 font-medium">Subscribe to view this content</p>
+                <p className="text-sm text-gray-500">Exclusive content for subscribers</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Post Content */}
+        <div className="p-4">
+          {post.caption && canAccess && (
+            <p className="text-gray-800 mb-3">{post.caption}</p>
+          )}
+
+          {/* Post Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={`${isLiked ? 'text-red-500' : 'text-gray-600'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLike();
+                }}
+                disabled={likeLoading}
+              >
+                <Heart className={`w-4 h-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
+                <span className="text-sm">{likeCount}</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-600"
+                onClick={(e) => onCommentsClick(post.id, e)}
+              >
+                <MessageCircle className="w-4 h-4 mr-1" />
+                <span className="text-sm">Comment</span>
+              </Button>
+            </div>
+            
+            {!isOwnProfile && user && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-hooks-coral"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTipClick();
+                }}
+              >
+                Send Keys 🪝
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

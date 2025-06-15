@@ -213,17 +213,17 @@ const EnhancedSwipeCard = ({ user, onSwipe, onSuperLike, onViewProfile, canUndo 
               <User className="w-5 h-5 text-white" />
             </Button>
             
-            {/* Only show FollowSubscribeButtons for creators */}
-            {user.user_type === 'creator' && user.subscriptionFee && (
-              <div className="w-12">
-                <FollowSubscribeButtons
-                  targetUserId={user.id.toString()}
-                  targetUserType="creator"
-                  subscriptionFee={user.subscriptionFee}
-                  className="flex flex-col space-y-1"
-                />
-              </div>
-            )}
+            {/* Show FollowSubscribeButtons for all user types */}
+            <div className="w-12">
+              <FollowSubscribeButtons
+                targetUserId={user.id.toString()}
+                targetUserType={user.user_type || 'consumer'}
+                subscriptionFee={user.subscriptionFee}
+                className="flex flex-col space-y-1"
+                size="sm"
+                showBothButtons={true}
+              />
+            </div>
           </div>
         )}
         
