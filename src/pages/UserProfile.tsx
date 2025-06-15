@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -164,6 +165,7 @@ const UserProfile = () => {
                   <FollowSubscribeButtons
                     targetUserId={userId!}
                     targetUserType={profile.user_type}
+                    targetUserName={profile.name}
                     className="flex gap-2 w-full"
                   />
                 </div>

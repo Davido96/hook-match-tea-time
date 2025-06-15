@@ -7,10 +7,12 @@ import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import SubscriptionPlanModal from "./SubscriptionPlanModal";
 
 interface FollowSubscribeButtonsProps {
   targetUserId: string;
   targetUserType: 'creator' | 'consumer';
+  targetUserName?: string;
   subscriptionFee?: number;
   className?: string;
   size?: 'sm' | 'lg' | 'default';
@@ -20,6 +22,7 @@ interface FollowSubscribeButtonsProps {
 const FollowSubscribeButtons = ({ 
   targetUserId, 
   targetUserType, 
+  targetUserName = "Creator",
   subscriptionFee, 
   className = "",
   size = "sm",
@@ -27,10 +30,10 @@ const FollowSubscribeButtons = ({
 }: FollowSubscribeButtonsProps) => {
   const { user } = useAuth();
   const { followUser, unfollowUser, isFollowing, loading: followLoading } = useFollows();
-  const { subscribeToCreator, isSubscribed, loading: subscribeLoading } = useSubscriptions();
+  const { isSubscribed, loading: subscribeLoading } = useSubscriptions();
   const [userIsFollowing, setUserIsFollowing] = useState(false);
   const [userIsSubscribed, setUserIsSubscribed] = useState(false);
-  const [showSubscribeButton, setShowSubscribeButton] = useState(true);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
     if (user && targetUserId) {
@@ -79,22 +82,23 @@ const FollowSubscribeButtons = ({
     }
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribeClick = () => {
     if (!user) {
       toast.error("Please login to subscribe");
       return;
     }
 
-    try {
-      // For now, we'll use a default plan. In a real app, you'd select a plan
-      const defaultPlanId = "default-plan-id";
-      await subscribeToCreator(targetUserId, defaultPlanId);
-      setUserIsSubscribed(true);
-      toast.success("Subscribed successfully");
-    } catch (error) {
-      console.error('Error subscribing:', error);
-      toast.error("Failed to subscribe");
+    if (userIsSubscribed) {
+      toast.info("You are already subscribed to this creator");
+      return;
     }
+
+    setShowSubscriptionModal(true);
+  };
+
+  const handleSubscriptionComplete = () => {
+    setUserIsSubscribed(true);
+    checkSubscriptionStatus(); // Refresh status
   };
 
   if (!user || user.id === targetUserId) {
@@ -114,59 +118,70 @@ const FollowSubscribeButtons = ({
   };
 
   return (
-    <div className={cn("flex gap-2", className)}>
-      {/* Follow Button - Always show for all user types */}
-      <Button
-        variant={userIsFollowing ? "default" : "outline"}
-        size={size}
-        onClick={handleToggleFollow}
-        disabled={followLoading}
-        className={cn(
-          buttonSizeClasses[size],
-          userIsFollowing 
-            ? "bg-hooks-coral text-white hover:bg-hooks-coral/90" 
-            : "border-hooks-coral text-hooks-coral hover:bg-hooks-coral hover:text-white"
-        )}
-      >
-        {followLoading ? (
-          <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
-        ) : (
-          <>
-            {userIsFollowing ? (
-              <Heart className={cn(iconSizeClasses[size], "mr-1 fill-current")} />
-            ) : (
-              <UserPlus className={cn(iconSizeClasses[size], "mr-1")} />
-            )}
-            {userIsFollowing ? "Following" : "Follow"}
-          </>
-        )}
-      </Button>
-
-      {/* Subscribe Button - Show for creators with subscription fee, or always if showBothButtons is true */}
-      {showBothButtons && (targetUserType === 'creator' || subscriptionFee) && showSubscribeButton && (
+    <>
+      <div className={cn("flex gap-2", className)}>
+        {/* Follow Button - Always show for all user types */}
         <Button
-          variant={userIsSubscribed ? "default" : "outline"}
+          variant={userIsFollowing ? "default" : "outline"}
           size={size}
-          onClick={handleSubscribe}
-          disabled={subscribeLoading}
+          onClick={handleToggleFollow}
+          disabled={followLoading}
           className={cn(
             buttonSizeClasses[size],
-            userIsSubscribed 
-              ? "bg-gradient-to-r from-hooks-coral to-hooks-pink text-white" 
-              : "border-hooks-pink text-hooks-pink hover:bg-hooks-pink hover:text-white"
+            userIsFollowing 
+              ? "bg-hooks-coral text-white hover:bg-hooks-coral/90" 
+              : "border-hooks-coral text-hooks-coral hover:bg-hooks-coral hover:text-white"
           )}
         >
-          {subscribeLoading ? (
+          {followLoading ? (
             <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
           ) : (
             <>
-              <Crown className={cn(iconSizeClasses[size], "mr-1")} />
-              {userIsSubscribed ? "Subscribed" : `Subscribe${subscriptionFee ? ` (${subscriptionFee} Keys)` : ''}`}
+              {userIsFollowing ? (
+                <Heart className={cn(iconSizeClasses[size], "mr-1 fill-current")} />
+              ) : (
+                <UserPlus className={cn(iconSizeClasses[size], "mr-1")} />
+              )}
+              {userIsFollowing ? "Following" : "Follow"}
             </>
           )}
         </Button>
-      )}
-    </div>
+
+        {/* Subscribe Button - Show for creators */}
+        {showBothButtons && targetUserType === 'creator' && (
+          <Button
+            variant={userIsSubscribed ? "default" : "outline"}
+            size={size}
+            onClick={handleSubscribeClick}
+            disabled={subscribeLoading}
+            className={cn(
+              buttonSizeClasses[size],
+              userIsSubscribed 
+                ? "bg-gradient-to-r from-hooks-coral to-hooks-pink text-white" 
+                : "border-hooks-pink text-hooks-pink hover:bg-hooks-pink hover:text-white"
+            )}
+          >
+            {subscribeLoading ? (
+              <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
+            ) : (
+              <>
+                <Crown className={cn(iconSizeClasses[size], "mr-1")} />
+                {userIsSubscribed ? "Subscribed" : "Subscribe"}
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
+      {/* Subscription Plan Modal */}
+      <SubscriptionPlanModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        creatorId={targetUserId}
+        creatorName={targetUserName}
+        onSubscriptionComplete={handleSubscriptionComplete}
+      />
+    </>
   );
 };
 

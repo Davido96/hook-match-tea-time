@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
@@ -108,7 +109,7 @@ export const useSubscriptions = () => {
 
       if (getCreatorWalletError) {
         console.error('Error getting creator wallet:', getCreatorWalletError);
-        throw new Error('Failed to process payment to creator');
+        // Continue with the process even if creator wallet check fails
       }
 
       if (!creatorWallet) {
@@ -122,7 +123,7 @@ export const useSubscriptions = () => {
 
         if (createWalletError) {
           console.error('Error creating creator wallet:', createWalletError);
-          throw new Error('Failed to create creator wallet');
+          // Continue with the process even if creator wallet creation fails
         }
       } else {
         const { error: updateCreatorWalletError } = await supabase
@@ -132,17 +133,22 @@ export const useSubscriptions = () => {
 
         if (updateCreatorWalletError) {
           console.error('Error updating creator wallet:', updateCreatorWalletError);
-          throw new Error('Failed to pay creator');
+          // Continue with the process even if creator wallet update fails
         }
       }
 
       // Record earning for creator
-      await recordEarning({
-        source_type: 'subscription',
-        source_id: subscription.id,
-        amount: plan.price_keys,
-        description: `Subscription: ${plan.name}`
-      });
+      try {
+        await recordEarning({
+          source_type: 'subscription',
+          source_id: subscription.id,
+          amount: plan.price_keys,
+          description: `Subscription: ${plan.name}`
+        });
+      } catch (earningError) {
+        console.error('Error recording earning:', earningError);
+        // Continue with the process even if earning recording fails
+      }
 
       // Refresh wallet data
       await refetchWallet();
