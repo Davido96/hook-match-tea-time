@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Heart, MessageCircle, Smile } from "lucide-react";
+import { ArrowLeft, Search, Heart, MessageCircle, Smile, RefreshCw } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMatches } from "@/hooks/useMatches";
 import { useMessages } from "@/hooks/useMessages";
 
@@ -14,18 +14,29 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
-  const { matches, loading: matchesLoading, error: matchesError, refetch: refetchMatches } = useMatches();
+  const { matches, loading: matchesLoading, error: matchesError, refetch: refetchMatches, retryCount } = useMatches();
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showRetryButton, setShowRetryButton] = useState(false);
   
   const { messages, loading: messagesLoading, sendMessage } = useMessages(selectedMatch?.user_id);
 
-  // Refresh matches when component mounts to ensure we have the latest data
+  // Show retry button after 8 seconds of loading
   useEffect(() => {
-    console.log('💬 ChatInterface mounted, refreshing matches...');
-    refetchMatches();
-  }, [refetchMatches]);
+    if (matchesLoading) {
+      const timer = setTimeout(() => {
+        setShowRetryButton(true);
+      }, 8000);
+
+      return () => {
+        clearTimeout(timer);
+        setShowRetryButton(false);
+      };
+    } else {
+      setShowRetryButton(false);
+    }
+  }, [matchesLoading]);
 
   // Log matches for debugging
   useEffect(() => {
@@ -67,22 +78,123 @@ const ChatInterface = ({ onBack }: ChatInterfaceProps) => {
     return `Active ${Math.floor(diffHours / 24)}d ago`;
   };
 
+  const handleRetry = () => {
+    setShowRetryButton(false);
+    refetchMatches();
+  };
+
+  // Loading state with skeleton and retry option
   if (matchesLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center">
-        <div className="text-white text-xl">Loading your matches...</div>
+      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
+        {/* Header */}
+        <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                  className="text-white hover:bg-white/20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <h1 className="text-xl font-bold text-white">Messages</h1>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            <div className="text-center text-white space-y-4">
+              <div className="flex items-center justify-center space-x-2">
+                <RefreshCw className="w-6 h-6 animate-spin" />
+                <span className="text-xl">Loading your matches...</span>
+              </div>
+              
+              {retryCount > 0 && (
+                <p className="text-white/80 text-sm">
+                  Retry attempt {retryCount}/3
+                </p>
+              )}
+
+              {/* Skeleton loading */}
+              <div className="space-y-3 mt-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center space-x-3 p-3 rounded-lg bg-white/10">
+                    <Skeleton className="w-12 h-12 rounded-full bg-white/20" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32 bg-white/20" />
+                      <Skeleton className="h-3 w-24 bg-white/20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {showRetryButton && (
+                <Button 
+                  onClick={handleRetry}
+                  className="bg-white text-hooks-coral hover:bg-white/90 mt-4"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Error state
   if (matchesError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="text-xl mb-4">Failed to load matches</div>
-          <Button onClick={refetchMatches} className="bg-white text-hooks-coral hover:bg-white/90">
-            Try Again
-          </Button>
+      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
+        {/* Header */}
+        <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                  className="text-white hover:bg-white/20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <h1 className="text-xl font-bold text-white">Messages</h1>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            <div className="text-center text-white space-y-4">
+              <h2 className="text-xl font-semibold">Unable to load matches</h2>
+              <p className="text-white/80">{matchesError}</p>
+              <div className="space-y-2">
+                <Button 
+                  onClick={handleRetry}
+                  className="bg-white text-hooks-coral hover:bg-white/90"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+                <Button 
+                  onClick={onBack}
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10"
+                >
+                  Go Back
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

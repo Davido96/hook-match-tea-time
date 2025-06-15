@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -24,9 +24,11 @@ export const useMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     if (!user) {
+      console.log('No user found, clearing matches');
       setMatches([]);
       setLoading(false);
       return;
@@ -37,92 +39,121 @@ export const useMatches = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch matches where the current user is either user1 or user2
-      const { data: matchesData, error: matchesError } = await supabase
+      // Create a timeout promise (10 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 10000);
+      });
+
+      // Optimized single query using JOIN to get matches and profiles together
+      const matchesPromise = supabase
         .from('matches')
         .select(`
           id,
           user1_id,
           user2_id,
           created_at,
-          is_active
+          is_active,
+          profiles!inner(
+            id,
+            user_id,
+            name,
+            age,
+            bio,
+            avatar_url,
+            interests,
+            location_city,
+            location_state,
+            gender,
+            user_type,
+            verification_status
+          )
         `)
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
         .eq('is_active', true);
 
-      if (matchesError) {
-        console.error('Error fetching matches:', matchesError);
+      // Race between the query and timeout
+      const matchesData = await Promise.race([matchesPromise, timeoutPromise]) as any;
+
+      if (matchesData.error) {
+        console.error('Error fetching matches:', matchesData.error);
         setError('Failed to load matches');
         return;
       }
 
-      console.log('Raw matches data:', matchesData);
+      console.log('Raw matches data:', matchesData.data);
 
-      if (!matchesData || matchesData.length === 0) {
+      if (!matchesData.data || matchesData.data.length === 0) {
         console.log('No matches found');
         setMatches([]);
+        setRetryCount(0);
         return;
       }
 
-      // Extract the other user's ID from each match
-      const otherUserIds = matchesData.map(match => 
-        match.user1_id === user.id ? match.user2_id : match.user1_id
-      );
+      // Transform the joined data to match interface
+      const transformedMatches: Match[] = matchesData.data.map((match: any) => {
+        // Get the other user's profile (not the current user)
+        const otherUserId = match.user1_id === user.id ? match.user2_id : match.user1_id;
+        const profile = match.profiles;
 
-      console.log('Other user IDs:', otherUserIds);
-
-      // Fetch profiles for the matched users
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('user_id', otherUserIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        setError('Failed to load match profiles');
-        return;
-      }
-
-      console.log('Matched profiles:', profilesData);
-
-      // Transform profiles to match interface
-      const transformedMatches: Match[] = (profilesData || []).map(profile => ({
-        id: profile.id,
-        user_id: profile.user_id,
-        name: profile.name || 'Unknown User',
-        age: profile.age || 18,
-        bio: profile.bio || 'No bio available',
-        image: profile.avatar_url || 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
-        interests: profile.interests || [],
-        distance: '2 km away', // Default distance - could be calculated based on location
-        location: profile.location_city && profile.location_state 
-          ? `${profile.location_city}, ${profile.location_state}` 
-          : 'Location not specified',
-        gender: profile.gender,
-        user_type: profile.user_type as 'creator' | 'consumer',
-        verification_status: profile.verification_status as 'verified' | 'pending' | 'rejected',
-        last_active: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString()
-      }));
+        return {
+          id: profile.id,
+          user_id: profile.user_id,
+          name: profile.name || 'Unknown User',
+          age: profile.age || 18,
+          bio: profile.bio || 'No bio available',
+          image: profile.avatar_url || 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
+          interests: profile.interests || [],
+          distance: '2 km away',
+          location: profile.location_city && profile.location_state 
+            ? `${profile.location_city}, ${profile.location_state}` 
+            : 'Location not specified',
+          gender: profile.gender,
+          user_type: profile.user_type as 'creator' | 'consumer',
+          verification_status: profile.verification_status as 'verified' | 'pending' | 'rejected',
+          last_active: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString()
+        };
+      });
 
       console.log('Transformed matches:', transformedMatches);
       setMatches(transformedMatches);
-    } catch (error) {
+      setRetryCount(0);
+    } catch (error: any) {
       console.error('Error in fetchMatches:', error);
-      setError('Failed to load matches');
+      
+      if (error.message === 'Request timeout') {
+        setError('Request timed out. Please try again.');
+      } else {
+        setError('Failed to load matches');
+      }
+
+      // Implement exponential backoff for retries
+      if (retryCount < 3) {
+        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        console.log(`Retrying in ${delay}ms (attempt ${retryCount + 1})`);
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchMatches();
+        }, delay);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, retryCount]);
 
+  // Initial fetch with dependency on user being ready
   useEffect(() => {
-    fetchMatches();
-  }, [user]);
+    if (user !== undefined) { // Only run when auth state is determined
+      fetchMatches();
+    }
+  }, [user, fetchMatches]);
 
-  // Subscribe to real-time match updates
+  // Optimized real-time subscription with debouncing
   useEffect(() => {
     if (!user) return;
 
     console.log('Setting up real-time match subscription for user:', user.id);
+
+    let debounceTimer: NodeJS.Timeout;
 
     const channel = supabase
       .channel('matches-changes')
@@ -139,8 +170,13 @@ export const useMatches = () => {
           
           // Check if this match involves the current user
           if (newMatch.user1_id === user.id || newMatch.user2_id === user.id) {
-            console.log('Match involves current user, refetching matches');
-            fetchMatches();
+            console.log('Match involves current user, debouncing refetch');
+            
+            // Debounce the refetch to prevent excessive calls
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+              fetchMatches();
+            }, 1000);
           }
         }
       )
@@ -148,14 +184,16 @@ export const useMatches = () => {
 
     return () => {
       console.log('Cleaning up match subscription');
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, fetchMatches]);
 
   return {
     matches,
     loading,
     error,
-    refetch: fetchMatches
+    refetch: fetchMatches,
+    retryCount
   };
 };
