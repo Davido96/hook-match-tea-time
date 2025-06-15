@@ -28,108 +28,56 @@ export const useMatches = () => {
 
   const fetchMatches = useCallback(async () => {
     if (!user) {
-      console.log('No user found, clearing matches');
       setMatches([]);
       setLoading(false);
       return;
     }
-
     try {
-      console.log('Fetching matches for user:', user.id);
       setLoading(true);
       setError(null);
 
-      // Create a timeout promise (10 seconds)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 10000);
+      // Use the custom Supabase RPC to fetch matches with the other user's profile
+      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
+        user_uuid: user.id
       });
 
-      // Optimized single query using JOIN to get matches and profiles together
-      const matchesPromise = supabase
-        .from('matches')
-        .select(`
-          id,
-          user1_id,
-          user2_id,
-          created_at,
-          is_active,
-          profiles!inner(
-            id,
-            user_id,
-            name,
-            age,
-            bio,
-            avatar_url,
-            interests,
-            location_city,
-            location_state,
-            gender,
-            user_type,
-            verification_status
-          )
-        `)
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .eq('is_active', true);
-
-      // Race between the query and timeout
-      const matchesData = await Promise.race([matchesPromise, timeoutPromise]) as any;
-
-      if (matchesData.error) {
-        console.error('Error fetching matches:', matchesData.error);
+      if (rpcError) {
+        console.error('[useMatches] RPC error fetching matches:', rpcError);
         setError('Failed to load matches');
         return;
       }
 
-      console.log('Raw matches data:', matchesData.data);
-
-      if (!matchesData.data || matchesData.data.length === 0) {
-        console.log('No matches found');
-        setMatches([]);
-        setRetryCount(0);
-        return;
-      }
-
-      // Transform the joined data to match interface
-      const transformedMatches: Match[] = matchesData.data.map((match: any) => {
-        // Get the other user's profile (not the current user)
-        const otherUserId = match.user1_id === user.id ? match.user2_id : match.user1_id;
-        const profile = match.profiles;
-
-        return {
-          id: profile.id,
-          user_id: profile.user_id,
-          name: profile.name || 'Unknown User',
-          age: profile.age || 18,
-          bio: profile.bio || 'No bio available',
-          image: profile.avatar_url || 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
-          interests: profile.interests || [],
-          distance: '2 km away',
-          location: profile.location_city && profile.location_state 
-            ? `${profile.location_city}, ${profile.location_state}` 
+      // Transform data: Every row is a match with the other user's details
+      const transformedMatches: Match[] = (data || []).map((row: any) => ({
+        id: row.match_id || row.id,
+        user_id: row.other_user_id,
+        name: row.other_name || 'Unknown User',
+        age: row.other_age || 18,
+        bio: row.other_bio || '',
+        image: row.other_avatar_url ||
+          'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
+        interests: row.other_interests || [],
+        distance: '2 km away', // Placeholder; real value not available without geodata.
+        location:
+          row.other_location_city && row.other_location_state
+            ? `${row.other_location_city}, ${row.other_location_state}`
             : 'Location not specified',
-          gender: profile.gender,
-          user_type: profile.user_type as 'creator' | 'consumer',
-          verification_status: profile.verification_status as 'verified' | 'pending' | 'rejected',
-          last_active: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString()
-        };
-      });
+        gender: row.other_gender,
+        user_type: row.other_user_type as 'creator' | 'consumer',
+        verification_status: (row.other_verification_status ??
+          'pending') as 'verified' | 'pending' | 'rejected',
+        last_active: row.other_last_active
+          ? new Date(row.other_last_active).toISOString()
+          : undefined,
+      }));
 
-      console.log('Transformed matches:', transformedMatches);
       setMatches(transformedMatches);
       setRetryCount(0);
     } catch (error: any) {
-      console.error('Error in fetchMatches:', error);
-      
-      if (error.message === 'Request timeout') {
-        setError('Request timed out. Please try again.');
-      } else {
-        setError('Failed to load matches');
-      }
-
-      // Implement exponential backoff for retries
+      console.error('[useMatches] Error:', error);
+      setError('Failed to load matches');
       if (retryCount < 3) {
-        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-        console.log(`Retrying in ${delay}ms (attempt ${retryCount + 1})`);
+        const delay = Math.pow(2, retryCount) * 1000;
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
           fetchMatches();
@@ -138,23 +86,20 @@ export const useMatches = () => {
     } finally {
       setLoading(false);
     }
+  // only re-run if user or retryCount changes
   }, [user, retryCount]);
 
   // Initial fetch with dependency on user being ready
   useEffect(() => {
-    if (user !== undefined) { // Only run when auth state is determined
+    if (user !== undefined) {
       fetchMatches();
     }
   }, [user, fetchMatches]);
 
-  // Optimized real-time subscription with debouncing
+  // Real-time updates for matches — Listen for INSERT on matches table
   useEffect(() => {
     if (!user) return;
-
-    console.log('Setting up real-time match subscription for user:', user.id);
-
     let debounceTimer: NodeJS.Timeout;
-
     const channel = supabase
       .channel('matches-changes')
       .on(
@@ -165,14 +110,8 @@ export const useMatches = () => {
           table: 'matches'
         },
         (payload) => {
-          console.log('New match detected:', payload);
           const newMatch = payload.new as any;
-          
-          // Check if this match involves the current user
           if (newMatch.user1_id === user.id || newMatch.user2_id === user.id) {
-            console.log('Match involves current user, debouncing refetch');
-            
-            // Debounce the refetch to prevent excessive calls
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
               fetchMatches();
@@ -183,7 +122,6 @@ export const useMatches = () => {
       .subscribe();
 
     return () => {
-      console.log('Cleaning up match subscription');
       clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
