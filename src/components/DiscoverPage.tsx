@@ -4,6 +4,7 @@ import { MessageCircle, Wallet, Filter, Settings, RefreshCw } from "lucide-react
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
+import { useDiscoverUsers } from "@/hooks/useDiscoverUsers";
 import UnifiedWalletModal from "@/components/UnifiedWalletModal";
 import TipModal from "@/components/TipModal";
 import ProfileButton from "@/components/ProfileButton";
@@ -15,7 +16,6 @@ import DiscoveryStats from "@/components/DiscoveryStats";
 import EditProfileModal from "@/components/EditProfileModal";
 import MatchModal from "@/components/MatchModal";
 import FilterModal from "@/components/FilterModal";
-import { sampleUsers } from "@/data/sampleUsers";
 import { useToast } from "@/hooks/use-toast";
 import HookLogo from "@/components/HookLogo";
 
@@ -32,6 +32,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   const { user } = useAuth();
   const { profile } = useProfile();
   const { wallet } = useWallet();
+  const { users: realUsers, loading: usersLoading, error: usersError, refetch } = useDiscoverUsers();
   const { toast } = useToast();
   
   // Modals state
@@ -49,7 +50,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   
   // Discovery state
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
-  const [filteredUsers, setFilteredUsers] = useState(sampleUsers);
+  const [filteredUsers, setFilteredUsers] = useState(realUsers);
   const [undoStack, setUndoStack] = useState<number[]>([]);
   const [superLikesRemaining, setSuperLikesRemaining] = useState(3);
   
@@ -69,7 +70,12 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
 
   // Apply filters to users - updated to handle both creators and consumers
   useEffect(() => {
-    let filtered = sampleUsers.filter(user => {
+    if (realUsers.length === 0) {
+      setFilteredUsers([]);
+      return;
+    }
+
+    let filtered = realUsers.filter(user => {
       // Gender filter
       if (filters.gender !== 'both' && user.gender !== filters.gender) {
         return false;
@@ -98,7 +104,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
     
     setFilteredUsers(filtered);
     setCurrentUserIndex(0);
-  }, [filters]);
+  }, [filters, realUsers]);
 
   const handleSwipe = (direction: 'left' | 'right') => {
     const currentUser = filteredUsers[currentUserIndex];
@@ -193,14 +199,12 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   };
 
   const handleRefreshProfiles = () => {
-    // Shuffle the filtered users to show new profiles
-    const shuffled = [...filteredUsers].sort(() => Math.random() - 0.5);
-    setFilteredUsers(shuffled);
-    setCurrentUserIndex(0);
+    // Refetch users from database and shuffle
+    refetch();
     
     toast({
       title: "Profiles Refreshed",
-      description: "Showing new profiles in your area!",
+      description: "Loading new profiles from the platform!",
     });
   };
 
@@ -229,6 +233,29 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
       description: "Updated your discovery preferences",
     });
   };
+
+  // Show loading while fetching users
+  if (usersLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center">
+        <div className="text-white text-xl">Loading users...</div>
+      </div>
+    );
+  }
+
+  // Show error if failed to load users
+  if (usersError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-xl mb-4">Failed to load users</div>
+          <Button onClick={refetch} className="bg-white text-hooks-coral hover:bg-white/90">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple">
@@ -356,11 +383,18 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
               <div className="absolute inset-0 bg-white rounded-2xl shadow-lg flex items-center justify-center">
                 <div className="text-center text-gray-500 p-8">
                   <div className="text-6xl mb-4">🎉</div>
-                  <h3 className="text-xl font-semibold mb-2">You've seen everyone!</h3>
-                  <p className="mb-4">Try adjusting your filters or check back later for new profiles.</p>
+                  <h3 className="text-xl font-semibold mb-2">
+                    {realUsers.length === 0 ? "No users found!" : "You've seen everyone!"}
+                  </h3>
+                  <p className="mb-4">
+                    {realUsers.length === 0 
+                      ? "Be the first to create your profile and invite friends to join!"
+                      : "Try adjusting your filters or check back later for new profiles."
+                    }
+                  </p>
                   <Button onClick={handleRefreshProfiles} className="gradient-coral">
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh Profiles
+                    {realUsers.length === 0 ? "Check for Users" : "Refresh Profiles"}
                   </Button>
                 </div>
               </div>
@@ -390,7 +424,7 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
               </p>
             )}
             <p className="text-white/60 text-xs mt-1">
-              Showing creators and members • Use filters to customize
+              Showing {realUsers.length} real users • Use filters to customize
             </p>
           </div>
         </div>

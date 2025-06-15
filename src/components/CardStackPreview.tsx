@@ -43,7 +43,16 @@ const CardStackPreview = ({ users, currentIndex }: CardStackPreviewProps) => {
         >
           <div 
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${user.image})` }}
+            style={{ 
+              backgroundImage: `url(${user.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+            onError={(e) => {
+              // Fallback to placeholder if image fails to load
+              const target = e.target as HTMLDivElement;
+              target.style.backgroundImage = 'url(https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop)';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           
