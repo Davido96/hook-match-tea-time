@@ -160,7 +160,7 @@ export const useMatches = () => {
     };
   }, [user, fetchMatches]);
 
-  // Listen for custom match events
+  // Listen for custom match events and welcome messages
   useEffect(() => {
     const handleNewMatch = () => {
       console.log('[useMatches] Custom newMatch event received, refreshing matches');

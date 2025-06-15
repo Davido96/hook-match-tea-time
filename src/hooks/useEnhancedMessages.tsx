@@ -11,6 +11,7 @@ interface Message {
   sender_id: string;
   status: 'sent' | 'delivered' | 'read';
   created_at: string;
+  message_type?: string;
 }
 
 export const useEnhancedMessages = (conversationId?: string) => {
@@ -53,7 +54,8 @@ export const useEnhancedMessages = (conversationId?: string) => {
         time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sender_id: msg.sender_id,
         status: (msg as any).status || 'sent', // Type assertion for status field
-        created_at: msg.created_at
+        created_at: msg.created_at,
+        message_type: msg.message_type
       }));
 
       setMessages(transformedMessages);
@@ -112,7 +114,8 @@ export const useEnhancedMessages = (conversationId?: string) => {
         time: new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sender_id: data.sender_id,
         status: 'sent',
-        created_at: data.created_at
+        created_at: data.created_at,
+        message_type: data.message_type
       };
 
       setMessages(prev => [...prev, newMessage]);
@@ -165,7 +168,8 @@ export const useEnhancedMessages = (conversationId?: string) => {
               time: new Date(newMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               sender_id: newMessage.sender_id,
               status: newMessage.status || 'delivered',
-              created_at: newMessage.created_at
+              created_at: newMessage.created_at,
+              message_type: newMessage.message_type
             };
             
             setMessages(prev => [...prev, transformedMessage]);

@@ -32,7 +32,9 @@ export const useConversations = () => {
       setLoading(true);
       setError(null);
 
-      // Use the RPC function with proper type handling
+      console.log('Fetching conversations for user:', user.id);
+
+      // Use the corrected RPC function
       const { data, error: rpcError } = await supabase.rpc(
         'get_user_matches' as any,
         { user_uuid: user.id }
@@ -44,7 +46,7 @@ export const useConversations = () => {
         return;
       }
 
-      // Type guard and proper data handling
+      // Handle the response properly - show ALL matches that have conversations
       const rawData = Array.isArray(data) ? data : [];
       const transformedConversations: Conversation[] = rawData
         .filter((row: any) => row.conversation_id) // Only include matches with conversations
@@ -54,14 +56,14 @@ export const useConversations = () => {
           other_user_id: row.other_user_id,
           other_name: row.other_name || 'Unknown User',
           other_avatar_url: row.other_avatar_url || 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=600&fit=crop',
-          last_message_content: row.last_message_content || '',
+          last_message_content: row.last_message_content || 'New match! Start chatting!',
           last_message_at: row.last_message_at || row.match_created_at,
           unread_count: row.unread_count || 0,
           is_online: row.other_last_active ? 
             (new Date().getTime() - new Date(row.other_last_active).getTime()) < 5 * 60 * 1000 : false
         }));
 
-      console.log('Fetched conversations:', transformedConversations);
+      console.log('Transformed conversations:', transformedConversations);
       setConversations(transformedConversations);
     } catch (error) {
       console.error('Error in fetchConversations:', error);
@@ -88,7 +90,7 @@ export const useConversations = () => {
         return;
       }
 
-      // Update local state
+      // Update local state to reflect read status
       setConversations(prev => 
         prev.map(conv => 
           conv.conversation_id === conversationId 
@@ -111,6 +113,8 @@ export const useConversations = () => {
   useEffect(() => {
     if (!user) return;
 
+    let debounceTimer: NodeJS.Timeout;
+
     const channel = supabase
       .channel('conversations-updates')
       .on(
@@ -122,7 +126,10 @@ export const useConversations = () => {
         },
         () => {
           console.log('Message update detected, refreshing conversations');
-          fetchConversations();
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            fetchConversations();
+          }, 1000);
         }
       )
       .on(
@@ -130,16 +137,20 @@ export const useConversations = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'conversations'
+          table: 'matches'
         },
         () => {
-          console.log('Conversation update detected, refreshing conversations');
-          fetchConversations();
+          console.log('Match update detected, refreshing conversations');
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            fetchConversations();
+          }, 1000);
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [user, fetchConversations]);

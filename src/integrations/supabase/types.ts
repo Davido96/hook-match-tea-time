@@ -856,6 +856,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      ensure_conversation_with_welcome_message: {
+        Args: { match_id_param: string }
+        Returns: string
+      }
       get_daily_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -885,6 +889,29 @@ export type Database = {
           created_at: string
         }[]
       }
+      get_user_matches: {
+        Args: { user_uuid: string }
+        Returns: {
+          match_id: string
+          other_user_id: string
+          other_name: string
+          other_age: number
+          other_bio: string
+          other_avatar_url: string
+          other_interests: string[]
+          other_location_city: string
+          other_location_state: string
+          other_gender: string
+          other_user_type: string
+          other_verification_status: string
+          other_last_active: string
+          match_created_at: string
+          conversation_id: string
+          last_message_content: string
+          last_message_at: string
+          unread_count: number
+        }[]
+      }
       get_user_status: {
         Args: { user_uuid: string }
         Returns: {
@@ -903,6 +930,10 @@ export type Database = {
           action_type: string
           increment_amount?: number
         }
+        Returns: undefined
+      }
+      mark_messages_as_read: {
+        Args: { conversation_id_param: string; user_id_param: string }
         Returns: undefined
       }
       respond_to_like: {
