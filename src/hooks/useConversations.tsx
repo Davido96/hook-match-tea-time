@@ -32,9 +32,11 @@ export const useConversations = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
-        user_uuid: user.id
-      });
+      // Use the RPC function with proper type handling
+      const { data, error: rpcError } = await supabase.rpc(
+        'get_user_matches' as any,
+        { user_uuid: user.id }
+      );
 
       if (rpcError) {
         console.error('Error fetching conversations:', rpcError);
@@ -42,7 +44,9 @@ export const useConversations = () => {
         return;
       }
 
-      const transformedConversations: Conversation[] = (data || [])
+      // Type guard and proper data handling
+      const rawData = Array.isArray(data) ? data : [];
+      const transformedConversations: Conversation[] = rawData
         .filter((row: any) => row.conversation_id) // Only include matches with conversations
         .map((row: any) => ({
           conversation_id: row.conversation_id,
@@ -71,10 +75,13 @@ export const useConversations = () => {
     if (!user || !conversationId) return;
 
     try {
-      const { error } = await supabase.rpc('mark_messages_as_read', {
-        conversation_id_param: conversationId,
-        user_id_param: user.id
-      });
+      const { error } = await supabase.rpc(
+        'mark_messages_as_read' as any,
+        {
+          conversation_id_param: conversationId,
+          user_id_param: user.id
+        }
+      );
 
       if (error) {
         console.error('Error marking messages as read:', error);

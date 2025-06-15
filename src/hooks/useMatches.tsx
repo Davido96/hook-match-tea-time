@@ -42,9 +42,10 @@ export const useMatches = () => {
 
       console.log('Fetching matches for user:', user.id);
 
-      const { data, error: rpcError } = await supabase.rpc('get_user_matches', {
-        user_uuid: user.id
-      });
+      const { data, error: rpcError } = await supabase.rpc(
+        'get_user_matches' as any,
+        { user_uuid: user.id }
+      );
 
       if (rpcError) {
         console.error('[useMatches] RPC error fetching matches:', rpcError);

@@ -52,7 +52,7 @@ export const useEnhancedMessages = (conversationId?: string) => {
         sender: msg.sender_id === user.id ? 'me' : 'them',
         time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sender_id: msg.sender_id,
-        status: msg.status || 'sent',
+        status: (msg as any).status || 'sent', // Type assertion for status field
         created_at: msg.created_at
       }));
 
@@ -60,10 +60,13 @@ export const useEnhancedMessages = (conversationId?: string) => {
 
       // Mark messages as read when fetched
       if (transformedMessages.length > 0) {
-        await supabase.rpc('mark_messages_as_read', {
-          conversation_id_param: conversationId,
-          user_id_param: user.id
-        });
+        await supabase.rpc(
+          'mark_messages_as_read' as any,
+          {
+            conversation_id_param: conversationId,
+            user_id_param: user.id
+          }
+        );
       }
     } catch (error) {
       console.error('Error in fetchMessages:', error);
@@ -89,7 +92,7 @@ export const useEnhancedMessages = (conversationId?: string) => {
           sender_id: user.id,
           content: content.trim(),
           message_type: 'text',
-          status: 'sent'
+          is_read: false
         })
         .select()
         .single();
@@ -169,10 +172,13 @@ export const useEnhancedMessages = (conversationId?: string) => {
             
             // Auto-mark as read after a short delay
             setTimeout(() => {
-              supabase.rpc('mark_messages_as_read', {
-                conversation_id_param: conversationId,
-                user_id_param: user?.id
-              });
+              supabase.rpc(
+                'mark_messages_as_read' as any,
+                {
+                  conversation_id_param: conversationId,
+                  user_id_param: user?.id
+                }
+              );
             }, 1000);
           }
         }
