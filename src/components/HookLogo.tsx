@@ -32,7 +32,7 @@ const HookLogo = ({ size = 'md', className = '' }: HookLogoProps) => {
         filter: 'drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4))'
       }}
     >
-      🪝
+      🎣
     </span>
   );
 };
