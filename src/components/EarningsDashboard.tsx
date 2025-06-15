@@ -5,17 +5,18 @@ import { Button } from "@/components/ui/button";
 import { useEarnings } from "@/hooks/useEarnings";
 import { useWallet } from "@/hooks/useWallet";
 import { useWithdrawals } from "@/hooks/useWithdrawals";
-import { DollarSign, TrendingUp, Users, Gift, Wallet } from "lucide-react";
+import { DollarSign, TrendingUp, Users, Gift, Wallet, Plus, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
-import WithdrawalModal from "./WithdrawalModal";
+import UnifiedWalletModal from "./UnifiedWalletModal";
 import WithdrawalHistoryTable from "./WithdrawalHistoryTable";
 
 const EarningsDashboard = () => {
   const { summary, earnings, loading } = useEarnings();
   const { wallet } = useWallet();
   const { withdrawals, withdrawalsLoading, getPendingWithdrawals } = useWithdrawals();
-  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletModalTab, setWalletModalTab] = useState<"purchase" | "withdraw">("purchase");
 
   if (loading) {
     return <div className="text-center py-8">Loading earnings data...</div>;
@@ -48,6 +49,11 @@ const EarningsDashboard = () => {
   };
 
   const pendingWithdrawals = getPendingWithdrawals();
+
+  const openWalletModal = (tab: "purchase" | "withdraw") => {
+    setWalletModalTab(tab);
+    setIsWalletModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -98,35 +104,45 @@ const EarningsDashboard = () => {
         </Card>
       </div>
 
-      {/* Withdrawal Section */}
+      {/* Unified Wallet Management Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Wallet Management</CardTitle>
-              <CardDescription>Withdraw your earnings or view withdrawal history</CardDescription>
+              <CardDescription>Purchase Keys or withdraw your earnings</CardDescription>
             </div>
-            <Button 
-              onClick={() => setIsWithdrawalModalOpen(true)}
-              disabled={!wallet || wallet.keys_balance < 1000}
-              className="flex items-center gap-2"
-            >
-              <Wallet className="w-4 h-4" />
-              Request Withdrawal
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => openWalletModal("purchase")}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Buy Keys
+              </Button>
+              <Button 
+                onClick={() => openWalletModal("withdraw")}
+                disabled={!wallet || wallet.keys_balance < 1000}
+                className="flex items-center gap-2 gradient-coral text-white"
+              >
+                <ArrowDown className="w-4 h-4" />
+                Withdraw
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">Available Balance</div>
-              <div className="text-2xl font-bold text-green-600">{wallet?.keys_balance || 0} Keys</div>
+            <div className="p-4 bg-gradient-to-r from-hooks-coral to-hooks-pink text-white rounded-lg">
+              <div className="text-sm opacity-90">Available Balance</div>
+              <div className="text-2xl font-bold">{wallet?.keys_balance || 0} Keys</div>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">Pending Withdrawals</div>
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="text-sm text-yellow-700">Pending Withdrawals</div>
               <div className="text-2xl font-bold text-yellow-600">{pendingWithdrawals} Keys</div>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="text-sm text-gray-600">Minimum Withdrawal</div>
               <div className="text-2xl font-bold text-gray-600">1000 Keys</div>
             </div>
@@ -185,10 +201,11 @@ const EarningsDashboard = () => {
         loading={withdrawalsLoading} 
       />
 
-      {/* Withdrawal Modal */}
-      <WithdrawalModal 
-        isOpen={isWithdrawalModalOpen}
-        onClose={() => setIsWithdrawalModalOpen(false)}
+      {/* Unified Wallet Modal */}
+      <UnifiedWalletModal 
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        defaultTab={walletModalTab}
       />
     </div>
   );
