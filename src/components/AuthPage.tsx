@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,10 @@ const AuthPage = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { signIn, signUp, resetPassword } = useAuth();
+  const location = useLocation();
+
+  // Get userType from navigation state if not provided as prop
+  const effectiveUserType = userType || (location.state as any)?.userType;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,9 +166,9 @@ const AuthPage = ({
           </div>
           <CardTitle>
             {getTitle()}
-            {userType && mode === 'signup' && (
+            {effectiveUserType && mode === 'signup' && (
               <p className="text-sm text-gray-600 mt-2">
-                Joining as a {userType}
+                Joining as a {effectiveUserType}
               </p>
             )}
           </CardTitle>

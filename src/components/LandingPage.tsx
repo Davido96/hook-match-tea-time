@@ -1,8 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Shield, Zap, Star, TrendingUp } from "lucide-react";
-import { useState } from "react";
-import AuthPage from "@/components/AuthPage";
-import EnhancedProfileSetup from "@/components/EnhancedProfileSetup";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import CreatorShowcase from "@/components/CreatorShowcase";
 import FloatingStats from "@/components/FloatingStats";
@@ -10,25 +9,19 @@ import InteractiveButton from "@/components/InteractiveButton";
 import HookLogo from "@/components/HookLogo";
 
 interface LandingPageProps {
-  onGetStarted: () => void;
+  onGetStarted?: () => void;
 }
 
 const LandingPage = ({ onGetStarted }: LandingPageProps) => {
-  const [showAuth, setShowAuth] = useState(false);
-  const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
-  const [userType, setUserType] = useState<'creator' | 'consumer' | null>(null);
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
   const handleGetStarted = (type: 'creator' | 'consumer') => {
-    setUserType(type);
-    setAuthMode('signup');
-    setShowAuth(true);
+    navigate("/auth/signup", { state: { userType: type } });
   };
 
   const handleSignIn = () => {
-    setAuthMode('signin');
-    setShowAuth(true);
+    navigate("/auth/signin");
   };
 
   const handleSignOut = async () => {
@@ -39,57 +32,9 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
     }
   };
 
-  const handleAuthSuccess = () => {
-    setShowAuth(false);
-    onGetStarted();
+  const handleContinueToApp = () => {
+    navigate("/app");
   };
-
-  const handleSignupSuccess = () => {
-    setShowAuth(false);
-    setShowProfileSetup(true);
-  };
-
-  const handleProfileSetupComplete = () => {
-    setShowProfileSetup(false);
-    onGetStarted();
-  };
-
-  const handleBackToAuth = () => {
-    setShowProfileSetup(false);
-    setShowAuth(true);
-  };
-
-  const handleBackToLanding = () => {
-    setShowAuth(false);
-    setShowProfileSetup(false);
-    setUserType(null);
-  };
-
-  if (showProfileSetup) {
-    return (
-      <div className="page-transition">
-        <EnhancedProfileSetup 
-          onComplete={handleProfileSetupComplete} 
-          onBack={handleBackToAuth}
-          initialUserType={userType}
-        />
-      </div>
-    );
-  }
-
-  if (showAuth) {
-    return (
-      <div className="page-transition">
-        <AuthPage 
-          initialMode={authMode} 
-          onAuthSuccess={handleAuthSuccess}
-          onSignupSuccess={handleSignupSuccess}
-          onBack={handleBackToLanding}
-          userType={userType}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple relative overflow-hidden">
@@ -111,7 +56,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           {user ? (
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
               <InteractiveButton
-                onClick={onGetStarted}
+                onClick={handleContinueToApp}
                 variant="primary"
                 size="hero"
               >
