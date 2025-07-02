@@ -87,14 +87,16 @@ const AuthPage = ({ initialMode = "signin", onAuthSuccess, onSignupSuccess, onBa
     setLoading(true);
     
     try {
-      const options: any = {};
+      let signUpOptions = {};
       
       // Add referral code to user metadata if present
       if (referralCode) {
-        options.data = { referral_code: referralCode };
+        signUpOptions = { 
+          data: { referral_code: referralCode } 
+        };
       }
       
-      const { error } = await signUp(email, password, options);
+      const { error } = await signUp(email, password, signUpOptions);
       
       if (error) {
         console.error('Signup error:', error);

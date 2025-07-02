@@ -81,27 +81,48 @@ export const useReferrals = () => {
         referral_earnings: profile!.referral_earnings || 0
       });
 
-      // Get referral history
+      // Get referral history - simplified query without the problematic join
       const { data: historyData } = await supabase
         .from('referrals')
-        .select(`
-          *,
-          referee_profile:profiles!referrals_referee_id_fkey(name, user_type)
-        `)
+        .select('*')
         .eq('referrer_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (historyData) {
-        const processedHistory = historyData.map(item => ({
-          id: item.id,
-          referral_code: item.referral_code,
-          status: item.status,
-          reward_amount: item.reward_amount || 0,
-          referee_reward_amount: item.referee_reward_amount || 0,
-          created_at: item.created_at,
-          completed_at: item.completed_at,
-          referee_profile: item.referee_profile || null
-        }));
+        // Process the data and fetch referee names separately if needed
+        const processedHistory: ReferralRecord[] = [];
+        
+        for (const item of historyData) {
+          let refereeProfile = null;
+          
+          // Try to get referee profile if referee_id exists
+          if (item.referee_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('name, user_type')
+              .eq('user_id', item.referee_id)
+              .single();
+            
+            if (profileData) {
+              refereeProfile = {
+                name: profileData.name,
+                user_type: profileData.user_type
+              };
+            }
+          }
+          
+          processedHistory.push({
+            id: item.id,
+            referral_code: item.referral_code,
+            status: item.status,
+            reward_amount: item.reward_amount || 0,
+            referee_reward_amount: item.referee_reward_amount || 0,
+            created_at: item.created_at,
+            completed_at: item.completed_at,
+            referee_profile: refereeProfile
+          });
+        }
+        
         setReferralHistory(processedHistory);
       }
 
