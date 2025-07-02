@@ -460,9 +460,13 @@ export type Database = {
           location_state: string
           name: string
           pin_last_updated_at: string | null
+          referral_earnings: number | null
+          referred_by: string | null
           search_radius_km: number
           services_offered: string | null
           subscription_fee: number | null
+          successful_referrals: number | null
+          total_referrals: number | null
           updated_at: string | null
           user_id: string
           user_type: string
@@ -485,9 +489,13 @@ export type Database = {
           location_state: string
           name: string
           pin_last_updated_at?: string | null
+          referral_earnings?: number | null
+          referred_by?: string | null
           search_radius_km?: number
           services_offered?: string | null
           subscription_fee?: number | null
+          successful_referrals?: number | null
+          total_referrals?: number | null
           updated_at?: string | null
           user_id: string
           user_type: string
@@ -510,14 +518,84 @@ export type Database = {
           location_state?: string
           name?: string
           pin_last_updated_at?: string | null
+          referral_earnings?: number | null
+          referred_by?: string | null
           search_radius_km?: number
           services_offered?: string | null
           subscription_fee?: number | null
+          successful_referrals?: number | null
+          total_referrals?: number | null
           updated_at?: string | null
           user_id?: string
           user_type?: string
           verification_status?: string | null
           withdrawal_pin_hash?: string | null
+        }
+        Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          referee_id: string | null
+          referee_reward_amount: number | null
+          referral_code: string
+          referrer_id: string
+          reward_amount: number | null
+          rewarded_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referee_id?: string | null
+          referee_reward_amount?: number | null
+          referral_code: string
+          referrer_id: string
+          reward_amount?: number | null
+          rewarded_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referee_id?: string | null
+          referee_reward_amount?: number | null
+          referral_code?: string
+          referrer_id?: string
+          reward_amount?: number | null
+          rewarded_at?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -858,6 +936,14 @@ export type Database = {
       }
       ensure_conversation_with_welcome_message: {
         Args: { match_id_param: string }
+        Returns: string
+      }
+      ensure_referral_code: {
+        Args: { user_uuid: string; user_name: string }
+        Returns: string
+      }
+      generate_referral_code: {
+        Args: { user_name: string }
         Returns: string
       }
       get_daily_stats: {

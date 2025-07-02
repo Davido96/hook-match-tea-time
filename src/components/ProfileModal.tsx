@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, MapPin, Calendar, Edit, User } from "lucide-react";
+import { X, MapPin, Calendar, Edit, User, Gift, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
+import { useReferrals } from "@/hooks/useReferrals";
 import EditProfileModal from "./EditProfileModal";
+import ReferralDashboard from "./ReferralDashboard";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -20,8 +22,10 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { wallet } = useWallet();
+  const { referralStats } = useReferrals();
   const navigate = useNavigate();
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showReferralDashboard, setShowReferralDashboard] = useState(false);
 
   if (!isOpen || !profile) return null;
 
@@ -94,6 +98,26 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               </div>
             )}
 
+            {/* Referral Stats */}
+            {referralStats && referralStats.successful_referrals > 0 && (
+              <div className="bg-gradient-to-r from-hooks-coral/10 to-hooks-pink/10 p-3 rounded-lg">
+                <h4 className="font-semibold mb-2 flex items-center">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Referral Stats
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-center">
+                    <div className="font-bold text-lg">{referralStats.successful_referrals}</div>
+                    <div className="text-gray-600">Successful Referrals</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-lg text-hooks-coral">{referralStats.referral_earnings}</div>
+                    <div className="text-gray-600">Keys Earned</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Creator Info */}
             {profile.user_type === 'creator' && (
               <div>
@@ -130,6 +154,14 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
               <Button 
                 variant="outline" 
                 className="w-full"
+                onClick={() => setShowReferralDashboard(true)}
+              >
+                <Gift className="w-4 h-4 mr-2" />
+                Referral Program
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
                 onClick={() => setShowEditProfile(true)}
               >
                 <Edit className="w-4 h-4 mr-2" />
@@ -154,6 +186,12 @@ const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
           onClose={() => setShowEditProfile(false)}
         />
       )}
+
+      {/* Referral Dashboard */}
+      <ReferralDashboard
+        isOpen={showReferralDashboard}
+        onClose={() => setShowReferralDashboard(false)}
+      />
     </>
   );
 };

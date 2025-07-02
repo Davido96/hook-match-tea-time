@@ -1,148 +1,159 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import HookLogo from "@/components/HookLogo";
+import { useToast } from "@/hooks/use-toast";
+import HookLogo from "./HookLogo";
 
 interface AuthPageProps {
-  initialMode?: 'signin' | 'signup' | 'forgot-password';
-  onAuthSuccess?: () => void;
-  onBack?: () => void;
-  onSignupSuccess?: () => void;
-  userType?: 'creator' | 'consumer' | null;
+  initialMode?: "signin" | "signup";
+  onAuthSuccess: () => void;
+  onBack: () => void;
 }
 
-const AuthPage = ({ 
-  initialMode = 'signup', 
-  onAuthSuccess, 
-  onBack,
-  onSignupSuccess,
-  userType
-}: AuthPageProps) => {
-  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot-password'>(initialMode);
+const AuthPage = ({ initialMode = "signin", onAuthSuccess, onBack }: AuthPageProps) => {
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const { signIn, signUp, resetPassword } = useAuth();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
   const location = useLocation();
 
-  // Get userType from navigation state if not provided as prop
-  const effectiveUserType = userType || (location.state as any)?.userType;
+  // Extract referral code from URL parameters
+  const searchParams = new URLSearchParams(location.search);
+  const referralCode = searchParams.get('ref');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    if (!email) {
-      setError("Please enter your email address");
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (location.pathname === '/auth/signup' && referralCode) {
+      setMode('signup');
     }
+  }, [location.pathname, referralCode]);
 
-    if (mode === 'forgot-password') {
-      try {
-        const result = await resetPassword(email);
-        if (result.error) {
-          setError(result.error.message || "An error occurred. Please try again.");
-        } else {
-          setSuccess("Password reset email sent! Please check your inbox and follow the instructions.");
-        }
-      } catch (err: any) {
-        console.error('Reset password error:', err);
-        setError("An unexpected error occurred. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    if (!password) {
-      setError("Please enter your password");
-      setLoading(false);
-      return;
+  const validateSignUp = () => {
+    if (!email || !password || !confirmPassword) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all fields.",
+        variant: "destructive"
+      });
+      return false;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters long");
-      setLoading(false);
-      return;
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive"
+      });
+      return false;
     }
 
-    try {
-      let result;
-      if (mode === 'signup') {
-        result = await signUp(email, password);
-        if (!result.error) {
-          setSuccess("Account created successfully! Please check your email to verify your account.");
-          setTimeout(() => {
-            onSignupSuccess?.();
-          }, 1000);
-        }
-      } else {
-        result = await signIn(email, password);
-        if (!result.error) {
-          setSuccess("Signed in successfully!");
-          setTimeout(() => {
-            onAuthSuccess?.();
-          }, 1000);
-        }
-      }
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords Do Not Match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive"
+      });
+      return false;
+    }
 
-      if (result.error) {
-        if (result.error.message.includes('Invalid login credentials')) {
-          setError("Invalid email or password. Please check your credentials.");
-        } else if (result.error.message.includes('User already registered')) {
-          setError("An account with this email already exists. Try signing in instead.");
-        } else if (result.error.message.includes('Email not confirmed')) {
-          setError("Please check your email and click the confirmation link before signing in.");
-        } else {
-          setError(result.error.message || "An error occurred. Please try again.");
-        }
+    return true;
+  };
+
+  const validateSignIn = () => {
+    if (!email || !password) {
+      toast({
+        title: "Missing Fields",
+        description: "Please enter your email and password.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateSignUp()) return;
+    
+    setLoading(true);
+    
+    try {
+      const metadata: any = {};
+      
+      // Add referral code to user metadata if present
+      if (referralCode) {
+        metadata.referral_code = referralCode;
       }
-    } catch (err: any) {
-      console.error('Auth error:', err);
-      setError("An unexpected error occurred. Please try again.");
+      
+      const { error } = await signUp(email, password, metadata);
+      
+      if (error) {
+        console.error('Signup error:', error);
+        toast({
+          title: "Sign Up Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: referralCode 
+            ? "Account created! Check your email to verify and claim your referral bonus."
+            : "Account created! Check your email to verify your account.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast({
+        title: "Sign Up Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setError(null);
-    setSuccess(null);
-  };
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const switchMode = (newMode: 'signin' | 'signup' | 'forgot-password') => {
-    setMode(newMode);
-    resetForm();
-  };
+    if (!validateSignIn()) return;
 
-  const getTitle = () => {
-    switch (mode) {
-      case 'signup': return 'Join Hooks';
-      case 'signin': return 'Welcome Back';
-      case 'forgot-password': return 'Reset Password';
-      default: return 'Welcome';
-    }
-  };
+    setLoading(true);
 
-  const getButtonText = () => {
-    if (loading) return 'Loading...';
-    switch (mode) {
-      case 'signup': return 'Sign Up';
-      case 'signin': return 'Sign In';
-      case 'forgot-password': return 'Send Reset Email';
-      default: return 'Continue';
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        console.error('Signin error:', error);
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "Signed in successfully!",
+        });
+        onAuthSuccess();
+      }
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      toast({
+        title: "Sign In Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -150,116 +161,92 @@ const AuthPage = ({
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          {onBack && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              className="absolute top-4 left-4 p-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          )}
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <HookLogo size="lg" />
-            <h1 className="text-2xl font-bold text-gradient">Hooks</h1>
+          <div className="flex items-center justify-center mb-4">
+            <HookLogo className="w-12 h-12" />
           </div>
-          <CardTitle>
-            {getTitle()}
-            {effectiveUserType && mode === 'signup' && (
-              <p className="text-sm text-gray-600 mt-2">
-                Joining as a {effectiveUserType}
-              </p>
-            )}
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            {mode === "signin" ? "Welcome Back" : "Join Hook"}
           </CardTitle>
+          <p className="text-gray-600">
+            {mode === "signin" 
+              ? "Sign in to your account" 
+              : referralCode 
+                ? "Create your account and claim your bonus!"
+                : "Create your account to get started"
+            }
+          </p>
+          {referralCode && mode === "signup" && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+              <p className="text-sm text-green-700">
+                🎉 You're using referral code: <strong>{referralCode}</strong>
+                <br />You'll receive bonus Keys after verification!
+              </p>
+            </div>
+          )}
         </CardHeader>
-        
+
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="space-y-4">
             <div>
-              <Input
-                type="email"
-                placeholder="Email"
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                type="email" 
+                id="email" 
+                placeholder="Enter your email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 disabled={loading}
               />
             </div>
-            
-            {mode !== 'forgot-password' && (
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                type="password" 
+                id="password" 
+                placeholder="Enter your password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            {mode === "signup" && (
               <div>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input 
+                  type="password" 
+                  id="confirmPassword" 
+                  placeholder="Confirm your password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading}
                 />
               </div>
             )}
-            
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {success && (
-              <Alert>
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
-            )}
-            
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full gradient-coral text-white"
-            >
-              {getButtonText()}
+            <Button type="submit" className="w-full gradient-coral text-white" disabled={loading}>
+              {loading 
+                ? <span className="animate-pulse">Loading...</span> 
+                : mode === "signin" ? "Sign In" : "Sign Up"}
             </Button>
           </form>
-          
-          <div className="mt-4 text-center space-y-2">
-            {mode === 'signin' && (
-              <Button
-                variant="ghost"
-                onClick={() => switchMode('forgot-password')}
-                className="text-sm text-hooks-coral hover:text-hooks-coral/80"
-                disabled={loading}
-              >
-                Forgot your password?
-              </Button>
-            )}
-            
-            {mode === 'forgot-password' && (
-              <Button
-                variant="ghost"
-                onClick={() => switchMode('signin')}
-                className="text-sm"
-                disabled={loading}
-              >
-                Back to Sign In
-              </Button>
-            )}
-            
-            {mode !== 'forgot-password' && (
-              <Button
-                variant="ghost"
-                onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
-                className="text-sm"
-                disabled={loading}
-              >
-                {mode === 'signin' 
-                  ? "Don't have an account? Sign Up" 
-                  : 'Already have an account? Sign In'
-                }
-              </Button>
-            )}
-          </div>
         </CardContent>
+
+        <div className="p-4 text-center">
+          {mode === "signin" ? (
+            <>
+              Don't have an account?{" "}
+              <Button variant="link" onClick={() => setMode("signup")} disabled={loading}>
+                Sign Up
+              </Button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <Button variant="link" onClick={() => setMode("signin")} disabled={loading}>
+                Sign In
+              </Button>
+            </>
+          )}
+        </div>
       </Card>
     </div>
   );
