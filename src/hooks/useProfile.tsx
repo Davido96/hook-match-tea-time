@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +24,10 @@ interface Profile {
   verification_status: 'pending' | 'verified' | 'rejected';
   is_age_verified: boolean;
   withdrawal_pin_hash?: string | null;
+  referred_by?: string | null;
+  total_referrals?: number;
+  successful_referrals?: number;
+  referral_earnings?: number;
 }
 
 export const useProfile = () => {

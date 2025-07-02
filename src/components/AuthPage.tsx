@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,11 +11,12 @@ import HookLogo from "./HookLogo";
 
 interface AuthPageProps {
   initialMode?: "signin" | "signup";
-  onAuthSuccess: () => void;
+  onAuthSuccess?: () => void;
+  onSignupSuccess?: () => void;
   onBack: () => void;
 }
 
-const AuthPage = ({ initialMode = "signin", onAuthSuccess, onBack }: AuthPageProps) => {
+const AuthPage = ({ initialMode = "signin", onAuthSuccess, onSignupSuccess, onBack }: AuthPageProps) => {
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -85,14 +87,14 @@ const AuthPage = ({ initialMode = "signin", onAuthSuccess, onBack }: AuthPagePro
     setLoading(true);
     
     try {
-      const metadata: any = {};
+      const options: any = {};
       
       // Add referral code to user metadata if present
       if (referralCode) {
-        metadata.referral_code = referralCode;
+        options.data = { referral_code: referralCode };
       }
       
-      const { error } = await signUp(email, password, metadata);
+      const { error } = await signUp(email, password, options);
       
       if (error) {
         console.error('Signup error:', error);
@@ -108,6 +110,10 @@ const AuthPage = ({ initialMode = "signin", onAuthSuccess, onBack }: AuthPagePro
             ? "Account created! Check your email to verify and claim your referral bonus."
             : "Account created! Check your email to verify your account.",
         });
+        
+        if (onSignupSuccess) {
+          onSignupSuccess();
+        }
       }
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -143,7 +149,9 @@ const AuthPage = ({ initialMode = "signin", onAuthSuccess, onBack }: AuthPagePro
           title: "Success!",
           description: "Signed in successfully!",
         });
-        onAuthSuccess();
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       }
     } catch (error: any) {
       console.error('Signin error:', error);

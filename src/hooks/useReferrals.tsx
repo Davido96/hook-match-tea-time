@@ -29,7 +29,7 @@ interface ReferralRecord {
   referee_profile?: {
     name: string;
     user_type: string;
-  };
+  } | null;
 }
 
 export const useReferrals = () => {
@@ -92,7 +92,17 @@ export const useReferrals = () => {
         .order('created_at', { ascending: false });
 
       if (historyData) {
-        setReferralHistory(historyData as ReferralRecord[]);
+        const processedHistory = historyData.map(item => ({
+          id: item.id,
+          referral_code: item.referral_code,
+          status: item.status,
+          reward_amount: item.reward_amount || 0,
+          referee_reward_amount: item.referee_reward_amount || 0,
+          created_at: item.created_at,
+          completed_at: item.completed_at,
+          referee_profile: item.referee_profile || null
+        }));
+        setReferralHistory(processedHistory);
       }
 
     } catch (error) {
