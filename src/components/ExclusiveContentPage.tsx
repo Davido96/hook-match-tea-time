@@ -11,6 +11,7 @@ import PostCommentsModal from "./PostCommentsModal";
 import ExclusivePostCard from "./ExclusivePostCard";
 import ExclusiveContentEmptyState from "./ExclusiveContentEmptyState";
 import ExclusiveContentHeader from "./ExclusiveContentHeader";
+import PayPerViewModal from "./PayPerViewModal";
 
 interface ExclusivePost {
   id: string;
@@ -19,6 +20,9 @@ interface ExclusivePost {
   media_type: string;
   caption?: string;
   is_public: boolean;
+  is_ppv?: boolean;
+  ppv_price?: number;
+  ppv_unlock_duration?: number;
   created_at: string;
   profiles: {
     name: string;
@@ -41,9 +45,11 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
   const [showTipModal, setShowTipModal] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showPPVModal, setShowPPVModal] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState<{ id: string; name: string } | null>(null);
   const [selectedPost, setSelectedPost] = useState<ExclusivePost | null>(null);
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
+  const [selectedPPVPost, setSelectedPPVPost] = useState<ExclusivePost | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -97,6 +103,15 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
     navigate(`/profile/${creatorId}`);
   };
 
+  const handlePPVClick = (post: ExclusivePost) => {
+    setSelectedPPVPost(post);
+    setShowPPVModal(true);
+  };
+
+  const handlePPVPurchaseSuccess = () => {
+    fetchPosts(); // Refresh posts to update access status
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -123,6 +138,7 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
               onCommentsClick={handleCommentsClick}
               onTipClick={handleSendTip}
               onProfileClick={handleProfileClick}
+              onPPVClick={handlePPVClick}
               currentUserId={user?.id}
             />
           ))}
@@ -176,6 +192,19 @@ const ExclusiveContentPage = ({ onBack }: ExclusiveContentPageProps) => {
             setSelectedPostForComments(null);
           }}
           postId={selectedPostForComments}
+        />
+      )}
+
+      {/* Pay Per View Modal */}
+      {showPPVModal && selectedPPVPost && (
+        <PayPerViewModal
+          isOpen={showPPVModal}
+          onClose={() => {
+            setShowPPVModal(false);
+            setSelectedPPVPost(null);
+          }}
+          post={selectedPPVPost}
+          onPurchaseSuccess={handlePPVPurchaseSuccess}
         />
       )}
     </div>

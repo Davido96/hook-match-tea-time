@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Image, Video, FileX } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Upload, X, Image, Video, FileX, Lock, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,6 +22,9 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [isPPV, setIsPPV] = useState(false);
+  const [ppvPrice, setPpvPrice] = useState("");
+  const [ppvDuration, setPpvDuration] = useState("");
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -112,7 +117,10 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
           media_url: mediaUrl,
           media_type: mediaType,
           caption: caption.trim() || null,
-          is_public: isPublic
+          is_public: isPublic && !isPPV, // PPV content cannot be public
+          is_ppv: isPPV,
+          ppv_price: isPPV ? parseInt(ppvPrice) : null,
+          ppv_unlock_duration: isPPV && ppvDuration ? parseInt(ppvDuration) : null
         });
 
       if (error) throw error;
@@ -121,6 +129,9 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
       setSelectedFile(null);
       setCaption("");
       setIsPublic(false);
+      setIsPPV(false);
+      setPpvPrice("");
+      setPpvDuration("");
       setUploadProgress(0);
     } catch (error) {
       console.error('Error creating post:', error);
@@ -275,15 +286,72 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
               />
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is-public"
-                checked={isPublic}
-                onCheckedChange={setIsPublic}
-              />
-              <Label htmlFor="is-public">
-                Make this post public (visible to everyone)
-              </Label>
+            {/* Content Type Selection */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is-public"
+                  checked={isPublic && !isPPV}
+                  onCheckedChange={(checked) => {
+                    setIsPublic(checked);
+                    if (checked) setIsPPV(false);
+                  }}
+                  disabled={isPPV}
+                />
+                <Label htmlFor="is-public">
+                  Make this post public (visible to everyone)
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is-ppv"
+                  checked={isPPV}
+                  onCheckedChange={(checked) => {
+                    setIsPPV(checked);
+                    if (checked) setIsPublic(false);
+                  }}
+                />
+                <Label htmlFor="is-ppv" className="flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  Pay-per-view content
+                </Label>
+              </div>
+
+              {isPPV && (
+                <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                  <div>
+                    <Label htmlFor="ppv-price" className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Price (Keys)
+                    </Label>
+                    <Input
+                      id="ppv-price"
+                      type="number"
+                      placeholder="e.g., 10"
+                      value={ppvPrice}
+                      onChange={(e) => setPpvPrice(e.target.value)}
+                      min="1"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="ppv-duration">Access Duration</Label>
+                    <Select value={ppvDuration} onValueChange={setPpvDuration}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Permanent access</SelectItem>
+                        <SelectItem value="24">24 hours</SelectItem>
+                        <SelectItem value="168">7 days</SelectItem>
+                        <SelectItem value="720">30 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex space-x-3">

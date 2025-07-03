@@ -113,9 +113,12 @@ export type Database = {
           created_at: string | null
           creator_id: string | null
           id: string
+          is_ppv: boolean | null
           is_public: boolean | null
           media_type: string | null
           media_url: string
+          ppv_price: number | null
+          ppv_unlock_duration: number | null
           updated_at: string | null
         }
         Insert: {
@@ -123,9 +126,12 @@ export type Database = {
           created_at?: string | null
           creator_id?: string | null
           id?: string
+          is_ppv?: boolean | null
           is_public?: boolean | null
           media_type?: string | null
           media_url: string
+          ppv_price?: number | null
+          ppv_unlock_duration?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -133,9 +139,12 @@ export type Database = {
           created_at?: string | null
           creator_id?: string | null
           id?: string
+          is_ppv?: boolean | null
           is_public?: boolean | null
           media_type?: string | null
           media_url?: string
+          ppv_price?: number | null
+          ppv_unlock_duration?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -436,6 +445,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "exclusive_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_purchases: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          post_id: string
+          price_paid: number
+          purchased_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          post_id: string
+          price_paid: number
+          purchased_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          post_id?: string
+          price_paid?: number
+          purchased_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_purchases_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "exclusive_posts"
@@ -1010,6 +1057,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string
       }
+      has_post_access: {
+        Args: { user_uuid: string; post_uuid: string }
+        Returns: boolean
+      }
       increment_daily_usage: {
         Args: {
           user_uuid: string
@@ -1021,6 +1072,10 @@ export type Database = {
       mark_messages_as_read: {
         Args: { conversation_id_param: string; user_id_param: string }
         Returns: undefined
+      }
+      purchase_ppv_content: {
+        Args: { post_uuid: string }
+        Returns: Json
       }
       respond_to_like: {
         Args: { like_id_param: string; response_status: string }
