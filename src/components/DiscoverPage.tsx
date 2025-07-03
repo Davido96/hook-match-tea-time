@@ -22,6 +22,7 @@ import FilterModal from "@/components/FilterModal";
 import IncomingLikesPage from "@/components/IncomingLikesPage";
 import { useToast } from "@/hooks/use-toast";
 import HookLogo from "@/components/HookLogo";
+import ReferralButton from "@/components/ReferralButton";
 
 type ViewType = 'landing' | 'discover' | 'exclusive' | 'profile-setup' | 'messages' | 'incoming-likes';
 
@@ -449,6 +450,9 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
               >
                 <Filter className="w-5 h-5" />
               </Button>
+
+              {/* Referrals */}
+              <ReferralButton />
 
               {/* Incoming Likes */}
               <Button
