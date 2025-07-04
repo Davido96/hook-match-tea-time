@@ -52,6 +52,7 @@ const ExclusivePostCard = ({
   const isOwner = currentUserId === post.creator_id;
   const canViewContent = isOwner || hasAccess || post.is_public;
   const isPPVContent = post.is_ppv && post.ppv_price;
+  const needsPurchase = isPPVContent && !isOwner && !hasAccess;
 
   const formatDuration = (hours?: number) => {
     if (!hours) return "Permanent";
@@ -217,7 +218,7 @@ const ExclusivePostCard = ({
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            {isPPVContent && !canViewContent && (
+            {needsPurchase && (
               <Button 
                 variant="outline" 
                 size="sm" 

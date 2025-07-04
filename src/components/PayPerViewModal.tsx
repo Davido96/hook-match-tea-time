@@ -35,7 +35,14 @@ const PayPerViewModal = ({ isOpen, onClose, post, onPurchaseSuccess }: PayPerVie
   const [purchasing, setPurchasing] = useState(false);
 
   const handlePurchase = async () => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to purchase this content",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setPurchasing(true);
     try {
@@ -43,7 +50,15 @@ const PayPerViewModal = ({ isOpen, onClose, post, onPurchaseSuccess }: PayPerVie
         post_uuid: post.id
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Purchase RPC error:', error);
+        toast({
+          title: "Purchase Failed",
+          description: `Error: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
 
       const result = data as { success: boolean; error?: string; message?: string };
 
