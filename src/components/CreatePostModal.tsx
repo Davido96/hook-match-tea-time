@@ -120,7 +120,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
           is_public: isPublic && !isPPV, // PPV content cannot be public
           is_ppv: isPPV,
           ppv_price: isPPV ? parseInt(ppvPrice) : null,
-          ppv_unlock_duration: isPPV && ppvDuration ? parseInt(ppvDuration) : null
+          ppv_unlock_duration: isPPV && ppvDuration && ppvDuration !== "permanent" ? parseInt(ppvDuration) : null
         });
 
       if (error) throw error;
@@ -343,7 +343,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
                         <SelectValue placeholder="Select duration" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Permanent access</SelectItem>
+                        <SelectItem value="permanent">Permanent access</SelectItem>
                         <SelectItem value="24">24 hours</SelectItem>
                         <SelectItem value="168">7 days</SelectItem>
                         <SelectItem value="720">30 days</SelectItem>
