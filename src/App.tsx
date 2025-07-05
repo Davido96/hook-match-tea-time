@@ -16,6 +16,10 @@ import IncomingLikesPage from "@/pages/IncomingLikesPage";
 import UserProfile from "@/pages/UserProfile";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
+import CreatorWaitlistPage from "@/pages/CreatorWaitlistPage";
+import WaitlistSuccessPage from "@/pages/WaitlistSuccessPage";
+import WaitlistStatusPage from "@/pages/WaitlistStatusPage";
+import AdminWaitlistPage from "@/pages/AdminWaitlistPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthRoute from "@/components/AuthRoute";
 import ProfileRequiredRoute from "@/components/ProfileRequiredRoute";
@@ -33,6 +37,10 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/creator-waitlist" element={<CreatorWaitlistPage />} />
+            <Route path="/creator-waitlist/success" element={<WaitlistSuccessPage />} />
+            <Route path="/waitlist-status" element={<WaitlistStatusPage />} />
+            <Route path="/admin/waitlist" element={<AdminWaitlistPage />} />
             
             {/* Auth routes - redirect authenticated users */}
             <Route path="/auth/signin" element={<AuthRoute><SignInPage /></AuthRoute>} />

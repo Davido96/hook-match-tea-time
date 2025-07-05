@@ -116,6 +116,24 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
                 </div>
               </div>
               
+              {/* Creator Waitlist CTA */}
+              <div className="text-center">
+                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl p-6 max-w-2xl mx-auto border border-white/20">
+                  <h3 className="text-xl font-bold text-white mb-2">🎯 Pre-Launch Creator Program</h3>
+                  <p className="text-white/80 mb-4">
+                    Join our exclusive creator waitlist and be among the first to monetize your content on Hook
+                  </p>
+                  <InteractiveButton
+                    onClick={() => navigate('/creator-waitlist')}
+                    variant="outline"
+                    size="large"
+                    className="bg-white/10 hover:bg-white/20 text-white border-white/30"
+                  >
+                    Join Creator Waitlist
+                  </InteractiveButton>
+                </div>
+              </div>
+              
               <div className="text-center">
                 <InteractiveButton
                   onClick={handleSignIn}

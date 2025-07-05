@@ -9,6 +9,59 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      application_reviews: {
+        Row: {
+          audience_engagement_score: number | null
+          content_quality_score: number | null
+          created_at: string | null
+          id: string
+          platform_fit_score: number | null
+          professional_presentation_score: number | null
+          review_notes: string | null
+          review_score: number | null
+          review_status: Database["public"]["Enums"]["application_status"]
+          reviewed_at: string | null
+          reviewer_user_id: string | null
+          waitlist_id: string | null
+        }
+        Insert: {
+          audience_engagement_score?: number | null
+          content_quality_score?: number | null
+          created_at?: string | null
+          id?: string
+          platform_fit_score?: number | null
+          professional_presentation_score?: number | null
+          review_notes?: string | null
+          review_score?: number | null
+          review_status: Database["public"]["Enums"]["application_status"]
+          reviewed_at?: string | null
+          reviewer_user_id?: string | null
+          waitlist_id?: string | null
+        }
+        Update: {
+          audience_engagement_score?: number | null
+          content_quality_score?: number | null
+          created_at?: string | null
+          id?: string
+          platform_fit_score?: number | null
+          professional_presentation_score?: number | null
+          review_notes?: string | null
+          review_score?: number | null
+          review_status?: Database["public"]["Enums"]["application_status"]
+          reviewed_at?: string | null
+          reviewer_user_id?: string | null
+          waitlist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_reviews_waitlist_id_fkey"
+            columns: ["waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "creator_waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -40,6 +93,102 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      creator_waitlist: {
+        Row: {
+          admin_notes: string | null
+          application_score: number | null
+          application_status:
+            | Database["public"]["Enums"]["application_status"]
+            | null
+          approved_at: string | null
+          content_description: string | null
+          content_strategy: string | null
+          created_at: string | null
+          creator_category: Database["public"]["Enums"]["creator_category"]
+          current_followers: number | null
+          email: string
+          expected_monthly_revenue: number | null
+          full_name: string
+          id: string
+          instagram_handle: string | null
+          location_city: string | null
+          location_state: string | null
+          other_social: string | null
+          phone_number: string | null
+          portfolio_urls: string[] | null
+          priority_level: number | null
+          profile_photo_url: string | null
+          reviewed_at: string | null
+          submitted_at: string | null
+          tiktok_handle: string | null
+          twitter_handle: string | null
+          updated_at: string | null
+          why_join: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          application_score?: number | null
+          application_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
+          approved_at?: string | null
+          content_description?: string | null
+          content_strategy?: string | null
+          created_at?: string | null
+          creator_category: Database["public"]["Enums"]["creator_category"]
+          current_followers?: number | null
+          email: string
+          expected_monthly_revenue?: number | null
+          full_name: string
+          id?: string
+          instagram_handle?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          other_social?: string | null
+          phone_number?: string | null
+          portfolio_urls?: string[] | null
+          priority_level?: number | null
+          profile_photo_url?: string | null
+          reviewed_at?: string | null
+          submitted_at?: string | null
+          tiktok_handle?: string | null
+          twitter_handle?: string | null
+          updated_at?: string | null
+          why_join?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          application_score?: number | null
+          application_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
+          approved_at?: string | null
+          content_description?: string | null
+          content_strategy?: string | null
+          created_at?: string | null
+          creator_category?: Database["public"]["Enums"]["creator_category"]
+          current_followers?: number | null
+          email?: string
+          expected_monthly_revenue?: number | null
+          full_name?: string
+          id?: string
+          instagram_handle?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          other_social?: string | null
+          phone_number?: string | null
+          portfolio_urls?: string[] | null
+          priority_level?: number | null
+          profile_photo_url?: string | null
+          reviewed_at?: string | null
+          submitted_at?: string | null
+          tiktok_handle?: string | null
+          twitter_handle?: string | null
+          updated_at?: string | null
+          why_join?: string | null
+        }
+        Relationships: []
       }
       daily_usage: {
         Row: {
@@ -887,6 +1036,68 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_submissions: {
+        Row: {
+          created_at: string | null
+          government_id_url: string | null
+          id: string
+          sample_content_urls: string[] | null
+          selfie_url: string | null
+          social_verification_posts: string[] | null
+          updated_at: string | null
+          user_id: string | null
+          verification_notes: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_at: string | null
+          video_introduction_url: string | null
+          waitlist_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          government_id_url?: string | null
+          id?: string
+          sample_content_urls?: string[] | null
+          selfie_url?: string | null
+          social_verification_posts?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_notes?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_at?: string | null
+          video_introduction_url?: string | null
+          waitlist_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          government_id_url?: string | null
+          id?: string
+          sample_content_urls?: string[] | null
+          selfie_url?: string | null
+          social_verification_posts?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_notes?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_at?: string | null
+          video_introduction_url?: string | null
+          waitlist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_submissions_waitlist_id_fkey"
+            columns: ["waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "creator_waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallets: {
         Row: {
           created_at: string | null
@@ -1057,6 +1268,16 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string
       }
+      get_waitlist_status: {
+        Args: { applicant_email: string }
+        Returns: {
+          application_status: Database["public"]["Enums"]["application_status"]
+          submitted_at: string
+          reviewed_at: string
+          admin_notes: string
+          application_score: number
+        }[]
+      }
       has_post_access: {
         Args: { user_uuid: string; post_uuid: string }
         Returns: boolean
@@ -1103,7 +1324,28 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      application_status:
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "waitlisted"
+      creator_category:
+        | "lifestyle"
+        | "fitness"
+        | "beauty"
+        | "fashion"
+        | "food"
+        | "travel"
+        | "tech"
+        | "gaming"
+        | "music"
+        | "art"
+        | "education"
+        | "business"
+        | "comedy"
+        | "other"
+      verification_status: "pending" | "submitted" | "verified" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1218,6 +1460,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      application_status: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "waitlisted",
+      ],
+      creator_category: [
+        "lifestyle",
+        "fitness",
+        "beauty",
+        "fashion",
+        "food",
+        "travel",
+        "tech",
+        "gaming",
+        "music",
+        "art",
+        "education",
+        "business",
+        "comedy",
+        "other",
+      ],
+      verification_status: ["pending", "submitted", "verified", "rejected"],
+    },
   },
 } as const
