@@ -23,6 +23,7 @@ import AdminWaitlistPage from "@/pages/AdminWaitlistPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthRoute from "@/components/AuthRoute";
 import ProfileRequiredRoute from "@/components/ProfileRequiredRoute";
+import AdminRoute from "@/components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +41,11 @@ const App = () => (
             <Route path="/creator-waitlist" element={<CreatorWaitlistPage />} />
             <Route path="/creator-waitlist/success" element={<WaitlistSuccessPage />} />
             <Route path="/waitlist-status" element={<WaitlistStatusPage />} />
-            <Route path="/admin/waitlist" element={<AdminWaitlistPage />} />
+            <Route path="/admin/waitlist" element={
+              <AdminRoute>
+                <AdminWaitlistPage />
+              </AdminRoute>
+            } />
             
             {/* Auth routes - redirect authenticated users */}
             <Route path="/auth/signin" element={<AuthRoute><SignInPage /></AuthRoute>} />

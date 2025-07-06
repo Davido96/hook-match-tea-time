@@ -241,6 +241,18 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
             </div>
           )}
         </div>
+
+        {/* Admin Access */}
+        <div className="text-center mt-12">
+          <InteractiveButton
+            onClick={() => navigate('/admin/waitlist')}
+            variant="ghost"
+            size="medium"
+            className="text-white/50 hover:text-white/80 text-sm"
+          >
+            Admin Access
+          </InteractiveButton>
+        </div>
       </div>
     </div>
   );
