@@ -1000,6 +1000,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -1175,6 +1202,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_admin_role: {
+        Args: { _email: string }
+        Returns: boolean
+      }
       check_daily_limit: {
         Args: { user_uuid: string; action_type: string; limit_amount: number }
         Returns: boolean
@@ -1256,6 +1287,13 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_user_roles: {
+        Args: { _user_id: string }
+        Returns: {
+          role: Database["public"]["Enums"]["app_role"]
+          assigned_at: string
+        }[]
+      }
       get_user_status: {
         Args: { user_uuid: string }
         Returns: {
@@ -1280,6 +1318,13 @@ export type Database = {
       }
       has_post_access: {
         Args: { user_uuid: string; post_uuid: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
         Returns: boolean
       }
       increment_daily_usage: {
@@ -1324,6 +1369,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       application_status:
         | "pending"
         | "under_review"
@@ -1461,6 +1507,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       application_status: [
         "pending",
         "under_review",

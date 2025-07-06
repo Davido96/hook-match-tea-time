@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserRoles } from "@/hooks/useUserRoles";
+import { useNavigate } from "react-router-dom";
 import { 
   Eye, 
   CheckCircle, 
@@ -22,7 +25,9 @@ import {
   MapPin,
   DollarSign,
   Calendar,
-  Filter
+  Filter,
+  LogOut,
+  Shield
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -53,6 +58,9 @@ interface WaitlistApplication {
 
 const AdminWaitlistDashboard = () => {
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const { roles, isAdmin } = useUserRoles();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<WaitlistApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<WaitlistApplication | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +69,20 @@ const AdminWaitlistDashboard = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [reviewScore, setReviewScore] = useState<number>(0);
   const [reviewStatus, setReviewStatus] = useState<string>('');
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
     fetchApplications();
@@ -196,6 +218,47 @@ const AdminWaitlistDashboard = () => {
         <h1 className="text-3xl font-bold mb-2">Creator Waitlist Dashboard</h1>
         <p className="text-muted-foreground">Review and manage creator applications</p>
       </div>
+
+      {/* Admin Info Header */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Shield className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-semibold">{user?.email}</h3>
+                  <Badge className="bg-blue-100 text-blue-800">
+                    {isAdmin ? 'Admin' : roles.join(', ') || 'User'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Admin Dashboard Access • {format(new Date(), 'PPP')}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                size="sm"
+              >
+                Home
+              </Button>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                size="sm"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
