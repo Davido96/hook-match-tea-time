@@ -11,6 +11,8 @@ import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase, LogOut } from "lucid
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import CreatorConsentForm from "@/components/CreatorConsentForm";
+import { useCreatorConsent } from "@/hooks/useCreatorConsent";
 
 interface EnhancedProfileSetupProps {
   onComplete: () => void;
@@ -19,8 +21,21 @@ interface EnhancedProfileSetupProps {
 }
 
 const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedProfileSetupProps) => {
+  // Creator consent state
+  const [showConsentForm, setShowConsentForm] = useState(false);
+  const { isConsentComplete } = useCreatorConsent();
+  
   // If we have an initial user type, start at step 2, otherwise start at step 1
-  const [step, setStep] = useState(initialUserType ? 2 : 1);
+  // But for creators, we need to check consent first
+  const getInitialStep = () => {
+    if (initialUserType === 'creator' && !isConsentComplete()) {
+      setShowConsentForm(true);
+      return 1; // Will show consent form instead
+    }
+    return initialUserType ? 2 : 1;
+  };
+  
+  const [step, setStep] = useState(getInitialStep());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -45,6 +60,18 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
   const { createProfile, uploadAvatarDuringSetup } = useProfile();
   const { signOut } = useAuth();
   const { toast } = useToast();
+
+  // Handle consent form completion
+  const handleConsentComplete = () => {
+    setShowConsentForm(false);
+    setStep(2); // Move to basic info after consent
+  };
+
+  const handleConsentBack = () => {
+    if (onBack) {
+      onBack();
+    }
+  };
 
   const totalSteps = formData.userType === 'creator' ? 4 : 3; // Reduced by 1 since we skip user type selection
 
@@ -224,6 +251,16 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
       setLoading(false);
     }
   };
+
+  // Show consent form for creators who haven't completed it
+  if (showConsentForm) {
+    return (
+      <CreatorConsentForm 
+        onComplete={handleConsentComplete}
+        onBack={handleConsentBack}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-hooks-coral via-hooks-pink to-hooks-purple flex items-center justify-center p-4">
