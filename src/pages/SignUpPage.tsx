@@ -1,12 +1,17 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthPage from "@/components/AuthPage";
+import CreatorSignupFlow from "@/components/CreatorSignupFlow";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
 
-  const handleSignupSuccess = () => {
-    navigate("/profile-setup", { replace: true });
+  const handleSignupComplete = (userType: 'creator' | 'consumer') => {
+    // Navigate to profile setup with the selected user type
+    navigate("/profile-setup", { 
+      replace: true,
+      state: { userType }
+    });
   };
 
   const handleBack = () => {
@@ -14,9 +19,8 @@ const SignUpPage = () => {
   };
 
   return (
-    <AuthPage 
-      initialMode="signup"
-      onSignupSuccess={handleSignupSuccess}
+    <CreatorSignupFlow 
+      onComplete={handleSignupComplete}
       onBack={handleBack}
     />
   );
