@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, X, Image, Video, FileX, Lock, DollarSign } from "lucide-react";
+import { Upload, X, Image, Video, FileX, Lock, DollarSign, PlayCircle, Clock, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -170,24 +170,74 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
         
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* File Upload Area */}
+            {/* Enhanced File Upload Area */}
             <div>
-              <Label>Upload Media</Label>
+              <Label className="text-lg font-semibold">Upload Media</Label>
               {!selectedFile ? (
-                <div
-                  className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                    dragActive 
-                      ? 'border-hooks-coral bg-hooks-coral/5' 
-                      : 'border-gray-300 hover:border-hooks-coral'
-                  }`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                >
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Drag and drop your file here, or click to browse
-                  </p>
+                <div className="mt-3 space-y-4">
+                  {/* Upload Zones */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Video Upload Zone */}
+                    <div
+                      className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 cursor-pointer group ${
+                        dragActive 
+                          ? 'border-hooks-coral bg-hooks-coral/5 scale-105' 
+                          : 'border-hooks-coral/40 hover:border-hooks-coral hover:bg-hooks-coral/5 hover:scale-105'
+                      }`}
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      <div className="absolute top-2 right-2">
+                        <Zap className="w-4 h-4 text-hooks-coral" />
+                      </div>
+                      <PlayCircle className="w-10 h-10 mx-auto mb-3 text-hooks-coral group-hover:scale-110 transition-transform" />
+                      <h3 className="font-semibold text-gray-900 mb-1">Upload Video</h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Share engaging video content
+                      </p>
+                      <div className="text-xs text-hooks-coral font-medium">
+                        MP4, MOV, AVI • Up to 100MB
+                      </div>
+                    </div>
+
+                    {/* Image Upload Zone */}
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 cursor-pointer group ${
+                        dragActive 
+                          ? 'border-gray-400 bg-gray-50 scale-105' 
+                          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50 hover:scale-105'
+                      }`}
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      <Image className="w-10 h-10 mx-auto mb-3 text-gray-500 group-hover:scale-110 transition-transform" />
+                      <h3 className="font-semibold text-gray-900 mb-1">Upload Image</h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Share stunning photos
+                      </p>
+                      <div className="text-xs text-gray-500 font-medium">
+                        JPG, PNG, GIF, WebP • Up to 100MB
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Video Tips */}
+                  <div className="bg-gradient-to-r from-hooks-coral/10 to-hooks-pink/10 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Video className="w-4 h-4 text-hooks-coral" />
+                      <span className="text-sm font-semibold text-gray-900">Video Tips</span>
+                    </div>
+                    <div className="text-xs text-gray-700 space-y-1">
+                      <p>• Videos get 3x more engagement than images</p>
+                      <p>• Keep videos under 60 seconds for best results</p>
+                      <p>• Vertical videos (9:16) perform best on mobile</p>
+                    </div>
+                  </div>
+
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -195,17 +245,6 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
                     className="hidden"
                     id="file-upload"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                  >
-                    Choose File
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Images and videos up to 100MB
-                  </p>
                 </div>
               ) : (
                 <div className="mt-2 border rounded-lg p-4">
@@ -263,12 +302,28 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }: CreatePostModalProp
                   )}
 
                   {selectedFile && selectedFile.type.startsWith('video/') && (
-                    <div className="mt-3">
-                      <video
-                        src={URL.createObjectURL(selectedFile)}
-                        className="w-full h-48 object-cover rounded-lg"
-                        controls
-                      />
+                    <div className="mt-3 space-y-2">
+                      <div className="relative">
+                        <video
+                          src={URL.createObjectURL(selectedFile)}
+                          className="w-full h-48 object-cover rounded-lg"
+                          controls
+                        />
+                        <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                          <PlayCircle className="w-3 h-3" />
+                          Video Preview
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 rounded px-3 py-2">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>Duration will be calculated after upload</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-hooks-coral" />
+                          <span className="text-hooks-coral font-medium">Video content!</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

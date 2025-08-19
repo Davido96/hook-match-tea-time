@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, Crown, ArrowLeft } from "lucide-react";
+import { Plus, Crown, ArrowLeft, PlayCircle, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import CreatePostModal from "./CreatePostModal";
 import { useProfile } from "@/hooks/useProfile";
@@ -81,19 +81,40 @@ const ExclusiveContentHeader = ({ onPostCreated, onBack, onCreatePost, userType 
         </Button>
       )}
       
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Your Content</h1>
-          <p className="text-gray-600">Share exclusive content with your subscribers</p>
+      <div className="space-y-6 mb-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Your Content</h1>
+            <p className="text-gray-600">Share exclusive content with your subscribers</p>
+          </div>
+          
+          <Button 
+            onClick={handleCreatePostClick}
+            className="gradient-coral text-white shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Post
+          </Button>
         </div>
-        
-        <Button 
-          onClick={handleCreatePostClick}
-          className="gradient-coral text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Post
-        </Button>
+
+        {/* Video Promotion Banner */}
+        <div className="bg-gradient-to-r from-hooks-coral/10 via-hooks-pink/10 to-hooks-purple/10 rounded-xl p-4 border border-hooks-coral/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white rounded-full p-2 shadow-sm">
+                <PlayCircle className="w-6 h-6 text-hooks-coral" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Upload Videos for Better Engagement</h3>
+                <p className="text-sm text-gray-600">Video content gets 3x more views and interactions</p>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-sm text-hooks-coral font-medium">
+              <TrendingUp className="w-4 h-4" />
+              <span>Boost engagement</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {showCreatePost && (
