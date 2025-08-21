@@ -6,6 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import NotificationToast from "@/components/NotificationToast";
 import LandingPage from "@/components/LandingPage";
+import About from "@/pages/About";
+import PrivacyCreators from "@/pages/PrivacyCreators";
+import PrivacyFans from "@/pages/PrivacyFans";
+import EarningsInfo from "@/pages/EarningsInfo";
+import Terms from "@/pages/Terms";
+import CommunityGuidelines from "@/pages/CommunityGuidelines";
 import SignInPage from "@/pages/SignInPage";
 import SignUpPage from "@/pages/SignUpPage";
 import ProfileSetupPage from "@/pages/ProfileSetupPage";
@@ -38,6 +44,12 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy/creators" element={<PrivacyCreators />} />
+            <Route path="/privacy/fans" element={<PrivacyFans />} />
+            <Route path="/earnings-info" element={<EarningsInfo />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/community-guidelines" element={<CommunityGuidelines />} />
             <Route path="/creator-waitlist" element={<CreatorWaitlistPage />} />
             <Route path="/creator-waitlist/success" element={<WaitlistSuccessPage />} />
             <Route path="/waitlist-status" element={<WaitlistStatusPage />} />

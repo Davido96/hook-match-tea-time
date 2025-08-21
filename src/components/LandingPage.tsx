@@ -185,6 +185,52 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           </div>
         </div>
 
+        {/* About Us Section */}
+        <div className="text-center mt-20 mb-20">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-4xl mx-auto">
+            <h2 className="text-4xl font-bold text-white mb-6 font-playfair">About Hooks</h2>
+            <p className="text-xl text-white/90 mb-8 leading-relaxed">
+              We're building Nigeria's premier creator economy platform where authentic connections 
+              drive sustainable income. Our mission is to empower creators with fair revenue sharing, 
+              complete content control, and the tools to build thriving communities.
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-300 mb-2">80%</div>
+                <div className="text-white/80 text-sm">Creator Revenue Share</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-300 mb-2">100%</div>
+                <div className="text-white/80 text-sm">Content Ownership</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-300 mb-2">24/7</div>
+                <div className="text-white/80 text-sm">Platform Support</div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <InteractiveButton
+                onClick={() => navigate('/about')}
+                variant="outline"
+                size="medium"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                Learn More About Us
+              </InteractiveButton>
+              <InteractiveButton
+                onClick={() => navigate('/earnings-info')}
+                variant="ghost"
+                size="medium"
+                className="text-white/80 hover:text-white"
+              >
+                See Earnings Info
+              </InteractiveButton>
+            </div>
+          </div>
+        </div>
+
         {/* Success Stories */}
         <div className="text-center mt-20">
           <h2 className="text-4xl font-bold text-white mb-12 font-playfair">Creator Success Stories</h2>
