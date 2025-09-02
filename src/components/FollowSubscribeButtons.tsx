@@ -62,7 +62,7 @@ const FollowSubscribeButtons = ({
   const checkFollowStatus = async () => {
     try {
       console.log('Checking follow status for user:', targetUserId);
-      const following = await isFollowing(targetUserId);
+      const following = await isFollowing(String(targetUserId));
       console.log('Follow status result:', following);
       setUserIsFollowing(following);
     } catch (error) {
@@ -73,7 +73,7 @@ const FollowSubscribeButtons = ({
   const checkSubscriptionStatus = async () => {
     try {
       console.log('Checking subscription status for user:', targetUserId);
-      const subscribed = await isSubscribed(targetUserId);
+      const subscribed = await isSubscribed(String(targetUserId));
       console.log('Subscription status result:', subscribed);
       setUserIsSubscribed(subscribed);
     } catch (error) {
@@ -90,11 +90,11 @@ const FollowSubscribeButtons = ({
 
     try {
       if (userIsFollowing) {
-        await unfollowUser(targetUserId);
+        await unfollowUser(String(targetUserId));
         setUserIsFollowing(false);
         toast.success("Unfollowed successfully");
       } else {
-        await followUser(targetUserId);
+        await followUser(String(targetUserId));
         setUserIsFollowing(true);
         toast.success("Following successfully");
       }
