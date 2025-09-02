@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -242,6 +242,7 @@ export type Database = {
       }
       daily_usage: {
         Row: {
+          boosts_used: number
           created_at: string
           date: string
           id: string
@@ -253,6 +254,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          boosts_used?: number
           created_at?: string
           date?: string
           id?: string
@@ -264,6 +266,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          boosts_used?: number
           created_at?: string
           date?: string
           id?: string
@@ -1084,6 +1087,7 @@ export type Database = {
           id: string
           is_active: boolean
           keys_paid: number
+          premium_features: Json | null
           starts_at: string
           tier: string
           updated_at: string
@@ -1095,6 +1099,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           keys_paid?: number
+          premium_features?: Json | null
           starts_at?: string
           tier: string
           updated_at?: string
@@ -1106,6 +1111,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           keys_paid?: number
+          premium_features?: Json | null
           starts_at?: string
           tier?: string
           updated_at?: string
@@ -1257,7 +1263,7 @@ export type Database = {
         Returns: boolean
       }
       check_daily_limit: {
-        Args: { user_uuid: string; action_type: string; limit_amount: number }
+        Args: { action_type: string; limit_amount: number; user_uuid: string }
         Returns: boolean
       }
       create_or_update_recipient_wallet: {
@@ -1278,7 +1284,7 @@ export type Database = {
         Returns: string
       }
       ensure_referral_code: {
-        Args: { user_uuid: string; user_name: string }
+        Args: { user_name: string; user_uuid: string }
         Returns: string
       }
       generate_referral_code: {
@@ -1288,60 +1294,75 @@ export type Database = {
       get_daily_stats: {
         Args: { user_uuid: string }
         Returns: {
-          today_swipes: number
-          today_matches: number
-          today_super_likes: number
           current_streak: number
           longest_streak: number
+          today_matches: number
+          today_super_likes: number
+          today_swipes: number
           total_discovery_days: number
         }[]
       }
       get_incoming_likes: {
         Args: { user_uuid: string }
         Returns: {
+          created_at: string
+          is_super_like: boolean
           like_id: string
-          sender_id: string
-          sender_name: string
           sender_age: number
-          sender_bio: string
           sender_avatar_url: string
+          sender_bio: string
+          sender_id: string
           sender_interests: string[]
           sender_location_city: string
           sender_location_state: string
+          sender_name: string
           sender_user_type: string
           sender_verification_status: string
-          is_super_like: boolean
-          created_at: string
+        }[]
+      }
+      get_premium_limits: {
+        Args: { user_uuid: string }
+        Returns: {
+          can_see_likes: boolean
+          daily_boosts: number
+          daily_rewinds: number
+          daily_super_likes: number
+          daily_swipes: number
+          has_premium_badge: boolean
         }[]
       }
       get_user_matches: {
         Args: { user_uuid: string }
         Returns: {
+          conversation_id: string
+          last_message_at: string
+          last_message_content: string
+          match_created_at: string
           match_id: string
-          other_user_id: string
-          other_name: string
           other_age: number
-          other_bio: string
           other_avatar_url: string
+          other_bio: string
+          other_gender: string
           other_interests: string[]
+          other_last_active: string
           other_location_city: string
           other_location_state: string
-          other_gender: string
+          other_name: string
+          other_user_id: string
           other_user_type: string
           other_verification_status: string
-          other_last_active: string
-          match_created_at: string
-          conversation_id: string
-          last_message_content: string
-          last_message_at: string
           unread_count: number
         }[]
+      }
+      get_user_premium_features: {
+        Args: { user_uuid: string }
+        Returns: Json
       }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
-          role: Database["public"]["Enums"]["app_role"]
           assigned_at: string
+          role: Database["public"]["Enums"]["app_role"]
         }[]
       }
       get_user_status: {
@@ -1359,29 +1380,29 @@ export type Database = {
       get_waitlist_status: {
         Args: { applicant_email: string }
         Returns: {
-          application_status: Database["public"]["Enums"]["application_status"]
-          submitted_at: string
-          reviewed_at: string
           admin_notes: string
           application_score: number
+          application_status: Database["public"]["Enums"]["application_status"]
+          reviewed_at: string
+          submitted_at: string
         }[]
       }
       has_post_access: {
-        Args: { user_uuid: string; post_uuid: string }
+        Args: { post_uuid: string; user_uuid: string }
         Returns: boolean
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       increment_daily_usage: {
         Args: {
-          user_uuid: string
           action_type: string
           increment_amount?: number
+          user_uuid: string
         }
         Returns: undefined
       }
@@ -1402,7 +1423,7 @@ export type Database = {
         Returns: undefined
       }
       update_user_presence: {
-        Args: { user_uuid: string; online_status?: boolean }
+        Args: { online_status?: boolean; user_uuid: string }
         Returns: undefined
       }
       update_user_streak: {
