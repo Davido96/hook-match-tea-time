@@ -59,7 +59,8 @@ export const useDailyStats = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.rpc('increment_daily_usage', {
+      // Use the new gamified function that handles XP and achievements
+      const { error } = await supabase.rpc('handle_user_action', {
         user_uuid: user.id,
         action_type: 'swipes',
         increment_amount: 1
@@ -87,7 +88,8 @@ export const useDailyStats = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.rpc('increment_daily_usage', {
+      // Use the new gamified function that handles XP and achievements
+      const { error } = await supabase.rpc('handle_user_action', {
         user_uuid: user.id,
         action_type: 'super_likes',
         increment_amount: 1
