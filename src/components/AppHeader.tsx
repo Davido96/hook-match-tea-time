@@ -49,13 +49,13 @@ const AppHeader = ({
             variant="ghost"
             size="sm"
             onClick={handleStreaksClick}
-            className="relative text-gray-700 hover:text-hooks-coral"
+            className="relative text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           >
-            <Flame className="w-5 h-5" />
+            <Flame className="w-5 h-5 text-orange-500" />
             {activity.currentStreak > 0 && (
               <Badge 
                 variant="secondary" 
-                className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1 min-w-[16px] h-4 rounded-full"
+                className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1 min-w-[16px] h-4 rounded-full font-semibold"
               >
                 {activity.currentStreak}
               </Badge>
@@ -67,7 +67,7 @@ const AppHeader = ({
             variant="ghost"
             size="sm"
             onClick={onWalletClick}
-            className="text-gray-700 hover:text-hooks-coral"
+            className="text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           >
             <Wallet className="w-5 h-5" />
             <span className="sr-only">Wallet</span>
@@ -77,7 +77,7 @@ const AppHeader = ({
             variant="ghost"
             size="sm"
             onClick={onNotificationClick}
-            className="relative text-gray-700 hover:text-hooks-coral"
+            className="relative text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
