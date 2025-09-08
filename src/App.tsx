@@ -19,6 +19,7 @@ import AppPage from "@/pages/AppPage";
 import MessagesPage from "@/pages/MessagesPage";
 import ExclusiveContentPage from "@/pages/ExclusiveContentPage";
 import IncomingLikesPage from "@/pages/IncomingLikesPage";
+import StreaksPage from "@/pages/StreaksPage";
 import UserProfile from "@/pages/UserProfile";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
@@ -90,6 +91,11 @@ const App = () => (
             <Route path="/app/likes" element={
               <ProfileRequiredRoute>
                 <IncomingLikesPage />
+              </ProfileRequiredRoute>
+            } />
+            <Route path="/app/streaks" element={
+              <ProfileRequiredRoute>
+                <StreaksPage />
               </ProfileRequiredRoute>
             } />
             
