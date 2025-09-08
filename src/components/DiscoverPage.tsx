@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Wallet, Filter, Settings, RefreshCw, Heart } from "lucide-react";
+import { MessageCircle, Wallet, Filter, Settings, RefreshCw, Heart, Flame } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useWallet } from "@/hooks/useWallet";
@@ -42,6 +45,8 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
   const { matches: realMatches, refetch: refetchMatches } = useMatches();
   const { count: incomingLikesCount } = useIncomingLikes();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { activity } = useActivityTracker();
   
   // Modals state
   const [showWallet, setShowWallet] = useState(false);
@@ -431,6 +436,24 @@ const DiscoverPage = ({ currentView, setCurrentView, matches, onMatchAdded }: Di
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Streaks */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/app/streaks")}
+                className="relative text-white hover:bg-white/20"
+              >
+                <Flame className="w-5 h-5 text-orange-400" />
+                {activity.currentStreak > 0 && (
+                  <Badge 
+                    variant="secondary" 
+                    className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1 min-w-[16px] h-4 rounded-full font-semibold"
+                  >
+                    {activity.currentStreak}
+                  </Badge>
+                )}
+              </Button>
+              
               {/* Refresh */}
               <Button
                 variant="ghost"
