@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, MessageCircle, Send, Gift } from "lucide-react";
+import { ArrowLeft, Search, MessageCircle, Send, Gift, Camera } from "lucide-react";
+import { MediaAttachmentModal } from "./MediaAttachmentModal";
+import { PPVMessageCard } from "./PPVMessageCard";
+import { useChatPPV, ChatMediaOffer } from "@/hooks/useChatPPV";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +24,8 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showTipModal, setShowTipModal] = useState(false);
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [ppvOffers, setPPVOffers] = useState<Record<string, ChatMediaOffer>>({});
   
   const { 
     messages, 
@@ -28,6 +33,8 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
     sendMessage, 
     updateTypingStatus 
   } = useEnhancedMessages(selectedConversation?.conversation_id);
+
+  const { getOffersByConversation } = useChatPPV();
 
   const filteredConversations = conversations.filter(conv =>
     conv.other_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -52,11 +59,42 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
     }
   };
 
-  const handleConversationSelect = (conversation: any) => {
+  const handleConversationSelect = async (conversation: any) => {
     setSelectedConversation(conversation);
     // Mark as read when conversation is opened
     if (conversation.unread_count > 0) {
       markAsRead(conversation.conversation_id);
+    }
+
+    // Load PPV offers for this conversation
+    const { data } = await getOffersByConversation(conversation.conversation_id);
+    if (data) {
+      const offersMap: Record<string, ChatMediaOffer> = {};
+      data.forEach(offer => {
+        offersMap[offer.message_id] = offer;
+      });
+      setPPVOffers(offersMap);
+    }
+  };
+
+  const handleMediaSent = async (mediaUrl: string, offerId: string) => {
+    if (!selectedConversation) return;
+
+    // Send message with media reference
+    const messageContent = offerId 
+      ? `[PPV Content]` 
+      : `[Media]`;
+    
+    await sendMessage(messageContent);
+    
+    // Reload offers to get the new one
+    const { data } = await getOffersByConversation(selectedConversation.conversation_id);
+    if (data) {
+      const offersMap: Record<string, ChatMediaOffer> = {};
+      data.forEach(offer => {
+        offersMap[offer.message_id] = offer;
+      });
+      setPPVOffers(offersMap);
     }
   };
 
@@ -280,38 +318,66 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                 <div className="text-center text-white/60 py-8">Loading messages...</div>
               ) : messages.length > 0 ? (
                 <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                    >
+                  {messages.map((message) => {
+                    // Check if message has PPV offer
+                    const offer = ppvOffers[message.id];
+                    
+                    if (offer) {
+                      return (
+                        <div key={message.id} className="mb-4">
+                          <PPVMessageCard 
+                            offer={offer} 
+                            onPurchaseComplete={async () => {
+                              // Reload offers after purchase
+                              if (selectedConversation) {
+                                const { data } = await getOffersByConversation(selectedConversation.conversation_id);
+                                if (data) {
+                                  const offersMap: Record<string, ChatMediaOffer> = {};
+                                  data.forEach(o => {
+                                    offersMap[o.message_id] = o;
+                                  });
+                                  setPPVOffers(offersMap);
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+
+                    return (
                       <div
-                        className={`max-w-xs px-4 py-2 rounded-2xl ${
-                          message.sender === 'me'
-                            ? 'bg-white text-hooks-coral'
-                            : 'bg-white/20 text-white'
-                        }`}
+                        key={message.id}
+                        className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p>{message.content}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <p className={`text-xs ${
-                            message.sender === 'me' ? 'text-hooks-coral/60' : 'text-white/60'
-                          }`}>
-                            {message.time}
-                          </p>
-                          {message.sender === 'me' && (
-                            <span className={`text-xs ${
-                              message.status === 'read' ? 'text-blue-500' : 
-                              message.status === 'delivered' ? 'text-green-500' : 'text-gray-500'
+                        <div
+                          className={`max-w-xs px-4 py-2 rounded-2xl ${
+                            message.sender === 'me'
+                              ? 'bg-white text-hooks-coral'
+                              : 'bg-white/20 text-white'
+                          }`}
+                        >
+                          <p>{message.content}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className={`text-xs ${
+                              message.sender === 'me' ? 'text-hooks-coral/60' : 'text-white/60'
                             }`}>
-                              {message.status === 'read' ? '✓✓' : 
-                               message.status === 'delivered' ? '✓' : '◌'}
-                            </span>
-                          )}
+                              {message.time}
+                            </p>
+                            {message.sender === 'me' && (
+                              <span className={`text-xs ${
+                                message.status === 'read' ? 'text-blue-500' : 
+                                message.status === 'delivered' ? 'text-green-500' : 'text-gray-500'
+                              }`}>
+                                {message.status === 'read' ? '✓✓' : 
+                                 message.status === 'delivered' ? '✓' : '◌'}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center text-white/60 py-8">
@@ -325,6 +391,14 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
             {/* Message Input */}
             <div className="p-4 border-t border-white/20">
               <div className="flex space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMediaModal(true)}
+                  className="text-white hover:bg-white/20 shrink-0"
+                >
+                  <Camera className="w-5 h-5" />
+                </Button>
                 <Input
                   placeholder={`Message ${selectedConversation.other_name}...`}
                   value={newMessage}
@@ -350,12 +424,21 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
 
       {/* Tip Modal */}
       {selectedConversation && (
-        <TipModal
-          isOpen={showTipModal}
-          onClose={() => setShowTipModal(false)}
-          recipientName={selectedConversation.other_name}
-          recipientId={selectedConversation.other_user_id}
-        />
+        <>
+          <TipModal
+            isOpen={showTipModal}
+            onClose={() => setShowTipModal(false)}
+            recipientName={selectedConversation.other_name}
+            recipientId={selectedConversation.other_user_id}
+          />
+
+          <MediaAttachmentModal
+            open={showMediaModal}
+            onClose={() => setShowMediaModal(false)}
+            conversationId={selectedConversation.conversation_id}
+            onMediaSent={handleMediaSent}
+          />
+        </>
       )}
     </div>
   );

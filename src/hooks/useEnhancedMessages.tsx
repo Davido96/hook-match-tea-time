@@ -12,6 +12,8 @@ interface Message {
   status: 'sent' | 'delivered' | 'read';
   created_at: string;
   message_type?: string;
+  media_url?: string;
+  ppv_offer_id?: string;
 }
 
 export const useEnhancedMessages = (conversationId?: string) => {
