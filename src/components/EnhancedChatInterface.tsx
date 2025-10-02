@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, MessageCircle, Send, Gift, Camera } from "lucide-react";
+import { ArrowLeft, Search, MessageCircle, Send, Gift, Camera, Lock, Unlock, MoreVertical } from "lucide-react";
 import { MediaAttachmentModal } from "./MediaAttachmentModal";
 import { PPVMessageCard } from "./PPVMessageCard";
+import { ChatLockModal } from "./ChatLockModal";
 import { useChatPPV, ChatMediaOffer } from "@/hooks/useChatPPV";
+import { useLockedChats } from "@/hooks/useLockedChats";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useConversations } from "@/hooks/useConversations";
 import { useEnhancedMessages } from "@/hooks/useEnhancedMessages";
 import { useNavigate } from "react-router-dom";
 import TipModal from "./TipModal";
+import { toast } from "sonner";
 
 interface EnhancedChatInterfaceProps {
   onBack: () => void;
@@ -25,7 +29,12 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showTipModal, setShowTipModal] = useState(false);
   const [showMediaModal, setShowMediaModal] = useState(false);
+  const [showLockModal, setShowLockModal] = useState(false);
+  const [lockMode, setLockMode] = useState<'lock' | 'unlock'>('lock');
   const [ppvOffers, setPPVOffers] = useState<Record<string, ChatMediaOffer>>({});
+  const [unlockedChats, setUnlockedChats] = useState<Set<string>>(new Set());
+  
+  const { isLocked, lockChat, unlockChat, verifyPin } = useLockedChats();
   
   const { 
     messages, 
@@ -60,6 +69,14 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
   };
 
   const handleConversationSelect = async (conversation: any) => {
+    // Check if chat is locked and not in unlocked session
+    if (isLocked(conversation.conversation_id) && !unlockedChats.has(conversation.conversation_id)) {
+      setSelectedConversation(conversation);
+      setLockMode('unlock');
+      setShowLockModal(true);
+      return;
+    }
+
     setSelectedConversation(conversation);
     // Mark as read when conversation is opened
     if (conversation.unread_count > 0) {
@@ -75,6 +92,51 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
       });
       setPPVOffers(offersMap);
     }
+  };
+
+  const handleLockChat = (pin: string) => {
+    if (!selectedConversation) return;
+    
+    const result = lockChat(selectedConversation.conversation_id, pin);
+    if (result.success) {
+      toast.success('Chat locked successfully');
+      // Remove from unlocked session
+      setUnlockedChats(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(selectedConversation.conversation_id);
+        return newSet;
+      });
+      setSelectedConversation(null);
+    } else {
+      toast.error(result.error || 'Failed to lock chat');
+    }
+  };
+
+  const handleUnlockChat = (pin: string) => {
+    if (!selectedConversation) return;
+    
+    const result = unlockChat(selectedConversation.conversation_id, pin);
+    if (result.success) {
+      toast.success('Chat unlocked successfully');
+      // Add to unlocked session
+      setUnlockedChats(prev => new Set(prev).add(selectedConversation.conversation_id));
+      // Re-select the conversation to load it
+      handleConversationSelect(selectedConversation);
+    } else {
+      toast.error(result.error || 'Incorrect PIN');
+      setSelectedConversation(null);
+    }
+  };
+
+  const handleToggleLock = () => {
+    if (!selectedConversation) return;
+    
+    if (isLocked(selectedConversation.conversation_id)) {
+      setLockMode('unlock');
+    } else {
+      setLockMode('lock');
+    }
+    setShowLockModal(true);
   };
 
   const handleMediaSent = async (mediaUrl: string, offerId: string) => {
@@ -204,8 +266,12 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                         <div
                           key={conversation.conversation_id}
                           onClick={() => handleConversationSelect(conversation)}
-                          className="flex items-center space-x-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer transition-colors"
+                          className="flex items-center space-x-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer transition-colors relative"
                         >
+                          {isLocked(conversation.conversation_id) && (
+                            <Lock className="absolute top-2 right-2 w-4 h-4 text-yellow-400" />
+                          )}
+                          
                           <Avatar 
                             className="w-12 h-12 cursor-pointer"
                             onClick={(e) => {
@@ -229,7 +295,10 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                               )}
                             </div>
                             <p className="text-white/80 text-xs truncate">
-                              {conversation.last_message_content || 'Start a conversation...'}
+                              {isLocked(conversation.conversation_id) && !unlockedChats.has(conversation.conversation_id)
+                                ? '🔒 Locked conversation'
+                                : conversation.last_message_content || 'Start a conversation...'
+                              }
                             </p>
                             <p className="text-white/60 text-xs mt-1">
                               {conversation.last_message_at 
@@ -294,21 +363,55 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
                   </Avatar>
                   
                   <div>
-                    <h3 className="font-semibold text-white">{selectedConversation.other_name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-white">{selectedConversation.other_name}</h3>
+                      {isLocked(selectedConversation.conversation_id) && (
+                        <Lock className="w-4 h-4 text-yellow-400" />
+                      )}
+                    </div>
                     <p className="text-white/60 text-sm">
                       {getLastActiveText(selectedConversation.last_active)}
                     </p>
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleOpenTipModal}
-                  size="sm"
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                >
-                  <Gift className="w-4 h-4 mr-1" />
-                  Send Tip
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleOpenTipModal}
+                    size="sm"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                  >
+                    <Gift className="w-4 h-4 mr-1" />
+                    Send Tip
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-white hover:bg-white/20"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleToggleLock}>
+                        {isLocked(selectedConversation.conversation_id) ? (
+                          <>
+                            <Unlock className="w-4 h-4 mr-2" />
+                            Unlock Chat
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4 mr-2" />
+                            Lock Chat
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
 
@@ -437,6 +540,15 @@ const EnhancedChatInterface = ({ onBack }: EnhancedChatInterfaceProps) => {
             onClose={() => setShowMediaModal(false)}
             conversationId={selectedConversation.conversation_id}
             onMediaSent={handleMediaSent}
+          />
+
+          <ChatLockModal
+            open={showLockModal}
+            onClose={() => setShowLockModal(false)}
+            mode={lockMode}
+            conversationName={selectedConversation.other_name}
+            onLock={handleLockChat}
+            onUnlock={handleUnlockChat}
           />
         </>
       )}
