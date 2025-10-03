@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Shield, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import AdminWaitlistDashboard from "@/components/AdminWaitlistDashboard";
@@ -18,7 +18,27 @@ const AdminWaitlistPage = () => {
   const { user, signOut } = useAuth();
   const { roles, isAdmin } = useUserRoles();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const location = useLocation();
+
+  // Determine active tab from URL
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/admin' || path === '/admin/overview') return 'overview';
+    if (path === '/admin/waitlist') return 'waitlist';
+    if (path === '/admin/users') return 'users';
+    if (path === '/admin/withdrawals') return 'withdrawals';
+    if (path === '/admin/content') return 'content';
+    return 'overview';
+  };
+
+  const activeTab = getActiveTab();
+
+  // Redirect /admin to /admin/overview
+  useEffect(() => {
+    if (location.pathname === '/admin') {
+      navigate('/admin/overview', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -62,13 +82,23 @@ const AdminWaitlistPage = () => {
         </Card>
 
         {/* Main Content with Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="overview" onClick={() => navigate('/admin/overview')}>
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="waitlist" onClick={() => navigate('/admin/waitlist')}>
+              Waitlist
+            </TabsTrigger>
+            <TabsTrigger value="users" onClick={() => navigate('/admin/users')}>
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="withdrawals" onClick={() => navigate('/admin/withdrawals')}>
+              Withdrawals
+            </TabsTrigger>
+            <TabsTrigger value="content" onClick={() => navigate('/admin/content')}>
+              Content
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

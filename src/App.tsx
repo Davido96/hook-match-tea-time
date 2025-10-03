@@ -54,7 +54,32 @@ const App = () => (
             <Route path="/creator-waitlist" element={<CreatorWaitlistPage />} />
             <Route path="/creator-waitlist/success" element={<WaitlistSuccessPage />} />
             <Route path="/waitlist-status" element={<WaitlistStatusPage />} />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminWaitlistPage />
+              </AdminRoute>
+            } />
+            <Route path="/admin/overview" element={
+              <AdminRoute>
+                <AdminWaitlistPage />
+              </AdminRoute>
+            } />
             <Route path="/admin/waitlist" element={
+              <AdminRoute>
+                <AdminWaitlistPage />
+              </AdminRoute>
+            } />
+            <Route path="/admin/users" element={
+              <AdminRoute>
+                <AdminWaitlistPage />
+              </AdminRoute>
+            } />
+            <Route path="/admin/withdrawals" element={
+              <AdminRoute>
+                <AdminWaitlistPage />
+              </AdminRoute>
+            } />
+            <Route path="/admin/content" element={
               <AdminRoute>
                 <AdminWaitlistPage />
               </AdminRoute>
