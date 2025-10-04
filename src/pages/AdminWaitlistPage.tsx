@@ -13,6 +13,9 @@ import { AdminStats } from "@/components/admin/AdminStats";
 import { WithdrawalsManagement } from "@/components/admin/WithdrawalsManagement";
 import { UsersManagement } from "@/components/admin/UsersManagement";
 import { ContentModeration } from "@/components/admin/ContentModeration";
+import { RevenueCharts } from "@/components/admin/RevenueCharts";
+import { TopEarnersTable } from "@/components/admin/TopEarnersTable";
+import { EngagementMetrics } from "@/components/admin/EngagementMetrics";
 
 const AdminWaitlistPage = () => {
   const { user, signOut } = useAuth();
@@ -107,6 +110,9 @@ const AdminWaitlistPage = () => {
               <p className="text-muted-foreground">Monitor key metrics and platform activity</p>
             </div>
             <AdminStats />
+            <RevenueCharts />
+            <TopEarnersTable />
+            <EngagementMetrics />
           </TabsContent>
 
           <TabsContent value="waitlist">

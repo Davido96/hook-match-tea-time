@@ -54,6 +54,15 @@ interface WaitlistApplication {
   admin_notes?: string;
   submitted_at: string;
   reviewed_at?: string;
+  verification_submissions?: {
+    government_id_url?: string;
+    selfie_url?: string;
+    video_introduction_url?: string;
+    sample_content_urls?: string[];
+    social_verification_posts?: string[];
+    verification_status?: string;
+    created_at?: string;
+  }[];
 }
 
 const AdminWaitlistDashboard = () => {
@@ -92,7 +101,18 @@ const AdminWaitlistDashboard = () => {
     try {
       let query = supabase
         .from('creator_waitlist')
-        .select('*')
+        .select(`
+          *,
+          verification_submissions (
+            government_id_url,
+            selfie_url,
+            video_introduction_url,
+            sample_content_urls,
+            social_verification_posts,
+            verification_status,
+            created_at
+          )
+        `)
         .order('submitted_at', { ascending: false });
 
       if (filter !== 'all') {
@@ -368,8 +388,9 @@ const AdminWaitlistDashboard = () => {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="details" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="verification">Verification</TabsTrigger>
                     <TabsTrigger value="review">Review</TabsTrigger>
                   </TabsList>
                   
@@ -460,6 +481,118 @@ const AdminWaitlistDashboard = () => {
                         <p className="text-sm">{selectedApplication.admin_notes}</p>
                       </div>
                     )}
+                  </TabsContent>
+                  
+                  <TabsContent value="verification" className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5" />
+                        Verification Status
+                      </h4>
+                      
+                      {(() => {
+                        const verification = selectedApplication.verification_submissions?.[0];
+                        const documentsStatus = {
+                          'Profile Photo': !!selectedApplication.profile_photo_url,
+                          'Portfolio': !!(selectedApplication.portfolio_urls && selectedApplication.portfolio_urls.length > 0),
+                          'Government ID': !!verification?.government_id_url,
+                          'Selfie Verification': !!verification?.selfie_url,
+                          'Video Introduction': !!verification?.video_introduction_url,
+                          'Sample Content': !!(verification?.sample_content_urls && verification.sample_content_urls.length > 0),
+                          'Social Verification': !!(verification?.social_verification_posts && verification.social_verification_posts.length > 0),
+                        };
+                        
+                        const completedCount = Object.values(documentsStatus).filter(Boolean).length;
+                        const totalCount = Object.keys(documentsStatus).length;
+                        const percentage = Math.round((completedCount / totalCount) * 100);
+                        
+                        return (
+                          <>
+                            <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium">Completion Progress</span>
+                                <span className="text-sm font-bold">{completedCount}/{totalCount} Complete</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div 
+                                  className="bg-green-600 h-2 rounded-full transition-all"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">{percentage}% Complete</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              {Object.entries(documentsStatus).map(([doc, isComplete]) => (
+                                <div key={doc} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <span className="text-sm font-medium">{doc}</span>
+                                  {isComplete ? (
+                                    <CheckCircle className="w-5 h-5 text-green-600" />
+                                  ) : (
+                                    <XCircle className="w-5 h-5 text-red-600" />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {verification && (
+                              <div className="mt-4 p-4 border rounded-lg space-y-3">
+                                <h5 className="font-medium">Uploaded Documents</h5>
+                                
+                                {verification.government_id_url && (
+                                  <div>
+                                    <p className="text-sm font-medium mb-1">Government ID</p>
+                                    <img 
+                                      src={verification.government_id_url} 
+                                      alt="Government ID" 
+                                      className="w-full max-w-xs rounded border"
+                                    />
+                                  </div>
+                                )}
+                                
+                                {verification.selfie_url && (
+                                  <div>
+                                    <p className="text-sm font-medium mb-1">Selfie</p>
+                                    <img 
+                                      src={verification.selfie_url} 
+                                      alt="Selfie" 
+                                      className="w-32 h-32 rounded-full object-cover border"
+                                    />
+                                  </div>
+                                )}
+                                
+                                {verification.video_introduction_url && (
+                                  <div>
+                                    <p className="text-sm font-medium mb-1">Video Introduction</p>
+                                    <video 
+                                      src={verification.video_introduction_url} 
+                                      controls 
+                                      className="w-full max-w-md rounded border"
+                                    />
+                                  </div>
+                                )}
+                                
+                                {verification.sample_content_urls && verification.sample_content_urls.length > 0 && (
+                                  <div>
+                                    <p className="text-sm font-medium mb-2">Sample Content ({verification.sample_content_urls.length})</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {verification.sample_content_urls.map((url, idx) => (
+                                        <img 
+                                          key={idx}
+                                          src={url} 
+                                          alt={`Sample ${idx + 1}`} 
+                                          className="w-full h-32 object-cover rounded border"
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="review" className="space-y-4">

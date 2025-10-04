@@ -62,6 +62,57 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          element_id: string | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          page_url: string
+          session_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          element_id?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          page_url: string
+          session_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          element_id?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          page_url?: string
+          session_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       application_reviews: {
         Row: {
           audience_engagement_score: number | null
@@ -111,6 +162,185 @@ export type Database = {
             columns: ["waitlist_id"]
             isOneToOne: false
             referencedRelation: "creator_waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_attempts: {
+        Row: {
+          attempt_type: string
+          created_at: string
+          doctor_id: string | null
+          id: string
+          metadata: Json | null
+          patient_id: string | null
+          session_id: string
+          step_reached: string | null
+        }
+        Insert: {
+          attempt_type: string
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          metadata?: Json | null
+          patient_id?: string | null
+          session_id: string
+          step_reached?: string | null
+        }
+        Update: {
+          attempt_type?: string
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          metadata?: Json | null
+          patient_id?: string | null
+          session_id?: string
+          step_reached?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_attempts_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_attempts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_slots: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          is_available: boolean
+          provider_id: string | null
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          provider_id?: string | null
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          provider_id?: string | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_slots_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number | null
+        }
+        Relationships: []
+      }
+      appointments: {
+        Row: {
+          appointment_type_id: string | null
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          id: string
+          notes: string | null
+          patient_id: string
+          provider_id: string | null
+          reason: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_type_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          patient_id: string
+          provider_id?: string | null
+          reason?: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_type_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          provider_id?: string | null
+          reason?: string | null
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_appointment_type_id_fkey"
+            columns: ["appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
             referencedColumns: ["id"]
           },
         ]
@@ -165,6 +395,100 @@ export type Database = {
           xp_reward?: number
         }
         Relationships: []
+      }
+      chat_media_offers: {
+        Row: {
+          caption: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          media_type: string
+          media_url: string
+          message_id: string
+          price_keys: number
+          seller_id: string
+          thumbnail_url: string | null
+          unlock_duration_hours: number | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          media_type: string
+          media_url: string
+          message_id: string
+          price_keys: number
+          seller_id: string
+          thumbnail_url?: string | null
+          unlock_duration_hours?: number | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url?: string
+          message_id?: string
+          price_keys?: number
+          seller_id?: string
+          thumbnail_url?: string | null
+          unlock_duration_hours?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_media_offers_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_media_purchases: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          offer_id: string
+          price_paid: number
+          purchased_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          offer_id: string
+          price_paid: number
+          purchased_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          offer_id?: string
+          price_paid?: number
+          purchased_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_media_purchases_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "chat_media_offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {
@@ -375,6 +699,120 @@ export type Database = {
           swipes_used?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      doctor_views: {
+        Row: {
+          created_at: string
+          doctor_id: string | null
+          id: string
+          patient_id: string | null
+          session_id: string
+          source_page: string | null
+          view_duration: number | null
+        }
+        Insert: {
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          patient_id?: string | null
+          session_id: string
+          source_page?: string | null
+          view_duration?: number | null
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          patient_id?: string | null
+          session_id?: string
+          source_page?: string | null
+          view_duration?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_views_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_views_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          availability_hours: Json | null
+          avatar_url: string | null
+          bio: string | null
+          certifications: string[] | null
+          consultation_fee: number | null
+          created_at: string
+          department: string | null
+          doctor_id: string
+          education: string[] | null
+          first_name: string
+          id: string
+          is_active: boolean | null
+          languages_spoken: string[] | null
+          last_name: string
+          rating: number | null
+          specialization: string
+          total_reviews: number | null
+          updated_at: string
+          user_id: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          availability_hours?: Json | null
+          avatar_url?: string | null
+          bio?: string | null
+          certifications?: string[] | null
+          consultation_fee?: number | null
+          created_at?: string
+          department?: string | null
+          doctor_id: string
+          education?: string[] | null
+          first_name: string
+          id?: string
+          is_active?: boolean | null
+          languages_spoken?: string[] | null
+          last_name: string
+          rating?: number | null
+          specialization: string
+          total_reviews?: number | null
+          updated_at?: string
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          availability_hours?: Json | null
+          avatar_url?: string | null
+          bio?: string | null
+          certifications?: string[] | null
+          consultation_fee?: number | null
+          created_at?: string
+          department?: string | null
+          doctor_id?: string
+          education?: string[] | null
+          first_name?: string
+          id?: string
+          is_active?: boolean | null
+          languages_spoken?: string[] | null
+          last_name?: string
+          rating?: number | null
+          specialization?: string
+          total_reviews?: number | null
+          updated_at?: string
+          user_id?: string | null
+          years_experience?: number | null
         }
         Relationships: []
       }
@@ -682,6 +1120,182 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_interests: {
+        Row: {
+          created_at: string
+          frequency_count: number | null
+          id: string
+          interest_type: string
+          interest_value: string
+          last_interaction: string | null
+          patient_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          frequency_count?: number | null
+          id?: string
+          interest_type: string
+          interest_value: string
+          last_interaction?: string | null
+          patient_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          frequency_count?: number | null
+          id?: string
+          interest_type?: string
+          interest_value?: string
+          last_interaction?: string | null
+          patient_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_interests_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_outreach: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          doctor_id: string | null
+          id: string
+          message: string | null
+          opened_at: string | null
+          outreach_reason: string
+          outreach_type: string
+          patient_id: string | null
+          response_received: boolean | null
+          sent_at: string | null
+          status: string | null
+          subject: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          message?: string | null
+          opened_at?: string | null
+          outreach_reason: string
+          outreach_type: string
+          patient_id?: string | null
+          response_received?: boolean | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          message?: string | null
+          opened_at?: string | null
+          outreach_reason?: string
+          outreach_type?: string
+          patient_id?: string | null
+          response_received?: boolean | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_outreach_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_outreach_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          created_at: string
+          data_sharing_consent: boolean | null
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          first_name: string | null
+          id: string
+          insurance_id: string | null
+          insurance_provider: string | null
+          last_name: string | null
+          marketing_consent: boolean | null
+          patient_id: string
+          phone: string | null
+          preferred_contact_method: string | null
+          state: string | null
+          updated_at: string
+          user_id: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          created_at?: string
+          data_sharing_consent?: boolean | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id?: string
+          insurance_id?: string | null
+          insurance_provider?: string | null
+          last_name?: string | null
+          marketing_consent?: boolean | null
+          patient_id: string
+          phone?: string | null
+          preferred_contact_method?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          created_at?: string
+          data_sharing_consent?: boolean | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id?: string
+          insurance_id?: string | null
+          insurance_provider?: string | null
+          last_name?: string | null
+          marketing_consent?: boolean | null
+          patient_id?: string
+          phone?: string | null
+          preferred_contact_method?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
@@ -878,6 +1492,57 @@ export type Database = {
           user_type?: string
           verification_status?: string | null
           withdrawal_pin_hash?: string | null
+        }
+        Relationships: []
+      }
+      providers: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          id: string
+          license_number: string | null
+          location: string | null
+          name: string
+          phone: string | null
+          specialty: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          verification_status: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          license_number?: string | null
+          location?: string | null
+          name: string
+          phone?: string | null
+          specialty: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          verification_status?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          license_number?: string | null
+          location?: string | null
+          name?: string
+          phone?: string | null
+          specialty?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          verification_status?: string
         }
         Relationships: []
       }
@@ -1297,6 +1962,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          ended_at: string | null
+          id: string
+          ip_address: unknown | null
+          is_active: boolean
+          page_count: number
+          session_id: string
+          started_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          page_count?: number
+          session_id: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          page_count?: number
+          session_id?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -1531,6 +2247,10 @@ export type Database = {
           total_discovery_days: number
         }[]
       }
+      get_engagement_metrics: {
+        Args: { period_days?: number }
+        Returns: Json
+      }
       get_incoming_likes: {
         Args: { user_uuid: string }
         Returns: {
@@ -1549,6 +2269,27 @@ export type Database = {
           sender_verification_status: string
         }[]
       }
+      get_monthly_revenue_trend: {
+        Args: { months_count?: number }
+        Returns: {
+          month_date: string
+          month_label: string
+          ppv: number
+          subscriptions: number
+          tips: number
+          total_revenue: number
+        }[]
+      }
+      get_patient_recommendations: {
+        Args: { p_patient_id: string }
+        Returns: {
+          doctor_id: string
+          doctor_name: string
+          reason: string
+          recommendation_score: number
+          specialization: string
+        }[]
+      }
       get_premium_limits: {
         Args: { user_uuid: string }
         Returns: {
@@ -1558,6 +2299,28 @@ export type Database = {
           daily_super_likes: number
           daily_swipes: number
           has_premium_badge: boolean
+        }[]
+      }
+      get_revenue_analytics: {
+        Args: { end_date?: string; start_date?: string }
+        Returns: {
+          percentage: number
+          source_type: string
+          total_amount: number
+          transaction_count: number
+        }[]
+      }
+      get_top_earners: {
+        Args: { limit_count?: number; period_days?: number }
+        Returns: {
+          avatar_url: string
+          creator_name: string
+          ppv_earnings: number
+          subscription_earnings: number
+          tips_earnings: number
+          total_earnings: number
+          user_id: string
+          user_type: string
         }[]
       }
       get_user_matches: {
@@ -1624,6 +2387,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      has_chat_media_access: {
+        Args: { offer_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       has_post_access: {
         Args: { post_uuid: string; user_uuid: string }
         Returns: boolean
@@ -1647,6 +2414,10 @@ export type Database = {
         Args: { conversation_id_param: string; user_id_param: string }
         Returns: undefined
       }
+      purchase_chat_media: {
+        Args: { offer_uuid: string }
+        Returns: Json
+      }
       purchase_ppv_content: {
         Args: { post_uuid: string }
         Returns: Json
@@ -1657,6 +2428,16 @@ export type Database = {
       }
       set_withdrawal_pin: {
         Args: { pin: string }
+        Returns: undefined
+      }
+      track_patient_behavior: {
+        Args: {
+          p_behavior_type: string
+          p_behavior_value: string
+          p_metadata?: Json
+          p_patient_id: string
+          p_session_id?: string
+        }
         Returns: undefined
       }
       update_user_presence: {
