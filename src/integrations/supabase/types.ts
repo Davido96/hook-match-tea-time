@@ -214,6 +214,75 @@ export type Database = {
           },
         ]
       }
+      appointment_reviews: {
+        Row: {
+          admin_response: string | null
+          appointment_id: string | null
+          created_at: string
+          id: string
+          is_complaint: boolean
+          is_public: boolean
+          patient_id: string
+          provider_id: string
+          rating: number
+          resolved_at: string | null
+          resolved_by: string | null
+          review_text: string
+          review_type: Database["public"]["Enums"]["review_type"]
+          status: Database["public"]["Enums"]["review_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          is_complaint?: boolean
+          is_public?: boolean
+          patient_id: string
+          provider_id: string
+          rating: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_text: string
+          review_type?: Database["public"]["Enums"]["review_type"]
+          status?: Database["public"]["Enums"]["review_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          is_complaint?: boolean
+          is_public?: boolean
+          patient_id?: string
+          provider_id?: string
+          rating?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_text?: string
+          review_type?: Database["public"]["Enums"]["review_type"]
+          status?: Database["public"]["Enums"]["review_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reviews_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_slots: {
         Row: {
           created_at: string
@@ -846,6 +915,90 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string | null
+          email_type: string
+          id: string
+          metadata: Json | null
+          recipient_email: string
+          sent_at: string | null
+          status: string | null
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_type: string
+          id?: string
+          metadata?: Json | null
+          recipient_email: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_type?: string
+          id?: string
+          metadata?: Json | null
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      email_queue: {
+        Row: {
+          created_at: string | null
+          email_type: string
+          error_message: string | null
+          html_content: string
+          id: string
+          recipient_email: string
+          retry_count: number | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_type: string
+          error_message?: string | null
+          html_content: string
+          id?: string
+          recipient_email: string
+          retry_count?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          html_content?: string
+          id?: string
+          recipient_email?: string
+          retry_count?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       exclusive_posts: {
         Row: {
           caption: string | null
@@ -917,6 +1070,57 @@ export type Database = {
           following_id?: string
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      general_feedback: {
+        Row: {
+          admin_notes: string | null
+          assigned_to: string | null
+          created_at: string
+          email: string
+          feedback_type: Database["public"]["Enums"]["feedback_type"]
+          id: string
+          message: string
+          name: string
+          priority: Database["public"]["Enums"]["feedback_priority"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["feedback_status"]
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          email: string
+          feedback_type?: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          message: string
+          name: string
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          email?: string
+          feedback_type?: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          message?: string
+          name?: string
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1611,6 +1815,38 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      review_responses: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          response_text: string
+          review_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          response_text: string
+          review_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          response_text?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {
@@ -2414,6 +2650,12 @@ export type Database = {
         Args: { conversation_id_param: string; user_id_param: string }
         Returns: undefined
       }
+      process_email_queue: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          processed_count: number
+        }[]
+      }
       purchase_chat_media: {
         Args: { offer_uuid: string }
         Returns: Json
@@ -2480,6 +2722,11 @@ export type Database = {
         | "business"
         | "comedy"
         | "other"
+      feedback_priority: "low" | "medium" | "high" | "urgent"
+      feedback_status: "pending" | "in_progress" | "resolved" | "closed"
+      feedback_type: "complaint" | "inquiry" | "suggestion" | "technical_issue"
+      review_status: "pending" | "approved" | "resolved" | "rejected"
+      review_type: "positive" | "neutral" | "complaint"
       verification_status: "pending" | "submitted" | "verified" | "rejected"
     }
     CompositeTypes: {
@@ -2632,6 +2879,11 @@ export const Constants = {
         "comedy",
         "other",
       ],
+      feedback_priority: ["low", "medium", "high", "urgent"],
+      feedback_status: ["pending", "in_progress", "resolved", "closed"],
+      feedback_type: ["complaint", "inquiry", "suggestion", "technical_issue"],
+      review_status: ["pending", "approved", "resolved", "rejected"],
+      review_type: ["positive", "neutral", "complaint"],
       verification_status: ["pending", "submitted", "verified", "rejected"],
     },
   },
