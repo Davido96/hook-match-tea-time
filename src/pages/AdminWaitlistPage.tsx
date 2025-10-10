@@ -16,6 +16,7 @@ import { ContentModeration } from "@/components/admin/ContentModeration";
 import { RevenueCharts } from "@/components/admin/RevenueCharts";
 import { TopEarnersTable } from "@/components/admin/TopEarnersTable";
 import { EngagementMetrics } from "@/components/admin/EngagementMetrics";
+import EmailTemplatesManager from "@/components/admin/EmailTemplatesManager";
 
 const AdminWaitlistPage = () => {
   const { user, signOut } = useAuth();
@@ -31,6 +32,7 @@ const AdminWaitlistPage = () => {
     if (path === '/admin/users') return 'users';
     if (path === '/admin/withdrawals') return 'withdrawals';
     if (path === '/admin/content') return 'content';
+    if (path === '/admin/emails') return 'emails';
     return 'overview';
   };
 
@@ -86,7 +88,7 @@ const AdminWaitlistPage = () => {
 
         {/* Main Content with Tabs */}
         <Tabs value={activeTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="overview" onClick={() => navigate('/admin/overview')}>
               Overview
             </TabsTrigger>
@@ -101,6 +103,9 @@ const AdminWaitlistPage = () => {
             </TabsTrigger>
             <TabsTrigger value="content" onClick={() => navigate('/admin/content')}>
               Content
+            </TabsTrigger>
+            <TabsTrigger value="emails" onClick={() => navigate('/admin/emails')}>
+              Emails
             </TabsTrigger>
           </TabsList>
 
@@ -141,6 +146,10 @@ const AdminWaitlistPage = () => {
               <p className="text-muted-foreground">Review and moderate user-generated content</p>
             </div>
             <ContentModeration />
+          </TabsContent>
+
+          <TabsContent value="emails">
+            <EmailTemplatesManager />
           </TabsContent>
         </Tabs>
       </div>
