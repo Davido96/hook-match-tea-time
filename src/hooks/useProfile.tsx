@@ -23,6 +23,7 @@ interface Profile {
   services_offered?: string;
   verification_status: 'pending' | 'verified' | 'rejected';
   is_age_verified: boolean;
+  verification_video_url?: string | null;
   withdrawal_pin_hash?: string | null;
   referred_by?: string | null;
   total_referrals?: number;
