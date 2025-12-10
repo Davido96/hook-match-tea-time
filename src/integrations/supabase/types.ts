@@ -72,7 +72,7 @@ export type Database = {
           element_id: string | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
           page_url: string
           session_id: string
@@ -88,7 +88,7 @@ export type Database = {
           element_id?: string | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           page_url: string
           session_id: string
@@ -104,7 +104,7 @@ export type Database = {
           element_id?: string | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           page_url?: string
           session_id?: string
@@ -1685,6 +1685,7 @@ export type Database = {
           user_id: string
           user_type: string
           verification_status: string | null
+          verification_video_url: string | null
           withdrawal_pin_hash: string | null
         }
         Insert: {
@@ -1714,6 +1715,7 @@ export type Database = {
           user_id: string
           user_type: string
           verification_status?: string | null
+          verification_video_url?: string | null
           withdrawal_pin_hash?: string | null
         }
         Update: {
@@ -1743,6 +1745,7 @@ export type Database = {
           user_id?: string
           user_type?: string
           verification_status?: string | null
+          verification_video_url?: string | null
           withdrawal_pin_hash?: string | null
         }
         Relationships: []
@@ -2255,7 +2258,7 @@ export type Database = {
           device_type: string | null
           ended_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean
           page_count: number
           session_id: string
@@ -2271,7 +2274,7 @@ export type Database = {
           device_type?: string | null
           ended_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean
           page_count?: number
           session_id: string
@@ -2287,7 +2290,7 @@ export type Database = {
           device_type?: string | null
           ended_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean
           page_count?: number
           session_id?: string
@@ -2479,14 +2482,8 @@ export type Database = {
         Args: { user_uuid: string; xp_amount: number }
         Returns: undefined
       }
-      assign_admin_role: {
-        Args: { _email: string }
-        Returns: boolean
-      }
-      calculate_xp_for_level: {
-        Args: { level_num: number }
-        Returns: number
-      }
+      assign_admin_role: { Args: { _email: string }; Returns: boolean }
+      calculate_xp_for_level: { Args: { level_num: number }; Returns: number }
       check_and_award_achievements: {
         Args: { user_uuid: string }
         Returns: undefined
@@ -2516,10 +2513,7 @@ export type Database = {
         Args: { user_name: string; user_uuid: string }
         Returns: string
       }
-      generate_referral_code: {
-        Args: { user_name: string }
-        Returns: string
-      }
+      generate_referral_code: { Args: { user_name: string }; Returns: string }
       get_daily_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -2531,10 +2525,7 @@ export type Database = {
           total_discovery_days: number
         }[]
       }
-      get_engagement_metrics: {
-        Args: { period_days?: number }
-        Returns: Json
-      }
+      get_engagement_metrics: { Args: { period_days?: number }; Returns: Json }
       get_incoming_likes: {
         Args: { user_uuid: string }
         Returns: {
@@ -2630,10 +2621,7 @@ export type Database = {
           unread_count: number
         }[]
       }
-      get_user_premium_features: {
-        Args: { user_uuid: string }
-        Returns: Json
-      }
+      get_user_premium_features: { Args: { user_uuid: string }; Returns: Json }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
@@ -2649,10 +2637,7 @@ export type Database = {
           status_text: string
         }[]
       }
-      get_user_tier: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
+      get_user_tier: { Args: { user_uuid: string }; Returns: string }
       get_waitlist_status: {
         Args: { applicant_email: string }
         Returns: {
@@ -2699,27 +2684,18 @@ export type Database = {
         Returns: undefined
       }
       process_email_queue: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           processed_count: number
         }[]
       }
-      purchase_chat_media: {
-        Args: { offer_uuid: string }
-        Returns: Json
-      }
-      purchase_ppv_content: {
-        Args: { post_uuid: string }
-        Returns: Json
-      }
+      purchase_chat_media: { Args: { offer_uuid: string }; Returns: Json }
+      purchase_ppv_content: { Args: { post_uuid: string }; Returns: Json }
       respond_to_like: {
         Args: { like_id_param: string; response_status: string }
         Returns: boolean
       }
-      set_withdrawal_pin: {
-        Args: { pin: string }
-        Returns: undefined
-      }
+      set_withdrawal_pin: { Args: { pin: string }; Returns: undefined }
       track_patient_behavior: {
         Args: {
           p_behavior_type: string
@@ -2734,18 +2710,9 @@ export type Database = {
         Args: { online_status?: boolean; user_uuid: string }
         Returns: undefined
       }
-      update_user_streak: {
-        Args: { user_uuid: string }
-        Returns: undefined
-      }
-      upgrade_to_creator: {
-        Args: { user_uuid: string }
-        Returns: Json
-      }
-      verify_withdrawal_pin: {
-        Args: { pin: string }
-        Returns: boolean
-      }
+      update_user_streak: { Args: { user_uuid: string }; Returns: undefined }
+      upgrade_to_creator: { Args: { user_uuid: string }; Returns: Json }
+      verify_withdrawal_pin: { Args: { pin: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase, LogOut } from "lucide-react";
+import { ArrowLeft, Upload, User, MapPin, Heart, Briefcase, LogOut, Video } from "lucide-react";
+import VideoVerification from "@/components/VideoVerification";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +42,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
+  const [verificationVideoUrl, setVerificationVideoUrl] = useState<string | null>(null);
   
   // Form data with initial user type if provided
   const [formData, setFormData] = useState({
@@ -73,7 +75,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
     }
   };
 
-  const totalSteps = formData.userType === 'creator' ? 4 : 3; // Reduced by 1 since we skip user type selection
+  // Creators have extra steps: video verification (after basic info) and creator settings
+  const totalSteps = formData.userType === 'creator' ? 5 : 3;
 
   // Available interests for selection
   const availableInterests = [
@@ -165,14 +168,19 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
       return;
     }
     
-    if ((initialUserType && step === 2) || (!initialUserType && step === 2)) {
+    // Step 2: Basic info validation
+    if (step === 2) {
       if (!formData.name.trim() || !formData.age || parseInt(formData.age) < 18) {
         setError("Please provide valid name and age (18+)");
         return;
       }
     }
 
-    const locationStep = initialUserType ? 3 : 4;
+    // Step 3: Video verification for creators (optional but recommended)
+    // No hard validation - they can skip or come back
+    
+    // Location step: Step 3 for consumers, Step 4 for creators
+    const locationStep = formData.userType === 'creator' ? 4 : 3;
     if (step === locationStep) {
       if (!formData.gender || !formData.genderPreference || !formData.locationState || !formData.locationCity.trim()) {
         setError("Please fill in all location and preference fields");
@@ -180,8 +188,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
       }
     }
 
-    const creatorSettingsStep = initialUserType ? 4 : 5;
-    if (step === creatorSettingsStep && formData.userType === 'creator') {
+    // Creator settings step: Step 5 for creators
+    if (step === 5 && formData.userType === 'creator') {
       if (!formData.subscriptionFee || parseInt(formData.subscriptionFee) < 100) {
         setError("Subscription fee must be at least 100 Keys");
         return;
@@ -229,7 +237,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
         subscription_fee: formData.userType === 'creator' ? parseInt(formData.subscriptionFee) : 0,
         services_offered: formData.userType === 'creator' ? formData.servicesOffered.trim() : '',
         verification_status: 'pending' as const,
-        is_age_verified: false
+        is_age_verified: false,
+        verification_video_url: formData.userType === 'creator' ? verificationVideoUrl : null
       };
 
       const { error: createError } = await createProfile(profileData);
@@ -440,8 +449,16 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
             </div>
           )}
 
-          {/* Adjust remaining steps based on whether we have initial user type */}
-          {((initialUserType && step === 3) || (!initialUserType && step === 3)) && (
+          {/* Step 3: Video Verification for Creators */}
+          {step === 3 && formData.userType === 'creator' && (
+            <VideoVerification 
+              onVideoUploaded={(url) => setVerificationVideoUrl(url)}
+              existingVideoUrl={verificationVideoUrl || undefined}
+            />
+          )}
+
+          {/* Step 3 for consumers, Step 4 for creators: Location & Preferences */}
+          {((formData.userType === 'consumer' && step === 3) || (formData.userType === 'creator' && step === 4)) && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
@@ -508,7 +525,8 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
             </div>
           )}
 
-          {((initialUserType && step === 4) || (!initialUserType && step === 4)) && formData.userType === 'creator' && (
+          {/* Step 5: Creator Settings */}
+          {step === 5 && formData.userType === 'creator' && (
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
@@ -528,7 +546,7 @@ const EnhancedProfileSetup = ({ onComplete, onBack, initialUserType }: EnhancedP
                     value={formData.subscriptionFee}
                     onChange={(e) => setFormData({ ...formData, subscriptionFee: e.target.value })}
                   />
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Set how much subscribers pay monthly to access your exclusive content
                   </p>
                 </div>
