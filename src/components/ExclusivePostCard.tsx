@@ -7,6 +7,7 @@ import { usePostLikes } from "@/hooks/usePostLikes";
 import { usePostCommentCount } from "@/hooks/usePostCommentCount";
 import { usePostAccess } from "@/hooks/usePostAccess";
 import HookLogo from "@/components/HookLogo";
+import PostOptionsMenu from "@/components/PostOptionsMenu";
 
 interface ExclusivePost {
   id: string;
@@ -34,6 +35,8 @@ interface ExclusivePostCardProps {
   onProfileClick: (creatorId: string) => void;
   onPPVClick: (post: ExclusivePost) => void;
   currentUserId?: string;
+  onPostUpdated?: () => void;
+  onPostDeleted?: () => void;
 }
 
 const ExclusivePostCard = ({ 
@@ -43,7 +46,9 @@ const ExclusivePostCard = ({
   onTipClick, 
   onProfileClick,
   onPPVClick,
-  currentUserId 
+  currentUserId,
+  onPostUpdated,
+  onPostDeleted
 }: ExclusivePostCardProps) => {
   const { likeCount, isLiked, loading: likeLoading, toggleLike } = usePostLikes(post.id);
   const { commentCount } = usePostCommentCount(post.id);
@@ -153,6 +158,19 @@ const ExclusivePostCard = ({
               Expires {new Date(purchaseInfo.expires_at).toLocaleDateString()}
             </Badge>
           )}
+        </div>
+        
+        {/* Options Menu */}
+        <div className="absolute top-2 left-2">
+          <PostOptionsMenu
+            postId={post.id}
+            creatorId={post.creator_id}
+            isPublic={post.is_public}
+            isPPV={post.is_ppv}
+            ppvPrice={post.ppv_price}
+            onPostUpdated={onPostUpdated}
+            onPostDeleted={onPostDeleted}
+          />
         </div>
       </div>
       <CardContent className="p-4">

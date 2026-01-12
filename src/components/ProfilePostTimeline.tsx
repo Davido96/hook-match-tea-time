@@ -13,6 +13,7 @@ import TipModal from "./TipModal";
 import PostCommentsModal from "./PostCommentsModal";
 import UpgradeToCreatorModal from "./UpgradeToCreatorModal";
 import HookLogo from "./HookLogo";
+import PostOptionsMenu from "./PostOptionsMenu";
 
 interface Post {
   id: string;
@@ -214,6 +215,8 @@ const ProfilePostTimeline = ({ userId, isSubscribed, isOwnProfile, onSubscriptio
               onCommentsClick={handleCommentsClick}
               onTipClick={() => setShowTipModal(true)}
               formatTimeAgo={formatTimeAgo}
+              onPostUpdated={fetchPosts}
+              onPostDeleted={fetchPosts}
             />
           );
         })}
@@ -296,7 +299,9 @@ const PostCard = ({
   onPostClick, 
   onCommentsClick, 
   onTipClick, 
-  formatTimeAgo 
+  formatTimeAgo,
+  onPostUpdated,
+  onPostDeleted
 }: {
   post: any;
   canAccess: boolean;
@@ -305,6 +310,8 @@ const PostCard = ({
   onCommentsClick: (postId: string, e: React.MouseEvent) => void;
   onTipClick: () => void;
   formatTimeAgo: (dateString: string) => string;
+  onPostUpdated?: () => void;
+  onPostDeleted?: () => void;
 }) => {
   const { user } = useAuth();
   const { likeCount, isLiked, loading: likeLoading, toggleLike } = usePostLikes(post.id);
@@ -319,6 +326,13 @@ const PostCard = ({
               {formatTimeAgo(post.created_at)}
             </span>
             <div className="flex items-center space-x-2">
+              <PostOptionsMenu
+                postId={post.id}
+                creatorId={post.creator_id}
+                isPublic={post.is_public}
+                onPostUpdated={onPostUpdated}
+                onPostDeleted={onPostDeleted}
+              />
               {!post.is_public && (
                 <Badge variant="secondary" className="text-xs">
                   <Lock className="w-3 h-3 mr-1" />
