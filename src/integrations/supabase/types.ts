@@ -1664,12 +1664,16 @@ export type Database = {
           age_range_min: number
           avatar_url: string | null
           bio: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           created_at: string | null
           gender: string
           gender_preference: string
           id: string
           interests: string[] | null
           is_age_verified: boolean | null
+          is_blocked: boolean | null
           location_city: string
           location_state: string
           name: string
@@ -1694,12 +1698,16 @@ export type Database = {
           age_range_min?: number
           avatar_url?: string | null
           bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           created_at?: string | null
           gender: string
           gender_preference: string
           id?: string
           interests?: string[] | null
           is_age_verified?: boolean | null
+          is_blocked?: boolean | null
           location_city: string
           location_state: string
           name: string
@@ -1724,12 +1732,16 @@ export type Database = {
           age_range_min?: number
           avatar_url?: string | null
           bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           created_at?: string | null
           gender?: string
           gender_preference?: string
           id?: string
           interests?: string[] | null
           is_age_verified?: boolean | null
+          is_blocked?: boolean | null
           location_city?: string
           location_state?: string
           name?: string
@@ -2221,6 +2233,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string | null
+          id: string
+          post_id: string | null
+          reason: string
+          report_type: string
+          reported_user_id: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          post_id?: string | null
+          reason: string
+          report_type: string
+          reported_user_id: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          post_id?: string | null
+          reason?: string
+          report_type?: string
+          reported_user_id?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "exclusive_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

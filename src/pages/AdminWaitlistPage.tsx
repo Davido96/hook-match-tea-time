@@ -17,6 +17,8 @@ import { RevenueCharts } from "@/components/admin/RevenueCharts";
 import { TopEarnersTable } from "@/components/admin/TopEarnersTable";
 import { EngagementMetrics } from "@/components/admin/EngagementMetrics";
 import EmailTemplatesManager from "@/components/admin/EmailTemplatesManager";
+import { ReportsManagement } from "@/components/admin/ReportsManagement";
+import { AdminSettings } from "@/components/admin/AdminSettings";
 
 const AdminWaitlistPage = () => {
   const { user, signOut } = useAuth();
@@ -33,6 +35,8 @@ const AdminWaitlistPage = () => {
     if (path === '/admin/withdrawals') return 'withdrawals';
     if (path === '/admin/content') return 'content';
     if (path === '/admin/emails') return 'emails';
+    if (path === '/admin/reports') return 'reports';
+    if (path === '/admin/settings') return 'settings';
     return 'overview';
   };
 
@@ -88,7 +92,7 @@ const AdminWaitlistPage = () => {
 
         {/* Main Content with Tabs */}
         <Tabs value={activeTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-8 mb-6">
             <TabsTrigger value="overview" onClick={() => navigate('/admin/overview')}>
               Overview
             </TabsTrigger>
@@ -106,6 +110,12 @@ const AdminWaitlistPage = () => {
             </TabsTrigger>
             <TabsTrigger value="emails" onClick={() => navigate('/admin/emails')}>
               Emails
+            </TabsTrigger>
+            <TabsTrigger value="reports" onClick={() => navigate('/admin/reports')}>
+              Reports
+            </TabsTrigger>
+            <TabsTrigger value="settings" onClick={() => navigate('/admin/settings')}>
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -150,6 +160,22 @@ const AdminWaitlistPage = () => {
 
           <TabsContent value="emails">
             <EmailTemplatesManager />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-2">User Reports</h2>
+              <p className="text-muted-foreground">Review reports and take action on policy violations</p>
+            </div>
+            <ReportsManagement />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-2">Admin Settings</h2>
+              <p className="text-muted-foreground">Manage blocked users and platform settings</p>
+            </div>
+            <AdminSettings />
           </TabsContent>
         </Tabs>
       </div>
